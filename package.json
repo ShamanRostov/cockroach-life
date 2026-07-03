@@ -1,0 +1,24 @@
+{
+  "name": "cockroach-life",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build:staging": "tsc && vite build --mode staging",
+    "build:yandex": "tsc && vite build --mode yandex",
+    "preview": "vite preview",
+    "electron:dev": "npm run build && cd electron && npm install && npm start",
+    "electron:build": "npm run build && cd electron && npm install && npm run dist",
+    "screenshots": "node scripts/capture-screenshots.mjs"
+  },
+  "dependencies": {
+    "phaser": "^3.87.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.61.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.3"
+  }
+}

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bg192" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2d1f0e"/>
+      <stop offset="100%" stop-color="#1a1208"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="192" height="192" fill="url(#bg192)" rx="24"/>
+  <rect x="0" y="120" width="192" height="72" fill="#8b6914"/>
+
+  <!-- Simplified cockroach -->
+  <g transform="translate(96, 105)">
+    <ellipse cx="0" cy="22" rx="28" ry="8" fill="#000" opacity="0.3"/>
+    <path d="M -8 -18 Q -14 -32 -20 -38" stroke="#6d4c3d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M 8 -18 Q 14 -32 20 -38" stroke="#6d4c3d" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <g stroke="#3e2723" stroke-width="1.8" stroke-linecap="round" fill="none">
+      <path d="M -12 4 L -26 16"/><path d="M -8 10 L -22 24"/><path d="M -4 14 L -16 32"/>
+      <path d="M 12 4 L 26 16"/><path d="M 8 10 L 22 24"/><path d="M 4 14 L 16 32"/>
+    </g>
+    <ellipse cx="0" cy="12" rx="18" ry="14" fill="#4a3728"/>
+    <ellipse cx="0" cy="-4" rx="12" ry="10" fill="#4a3728"/>
+    <ellipse cx="0" cy="-18" rx="9" ry="7" fill="#4a3728"/>
+    <circle cx="-4" cy="-19" r="2.5" fill="#1a1208"/>
+    <circle cx="4" cy="-19" r="2.5" fill="#1a1208"/>
+    <circle cx="-3.5" cy="-19.5" r="1" fill="#ffa726"/>
+    <circle cx="4.5" cy="-19.5" r="1" fill="#ffa726"/>
+  </g>
+
+  <circle cx="96" cy="96" r="82" fill="none" stroke="#ffa726" stroke-width="2" opacity="0.2"/>
+</svg>

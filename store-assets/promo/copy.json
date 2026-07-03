@@ -1,0 +1,177 @@
+{
+  "game": {
+    "id": "cockroach-life",
+    "internalName": "Cockroach Life",
+    "version": "0.3.0"
+  },
+  "locales": {
+    "ru": {
+      "title": "Жизнь таракана",
+      "subtitle": "Строй гнездо. Выживай. Размножайся.",
+      "shortDescription": "Симулятор таракана: гнездо из хлама, налёты, аркады и разведение колонии",
+      "tagline": "Империя начинается под плинтусом"
+    },
+    "en": {
+      "title": "Cockroach Life",
+      "subtitle": "Build your nest. Survive. Breed.",
+      "shortDescription": "Cockroach sim: junk nest building, raids, arcade survival & colony breeding",
+      "tagline": "Empire starts by the baseboard"
+    }
+  },
+  "platforms": {
+    "yandex": {
+      "ru": {
+        "title": "Жизнь таракана",
+        "shortDescription": "Симулятор таракана: гнездо из хлама, налёты, аркады и разведение колонии",
+        "fullDescriptionFile": "store-assets/descriptions/yandex-ru.md",
+        "categories": ["simulator", "arcade", "casual"],
+        "tags": ["survival", "idle", "strategy", "building", "raid", "breeding", "browser"],
+        "keywords": [
+          "симулятор", "таракан", "выживание", "строительство", "гнездо", "аркада",
+          "idle", "стратегия", "налёт", "разведение", "казуальная игра", "браузерная игра"
+        ],
+        "ageRating": "6+",
+        "ageJustification": "Мультяшная 2D-графика, комичные опасности (тапок, спрей, кот), без крови и реалистичного насилия.",
+        "whatsNew": [
+          "Сезонный пропуск — 15 уровней наград (бесплатный и премиум трек)",
+          "Район «Подъезд» — третий регион с шкафчиками и нишами",
+          "16 районов на карте мира (квартира, балкон, подъезд)",
+          "Процедурная графика — все текстуры генерируются в рантайме",
+          "Скины таракана: золотой, неон, зомби, повар + набор в магазине"
+        ]
+      },
+      "en": {
+        "title": "Cockroach Life",
+        "shortDescription": "Cockroach sim: junk nest building, raids, arcade survival & colony breeding",
+        "fullDescriptionFile": "store-assets/descriptions/yandex-en.md",
+        "categories": ["simulator", "arcade", "casual"],
+        "tags": ["survival", "idle", "strategy", "building", "raid", "breeding", "browser"],
+        "keywords": [
+          "simulator", "cockroach", "survival", "building", "nest", "arcade",
+          "idle", "strategy", "raid", "breeding", "casual game", "browser game"
+        ],
+        "ageRating": "6+",
+        "ageJustification": "Cartoon 2D art, comedic hazards (slipper, spray, cat), no blood or realistic violence.",
+        "whatsNew": [
+          "Season Pass — 15 reward tiers (free and premium track)",
+          "Stairwell district — third region with lockers and niches",
+          "16 world map districts (apartment, balcony, stairwell)",
+          "Procedural graphics — all textures generated at runtime",
+          "Cockroach skins: golden, neon, zombie, chef + skin pack in shop"
+        ]
+      },
+      "leaderboards": [
+        { "id": "slipper_highscore", "nameRu": "Уворот от тапка", "nameEn": "Dodge the Slipper" },
+        { "id": "raid_rating", "nameRu": "Рейтинг налётов", "nameEn": "Raid Rating" },
+        { "id": "colony_size", "nameRu": "Размер колонии", "nameEn": "Colony Size" }
+      ],
+      "iapProducts": [
+        { "id": "food_pack_small", "nameRu": "Малый набор еды (200)", "nameEn": "Small Food Pack (200)", "consumable": true },
+        { "id": "food_pack_large", "nameRu": "Большой набор еды (1000)", "nameEn": "Large Food Pack (1000)", "consumable": true },
+        { "id": "money_pack", "nameRu": "Набор денег (500)", "nameEn": "Money Pack (500)", "consumable": true },
+        { "id": "shield_24h", "nameRu": "Щит от налётов 24ч", "nameEn": "Raid Shield 24h", "consumable": true },
+        { "id": "energy_refill", "nameRu": "Энергия (+3)", "nameEn": "Energy Refill (+3)", "consumable": true },
+        { "id": "remove_ads", "nameRu": "Убрать рекламу", "nameEn": "Remove Ads", "consumable": false },
+        { "id": "season_pass_premium", "nameRu": "Премиум сезонный пропуск", "nameEn": "Season Pass Premium", "consumable": false },
+        { "id": "skin_pack", "nameRu": "Набор скинов таракана", "nameEn": "Cockroach Skin Pack", "consumable": false }
+      ]
+    },
+    "steam": {
+      "appId": "see steam/steam_appid.txt",
+      "en": {
+        "title": "Cockroach Life",
+        "shortDescription": "Build a junk nest, breed your colony, raid rival roaches, and survive slipper dodging — all from a cockroach's POV.",
+        "fullDescriptionFile": "store-assets/descriptions/steam-en.md",
+        "genres": ["Casual", "Simulation", "Strategy"],
+        "tags": ["2D", "Casual", "Simulation", "Strategy", "Singleplayer", "Family Friendly"]
+      },
+      "ru": {
+        "title": "Жизнь таракана",
+        "shortDescription": "Строй гнездо из хлама, разводи колонию, грабь соседей и уворачивайся от тапка.",
+        "fullDescriptionFile": "store-assets/descriptions/steam-ru.md",
+        "genres": ["Казуальные игры", "Симуляторы", "Стратегии"],
+        "tags": ["2D", "Казуальная", "Симулятор", "Стратегия", "Для одного игрока", "Для всей семьи"]
+      }
+    },
+    "googlePlay": {
+      "title": "Cockroach Life — Nest & Raid Sim",
+      "shortDescription": "Build a roach nest, raid neighbors, dodge slippers — survival sim + arcades!",
+      "fullDescriptionFile": "store-assets/descriptions/google-play.md",
+      "category": "Simulation",
+      "contentRating": "Everyone / PEGI 3 equivalent with IAP",
+      "tags": ["Simulation", "Casual", "Strategy", "Arcade"]
+    },
+    "operator": {
+      "beeline": {
+        "title": "Жизнь таракана",
+        "shortDescription": "Симулятор таракана: гнездо из хлама, налёты и аркады на кухне.",
+        "fullDescriptionFile": "store-assets/descriptions/operator-beeline.md",
+        "portalParam": "beeline"
+      },
+      "megafon": {
+        "title": "Жизнь таракана",
+        "shortDescription": "Вырасти колонию, обустрой гнездо, грабь соседей и уворачивайся от тапка.",
+        "fullDescriptionFile": "store-assets/descriptions/operator-megafon.md",
+        "portalParam": "megafon"
+      }
+    }
+  },
+  "features": {
+    "ru": [
+      "Вид от таракана — уникальный POV",
+      "Изометрическое строительство из хлама",
+      "16 районов на карте мира в 3 регионах",
+      "Трёхфазные налёты",
+      "Разведение: 3 роли",
+      "5 аркадных мини-игр",
+      "Сезонный пропуск (15 уровней, бесплатный + премиум)",
+      "Скины таракана (5 вариантов)",
+      "Еженедельные ивенты",
+      "Ежедневные награды и квесты",
+      "3 таблицы лидеров",
+      "8 IAP-товаров",
+      "Процедурная графика в рантайме",
+      "RU / EN локализация"
+    ],
+    "en": [
+      "Cockroach POV — unique perspective",
+      "Isometric junk nest building",
+      "16 world map districts across 3 regions",
+      "Three-phase raids",
+      "Breeding: 3 roles",
+      "5 arcade minigames",
+      "Season Pass (15 tiers, free + premium)",
+      "Cockroach skins (5 variants)",
+      "Weekly live events",
+      "Daily rewards and quests",
+      "3 leaderboards",
+      "8 IAP products",
+      "Procedural runtime graphics",
+      "RU / EN localization"
+    ]
+  },
+  "assets": {
+    "icon": "store-assets/icons/icon-512.png",
+    "iconSvg": "store-assets/icons/icon.svg",
+    "icon192Svg": "store-assets/icons/icon-192.svg",
+    "cover": "store-assets/banners/cover-800x470.png",
+    "coverSvg": "store-assets/banners/cover.svg",
+    "screenshots": [
+      "store-assets/screenshots/01-nest-building.png",
+      "store-assets/screenshots/02-slipper-dodge.png",
+      "store-assets/screenshots/03-raid-infiltration.png",
+      "store-assets/screenshots/04-world-map.png",
+      "store-assets/screenshots/05-breeding-panel.png",
+      "store-assets/screenshots/06-shop-daily-quests.png"
+    ]
+  },
+  "colors": {
+    "bgDark": "#1a1208",
+    "bgWarm": "#2d1f0e",
+    "accent": "#ffa726",
+    "accentDark": "#e65100",
+    "floor": "#8b6914",
+    "text": "#fff8e1",
+    "cockroach": "#4a3728"
+  }
+}

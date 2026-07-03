@@ -1,0 +1,36 @@
+{
+  "name": "cockroach-life-electron",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Optional Electron wrapper for Steam/desktop builds",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.cockroachlife.game",
+    "productName": "Cockroach Life",
+    "directories": {
+      "output": "out"
+    },
+    "files": [
+      "main.js",
+      "../dist/**/*"
+    ],
+    "win": {
+      "target": ["portable"]
+    },
+    "linux": {
+      "target": ["AppImage"]
+    },
+    "mac": {
+      "target": ["dmg"]
+    }
+  }
+}

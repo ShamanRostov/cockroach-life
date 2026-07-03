@@ -1,0 +1,224 @@
+import type { DailyQuestType } from '../types';
+import type { CockroachRole } from '../types';
+import type { RoomType } from './BuildingSystem';
+import type { LiveOpsMultiplierType } from './LiveOpsSystem';
+import type { ProductId } from '../../platforms/IAPService';
+
+/** Local calendar date (YYYY-MM-DD) for daily resets at midnight. */
+export function localDateString(date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// ── Starting economy ──────────────────────────────────────────────────────────
+
+export const STARTING_FOOD = 50;
+export const STARTING_MONEY = 100;
+export const STARTING_HEALTH = 100;
+export const STARTING_MAX_HEALTH = 100;
+
+// ── Nest economy ──────────────────────────────────────────────────────────────
+
+export const NEST_FOOD_DRAIN_RATE = 0.05;
+export const STARVATION_DAMAGE_RATE = 0.02;
+export const BEDROOM_HEAL_PER_LEVEL = 0.5;
+export const SHELTER_HEAL_PER_LEVEL = 0.65;
+export const DEATH_HOSPITAL_HEALTH = 30;
+
+export const PASSIVE_INCOME: Record<RoomType, { food: number; money: number }> = {
+  kitchen: { food: 0.3, money: 0 },
+  storage: { food: 0.15, money: 0.1 },
+  bedroom: { food: 0, money: 0.05 },
+  nursery: { food: 0, money: 0.2 },
+  hospital: { food: 0, money: 0 },
+  planter: { food: 0.35, money: 0 },
+  shelter: { food: 0, money: 0.04 },
+  locker: { food: 0, money: 0.12 },
+  niche: { food: 0.2, money: 0.03 },
+};
+
+// ── Building costs (mirrors ROOM_DEFINITIONS) ─────────────────────────────────
+
+export interface RoomCostDef {
+  moneyCost: number;
+  foodCost: number;
+  maxLevel: number;
+  upgradeMoneyCost: number;
+}
+
+export const ROOM_COSTS: Record<RoomType, RoomCostDef> = {
+  kitchen: { moneyCost: 30, foodCost: 10, maxLevel: 5, upgradeMoneyCost: 20 },
+  bedroom: { moneyCost: 25, foodCost: 5, maxLevel: 5, upgradeMoneyCost: 15 },
+  storage: { moneyCost: 40, foodCost: 0, maxLevel: 5, upgradeMoneyCost: 25 },
+  nursery: { moneyCost: 60, foodCost: 20, maxLevel: 3, upgradeMoneyCost: 40 },
+  hospital: { moneyCost: 50, foodCost: 10, maxLevel: 3, upgradeMoneyCost: 30 },
+  planter: { moneyCost: 28, foodCost: 8, maxLevel: 5, upgradeMoneyCost: 18 },
+  shelter: { moneyCost: 22, foodCost: 5, maxLevel: 5, upgradeMoneyCost: 16 },
+  locker: { moneyCost: 38, foodCost: 0, maxLevel: 5, upgradeMoneyCost: 24 },
+  niche: { moneyCost: 24, foodCost: 5, maxLevel: 5, upgradeMoneyCost: 15 },
+};
+
+export const APARTMENT_STARTING_UNLOCKS: RoomType[] = ['kitchen', 'bedroom'];
+export const BALCONY_STARTING_UNLOCKS: RoomType[] = ['planter', 'shelter'];
+export const STAIRWELL_STARTING_UNLOCKS: RoomType[] = ['locker', 'niche'];
+
+/** Room-count thresholds to unlock apartment rooms (apartment region only). */
+export const APARTMENT_UNLOCK_THRESHOLDS: { count: number; room: RoomType }[] = [
+  { count: 2, room: 'storage' },
+  { count: 4, room: 'nursery' },
+  { count: 3, room: 'hospital' },
+];
+
+// ── Region unlock ─────────────────────────────────────────────────────────────
+
+export const BALCONY_UNLOCK_BUILDING_COUNT = 5;
+export const BALCONY_UNLOCK_RATING = 1200;
+export const STAIRWELL_UNLOCK_BUILDING_COUNT = 10;
+export const STAIRWELL_UNLOCK_RATING = 1500;
+export const STAIRWELL_BALCONY_BUILDING_COUNT = 3;
+
+// ── Raids ─────────────────────────────────────────────────────────────────────
+
+export const MAX_RAIDS_PER_DAY = 5;
+export const MAX_RAID_ENERGY = 3;
+export const RAID_SHIELD_HOURS = 3;
+export const LOOT_FOOD_CAP = 0.15;
+export const LOOT_MONEY_CAP = 0.1;
+export const STARTING_RAID_RATING = 1000;
+export const RAID_POWER_BASE = 10;
+export const RAID_POWER_PER_LEVEL = 12;
+export const RAID_POWER_FLAT = 8;
+export const RAID_SUCCESS_THRESHOLD = 35;
+export const RAID_WIN_RATING_BASE = 15;
+export const RAID_WIN_RATING_SCALE = 0.2;
+export const RAID_LOSS_RATING_BASE = 10;
+export const RAID_LOSS_RATING_SCALE = 0.1;
+
+// ── Daily bonus ───────────────────────────────────────────────────────────────
+
+export const DAILY_BONUS_TABLE: { food: number; money: number }[] = [
+  { food: 0, money: 0 },
+  { food: 50, money: 0 },
+  { food: 75, money: 25 },
+  { food: 100, money: 50 },
+  { food: 150, money: 75 },
+  { food: 200, money: 100 },
+  { food: 300, money: 150 },
+  { food: 500, money: 200 },
+];
+
+export const DAILY_BONUS_MAX_STREAK_DAY = 7;
+export const DAILY_QUEST_STREAK_MULT = 0.15;
+export const DAILY_QUEST_COUNT = 3;
+
+export const DAILY_QUEST_TARGETS: Record<DailyQuestType, number[]> = {
+  build: [1, 2, 3],
+  arcade: [1, 2, 3],
+  raid: [1, 2],
+  earn_food: [40, 60, 80],
+  earn_money: [30, 50, 75],
+};
+
+export const DAILY_QUEST_BASE_REWARDS: Record<DailyQuestType, { food?: number; money?: number }> = {
+  build: { food: 40, money: 20 },
+  arcade: { food: 35 },
+  raid: { food: 50, money: 40 },
+  earn_food: { money: 30 },
+  earn_money: { food: 35 },
+};
+
+// ── Breeding ──────────────────────────────────────────────────────────────────
+
+export const BREED_FOOD_COST = 15;
+export const BREED_MONEY_COST = 25;
+export const BREED_DURATION_MS = 30_000;
+export const NURSERY_CAPACITY_PER_LEVEL = 2;
+
+export const ROLE_BONUS_PER_LEVEL: Record<CockroachRole, number> = {
+  worker: 0.1,
+  scout: 0.15,
+  fighter: 0.2,
+};
+
+// ── Tutorial ──────────────────────────────────────────────────────────────────
+
+export const TUTORIAL_COMPLETE_REWARD = { food: 50, money: 30 };
+
+// ── IAP product grants ────────────────────────────────────────────────────────
+
+export const IAP_GRANTS: Record<
+  ProductId,
+  { food?: number; money?: number; shieldHours?: number; energy?: number }
+> = {
+  food_pack_small: { food: 200 },
+  food_pack_large: { food: 1000 },
+  money_pack: { money: 500 },
+  shield_24h: { shieldHours: 24 },
+  energy_refill: { energy: 3 },
+  remove_ads: {},
+  season_pass_premium: {},
+  skin_pack: {},
+};
+
+// ── Rewarded ad bonuses ───────────────────────────────────────────────────────
+
+export const REWARDED_ENERGY_AMOUNT = 1;
+
+// ── Monetization ──────────────────────────────────────────────────────────────
+
+export const INTERSTITIAL_EVERY_N_ARCADES = 3;
+export const MIN_INTERSTITIAL_INTERVAL_MS = 60_000;
+
+// ── Live ops multipliers ──────────────────────────────────────────────────────
+
+export const LIVE_OPS_MULTIPLIERS: Record<LiveOpsMultiplierType, number> = {
+  slipper_score: 2,
+  spray_reward: 2,
+  raid_loot: 1.5,
+  build_cost: 0.7,
+  passive_food: 2,
+};
+
+// ── Arcade rewards & tuning ───────────────────────────────────────────────────
+
+export const ARCADE_FOOD_HUNT = {
+  targetCrumbs: 8,
+  winFood: 40,
+  winMoney: 10,
+  failDamage: 15,
+  hungerDrain: 0.012,
+  hungerPerCrumb: 12,
+};
+
+export const ARCADE_SPRAY = {
+  winFood: 25,
+  winMoney: 15,
+  poisonedHealth: 20,
+};
+
+export const ARCADE_CAT_CHASE = {
+  surviveSeconds: 45,
+  catSpeed: 165,
+  playerSpeed: 220,
+  catchDistance: 28,
+  crumbScore: 10,
+  timeBonusMult: 5,
+  winFood: 30,
+  winMoney: 20,
+  failDamage: 10,
+};
+
+export const ARCADE_HOSPITAL = {
+  requiredHits: 5,
+  healPerHit: 15,
+  completionHeal: 30,
+  scorePerHit: 20,
+  pulseMin: 1.0,
+  pulseMax: 1.5,
+};
+
+export const ARCADE_SLIPPER = {
+  playerSpeed: 280,
+};

@@ -1,0 +1,132 @@
+{
+  "$schema": "https://yandex.ru/dev/games/doc/dg/concepts/about.html",
+  "_comment": "Template for Yandex Games Console — copy values into the developer dashboard when publishing. Full copy in store-assets/descriptions/.",
+  "title": {
+    "ru": "Жизнь таракана",
+    "en": "Cockroach Life"
+  },
+  "description": {
+    "ru": "Симулятор таракана: гнездо из хлама, налёты, аркады и разведение колонии",
+    "en": "Cockroach sim: junk nest building, raids, arcade survival & colony breeding"
+  },
+  "full_description": {
+    "ru": "store-assets/descriptions/yandex-ru.md",
+    "en": "store-assets/descriptions/yandex-en.md"
+  },
+  "categories": ["simulator", "arcade", "casual"],
+  "tags": ["survival", "idle", "strategy", "building", "raid", "breeding", "browser"],
+  "keywords": {
+    "ru": ["симулятор", "таракан", "выживание", "строительство", "гнездо", "аркада", "налёт", "разведение", "казуальная игра"],
+    "en": ["simulator", "cockroach", "survival", "building", "nest", "arcade", "raid", "breeding", "casual game"]
+  },
+  "age_rating": "6+",
+  "age_rating_justification": {
+    "ru": "Мультяшная 2D-графика, комичные опасности (тапок, спрей, кот), без крови и реалистичного насилия. Подходит для 6+.",
+    "en": "Cartoon 2D art, comedic hazards (slipper, spray, cat), no blood or realistic violence. Suitable for ages 6+."
+  },
+  "orientation": "landscape",
+  "supported_languages": ["ru", "en"],
+  "sdk_version": 2,
+  "sdk_script_url": "https://yandex.ru/games/sdk/v2",
+  "monetization": {
+    "ads": true,
+    "in_app_purchases": true
+  },
+  "leaderboards": [
+    {
+      "id": "slipper_highscore",
+      "name": { "ru": "Уворот от тапка", "en": "Dodge the Slipper" },
+      "sort": "desc",
+      "score_type": "numeric"
+    },
+    {
+      "id": "raid_rating",
+      "name": { "ru": "Рейтинг налётов", "en": "Raid Rating" },
+      "sort": "desc",
+      "score_type": "numeric"
+    },
+    {
+      "id": "colony_size",
+      "name": { "ru": "Размер колонии", "en": "Colony Size" },
+      "sort": "desc",
+      "score_type": "numeric"
+    }
+  ],
+  "in_app_purchases": [
+    {
+      "id": "food_pack_small",
+      "name": { "ru": "Малый набор еды (200)", "en": "Small Food Pack (200)" },
+      "consumable": true
+    },
+    {
+      "id": "food_pack_large",
+      "name": { "ru": "Большой набор еды (1000)", "en": "Large Food Pack (1000)" },
+      "consumable": true
+    },
+    {
+      "id": "money_pack",
+      "name": { "ru": "Набор денег (500)", "en": "Money Pack (500)" },
+      "consumable": true
+    },
+    {
+      "id": "shield_24h",
+      "name": { "ru": "Щит от налётов 24ч", "en": "Raid Shield 24h" },
+      "consumable": true
+    },
+    {
+      "id": "energy_refill",
+      "name": { "ru": "Энергия (+3)", "en": "Energy Refill (+3)" },
+      "consumable": true
+    },
+    {
+      "id": "remove_ads",
+      "name": { "ru": "Убрать рекламу", "en": "Remove Ads" },
+      "consumable": false
+    },
+    {
+      "id": "season_pass_premium",
+      "name": { "ru": "Премиум сезонный пропуск", "en": "Season Pass Premium" },
+      "consumable": false
+    },
+    {
+      "id": "skin_pack",
+      "name": { "ru": "Набор скинов таракана", "en": "Cockroach Skin Pack" },
+      "consumable": false
+    }
+  ],
+  "assets": {
+    "icon": "store-assets/icons/icon-512.png",
+    "cover": "store-assets/banners/cover-800x470.png",
+    "icon_svg_source": "store-assets/icons/icon.svg",
+    "cover_svg_source": "store-assets/banners/cover.svg",
+    "screenshots": [
+      "store-assets/screenshots/01-nest-building.png",
+      "store-assets/screenshots/02-slipper-dodge.png",
+      "store-assets/screenshots/03-raid-infiltration.png",
+      "store-assets/screenshots/04-world-map.png",
+      "store-assets/screenshots/05-breeding-panel.png",
+      "store-assets/screenshots/06-shop-daily-quests.png"
+    ]
+  },
+  "whats_new": {
+    "ru": [
+      "Сезонный пропуск — 15 уровней наград (бесплатный и премиум трек)",
+      "Район «Подъезд» — третий регион с шкафчиками и нишами",
+      "16 районов на карте мира (квартира, балкон, подъезд)",
+      "Процедурная графика — все текстуры генерируются в рантайме",
+      "Скины таракана: золотой, неон, зомби, повар + набор в магазине"
+    ],
+    "en": [
+      "Season Pass — 15 reward tiers (free and premium track)",
+      "Stairwell district — third region with lockers and niches",
+      "16 world map districts (apartment, balcony, stairwell)",
+      "Procedural graphics — all textures generated at runtime",
+      "Cockroach skins: golden, neon, zombie, chef + skin pack in shop"
+    ]
+  },
+  "build": {
+    "entry": "dist/index.html",
+    "command": "npm run build:yandex",
+    "notes": "Zip dist/ contents for upload. Enables VITE_LOAD_YANDEX_SDK=true and SDK injection."
+  }
+}

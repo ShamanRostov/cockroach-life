@@ -1,0 +1,12 @@
+node_modules/
+dist/
+electron/node_modules/
+electron/out/
+.env.local
+.env.*.local
+*.log
+.DS_Store
+Thumbs.db
+.cursor/
+playwright-report/
+test-results/

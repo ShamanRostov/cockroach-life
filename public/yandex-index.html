@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<!--
+  Yandex Games deployment variant.
+  Use this as index.html when uploading to Yandex Games Console, or run:
+    npm run build:yandex
+  which injects the SDK via the root index.html template.
+-->
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#1a1208" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>Cockroach Life</title>
+    <!-- Yandex Games SDK v2 — required for iframe portal -->
+    <script src="https://yandex.ru/games/sdk/v2"></script>
+    <link rel="stylesheet" href="./assets/index.css" />
+  </head>
+  <body>
+    <div id="game-container"></div>
+    <script type="module" src="./assets/index.js"></script>
+  </body>
+</html>

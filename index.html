@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#1a1208" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>Cockroach Life — Build your nest. Survive. Breed.</title>
+    <meta
+      name="description"
+      content="Cockroach sim: junk nest building, raids, arcade survival & colony breeding. Play in your browser."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Cockroach Life — Build your nest. Survive. Breed." />
+    <meta
+      property="og:description"
+      content="Build a junk nest, raid rival roaches, dodge slippers, and grow your colony — all from a cockroach's POV."
+    />
+    <meta property="og:image" content="/icon-512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Cockroach Life" />
+    <meta
+      name="twitter:description"
+      content="Build a junk nest, raid rival roaches, dodge slippers, and grow your colony."
+    />
+    <meta name="twitter:image" content="/icon-512.png" />
+    <link rel="icon" href="/icon-512.png" type="image/png" sizes="512x512" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" sizes="512x512" />
+    <!--
+      Yandex Games SDK (https://yandex.ru/games/sdk/v2)
+      Loaded when ANY of:
+        - Build with: npm run build:yandex  (sets VITE_LOAD_YANDEX_SDK=true)
+        - URL param:  ?platform=yandex  or  ?yandex=1
+      Alternative: use public/yandex-index.html as entry after build.
+      Do NOT use window.top navigation — game must work inside Yandex iframe.
+    -->
+    <script>
+      (function () {
+        var params = new URLSearchParams(location.search);
+        var buildFlag = '%VITE_LOAD_YANDEX_SDK%' === 'true';
+        var queryFlag =
+          params.get('platform') === 'yandex' || params.get('yandex') === '1';
+        if (buildFlag || queryFlag) {
+          var s = document.createElement('script');
+          s.src = 'https://yandex.ru/games/sdk/v2';
+          s.async = false;
+          document.head.appendChild(s);
+        }
+      })();
+    </script>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="game-container"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
