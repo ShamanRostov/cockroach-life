@@ -21,22 +21,22 @@ export const STARTING_MAX_HEALTH = 100;
 
 // ── Nest economy ──────────────────────────────────────────────────────────────
 
-export const NEST_FOOD_DRAIN_RATE = 0.05;
-export const STARVATION_DAMAGE_RATE = 0.02;
+export const NEST_FOOD_DRAIN_RATE = 0.045;
+export const STARVATION_DAMAGE_RATE = 0.018;
 export const BEDROOM_HEAL_PER_LEVEL = 0.5;
 export const SHELTER_HEAL_PER_LEVEL = 0.65;
 export const DEATH_HOSPITAL_HEALTH = 30;
 
 export const PASSIVE_INCOME: Record<RoomType, { food: number; money: number }> = {
-  kitchen: { food: 0.3, money: 0 },
-  storage: { food: 0.15, money: 0.1 },
-  bedroom: { food: 0, money: 0.05 },
-  nursery: { food: 0, money: 0.2 },
+  kitchen: { food: 0.35, money: 0 },
+  storage: { food: 0.18, money: 0.12 },
+  bedroom: { food: 0, money: 0.06 },
+  nursery: { food: 0, money: 0.22 },
   hospital: { food: 0, money: 0 },
-  planter: { food: 0.35, money: 0 },
-  shelter: { food: 0, money: 0.04 },
-  locker: { food: 0, money: 0.12 },
-  niche: { food: 0.2, money: 0.03 },
+  planter: { food: 0.38, money: 0 },
+  shelter: { food: 0, money: 0.05 },
+  locker: { food: 0, money: 0.14 },
+  niche: { food: 0.22, money: 0.04 },
 };
 
 // ── Building costs (mirrors ROOM_DEFINITIONS) ─────────────────────────────────
@@ -184,12 +184,12 @@ export const LIVE_OPS_MULTIPLIERS: Record<LiveOpsMultiplierType, number> = {
 // ── Arcade rewards & tuning ───────────────────────────────────────────────────
 
 export const ARCADE_FOOD_HUNT = {
-  targetCrumbs: 8,
-  winFood: 40,
-  winMoney: 10,
-  failDamage: 15,
-  hungerDrain: 0.012,
-  hungerPerCrumb: 12,
+  targetCrumbs: 7,
+  winFood: 45,
+  winMoney: 12,
+  failDamage: 12,
+  hungerDrain: 0.011,
+  hungerPerCrumb: 14,
 };
 
 export const ARCADE_SPRAY = {
@@ -199,15 +199,15 @@ export const ARCADE_SPRAY = {
 };
 
 export const ARCADE_CAT_CHASE = {
-  surviveSeconds: 45,
-  catSpeed: 165,
-  playerSpeed: 220,
+  surviveSeconds: 42,
+  catSpeed: 160,
+  playerSpeed: 225,
   catchDistance: 28,
-  crumbScore: 10,
+  crumbScore: 12,
   timeBonusMult: 5,
-  winFood: 30,
-  winMoney: 20,
-  failDamage: 10,
+  winFood: 35,
+  winMoney: 22,
+  failDamage: 8,
 };
 
 export const ARCADE_HOSPITAL = {

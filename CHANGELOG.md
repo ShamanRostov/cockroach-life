@@ -7,6 +7,29 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.4.1] — 2026-07-06
+
+### Added
+
+- PNG asset pipeline in `public/assets/` — no procedural sprite generation
+- Runtime transparency cleanup for sprites (`textureUtils` at boot)
+- Automated verify script with embedded preview server (`scripts/run-verify.mjs`)
+
+### Changed
+
+- All arcade mini-games tuned via `GameBalance.ts` (rewards, speeds, difficulty)
+- Nest UI layout refined — panels, HUD rail, and grid repositioned to avoid overlap
+- Modal close destroys all tracked objects (`ModalLayer`)
+- i18n RU/EN expanded for hospital timing hint and cat-chase boost
+
+### Fixed
+
+- White/checkerboard backgrounds stripped from PNG sprites at load
+- UI test coordinates aligned with `NestLayout` (7/7 passing)
+- Asset processor writes via temp file (in-place reprocess works on Linux)
+
+---
+
 ## [0.3.0] — 2026-07-03
 
 ### Added
@@ -72,6 +95,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 - Sound manager with generated SFX
 - Web platform adapter and dev server (`npm run dev`)
 
+[0.4.1]: https://github.com/ShamanRostov/cockroach-life/compare/v0.3.0...v0.4.1
 [0.3.0]: https://github.com/your-org/cockroach-life/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/your-org/cockroach-life/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/your-org/cockroach-life/releases/tag/v0.1.0

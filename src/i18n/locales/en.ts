@@ -114,7 +114,7 @@ export const en: LocalePack = {
       controls: 'WASD — collect crumbs before you starve!',
       hunger: 'Hunger: {value}%',
       collected: 'Collected: {current} / {target}',
-      win: 'Kitchen raided!\n+40 food, +10 money\n{score}',
+      win: 'Kitchen raided!\n+45 food, +12 money\n{score}',
       fail: 'Too hungry!',
     },
     hospital: {
@@ -122,14 +122,16 @@ export const en: LocalePack = {
       controls: 'Press SPACE when the pulse is in the green zone!',
       progress: 'Healing: {current} / {total}',
       healed: 'Healed! +30 HP',
+      now: '● NOW ●',
     },
     catChase: {
       title: '🐱 Cat Chase!',
       controls: 'WASD — outrun the cat and grab crumbs!',
       timeLeft: 'Time left: {seconds}s',
       score: 'Score: {score}',
-      win: 'Survived the cat!\n+30 food, +20 money\n{score}',
+      win: 'Survived the cat!\n+35 food, +22 money\n{score}',
       fail: 'Caught by the cat!',
+      boost: 'BOOST!',
     },
   },
   world: {

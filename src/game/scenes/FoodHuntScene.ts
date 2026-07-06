@@ -10,6 +10,7 @@ import { L, fmt } from '../../i18n';
 import { monetizationService } from '../../platforms/MonetizationService';
 import { AnalyticsService } from '../../platforms/AnalyticsService';
 import { SoundManager } from '../audio/SoundManager';
+import { ARCADE_FOOD_HUNT } from '../systems/GameBalance';
 
 export class FoodHuntScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -24,7 +25,7 @@ export class FoodHuntScene extends Phaser.Scene {
   private touchControls: TouchControls | null = null;
   private hunger = 100;
   private collected = 0;
-  private target = 8;
+  private target = ARCADE_FOOD_HUNT.targetCrumbs;
   private alive = true;
   private runCompleted = false;
   private hungerText!: Phaser.GameObjects.Text;
@@ -130,7 +131,7 @@ export class FoodHuntScene extends Phaser.Scene {
 
     this.applyMagnet(delta);
 
-    this.hunger -= delta * 0.012;
+    this.hunger -= delta * ARCADE_FOOD_HUNT.hungerDrain;
     this.hungerText.setText(
       fmt(L().arcade.food.hunger, { value: Math.max(0, Math.floor(this.hunger)) }),
     );
@@ -182,7 +183,7 @@ export class FoodHuntScene extends Phaser.Scene {
     const { x, y } = food;
     food.destroy();
     this.collected += 1;
-    this.hunger = Math.min(100, this.hunger + 12);
+    this.hunger = Math.min(100, this.hunger + ARCADE_FOOD_HUNT.hungerPerCrumb);
     this.magnetRadius = Math.min(95, this.magnetRadius + 14);
     const t = L();
     this.collectText.setText(
@@ -192,7 +193,7 @@ export class FoodHuntScene extends Phaser.Scene {
     spawnFoodPickup(this, x, y);
     spawnSparkBurst(this, x, y, 6);
     screenShake(this, 120, 0.008);
-    showScorePopup(this, x, y - 20, '+12', '#66bb6a');
+    showScorePopup(this, x, y - 20, `+${ARCADE_FOOD_HUNT.hungerPerCrumb}`, '#66bb6a');
 
     if (this.collected >= this.target) {
       this.win();
@@ -208,8 +209,8 @@ export class FoodHuntScene extends Phaser.Scene {
     this.state.updateHighScore(SCENES.FOOD, score);
     AnalyticsService.getInstance().trackArcadeComplete(SCENES.FOOD, score, true);
     SoundManager.getInstance().playSFX('arcade_win');
-    this.state.addFood(40);
-    this.state.addMoney(10);
+    this.state.addFood(ARCADE_FOOD_HUNT.winFood);
+    this.state.addMoney(ARCADE_FOOD_HUNT.winMoney);
     this.state.trackDailyProgress('arcade', 1);
     this.state.persist();
 
@@ -238,7 +239,7 @@ export class FoodHuntScene extends Phaser.Scene {
     const score = Math.floor(this.hunger + this.collected * 10);
     AnalyticsService.getInstance().trackArcadeComplete(SCENES.FOOD, score, false);
     SoundManager.getInstance().playSFX('arcade_lose');
-    this.state.economy.damage(15);
+    this.state.economy.damage(ARCADE_FOOD_HUNT.failDamage);
     this.state.persist();
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'ui-panel').setDisplaySize(420, 100).setAlpha(0.92);
     this.add

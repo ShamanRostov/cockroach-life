@@ -3,7 +3,7 @@
  * Run: node scripts/process-assets.mjs
  */
 import sharp from 'sharp';
-import { readdir, mkdir, stat } from 'node:fs/promises';
+import { mkdir, rename, stat, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -131,7 +131,14 @@ async function processOne(rel, opts) {
     background: { r: 0, g: 0, b: 0, alpha: 0 },
   });
 
-  await pipe.png().toFile(out);
+  const tmp = `${out}.tmp`;
+  await pipe.png().toFile(tmp);
+  try {
+    await unlink(out);
+  } catch {
+    // first write
+  }
+  await rename(tmp, out);
   console.log('OK', rel);
 }
 

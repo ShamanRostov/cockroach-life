@@ -8,6 +8,36 @@ const url = process.argv[2] ?? 'http://localhost:5173/?autotest=1';
 const errors = [];
 const results = [];
 
+const GAME_WIDTH = 1280;
+const GAME_HEIGHT = 720;
+const NEST = {
+  sideMargin: 12,
+  rightRailW: 56,
+  buildPanelW: 228,
+  buildPanelTop: 100,
+  defensePanelW: 268,
+  defensePanelTop: 100,
+  defensePanelH: 118,
+  arcadePanelH: 100,
+  arcadePanelBottom: 16,
+};
+
+const HUD_X = GAME_WIDTH - NEST.sideMargin - NEST.rightRailW / 2;
+const HUD_Y = [108, 154, 200, 246];
+const MODAL_CLOSE = { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 + 210 };
+const BUILD_FIRST_ROOM = {
+  x: GAME_WIDTH - NEST.sideMargin - NEST.buildPanelW / 2,
+  y: NEST.buildPanelTop + 48 + 18,
+};
+const ARCADE_SLIPPER = {
+  x: NEST.sideMargin + 36,
+  y: GAME_HEIGHT - NEST.arcadePanelH - NEST.arcadePanelBottom + 58,
+};
+const WORLD_MAP = {
+  x: NEST.sideMargin + NEST.defensePanelW / 2,
+  y: NEST.defensePanelTop + NEST.defensePanelH + 28,
+};
+
 function log(msg) {
   console.log(msg);
 }
@@ -96,41 +126,33 @@ await page.waitForTimeout(1200);
 await runStep(page, 'menu-play', 640, 268, 'NestScene');
 await page.waitForTimeout(800);
 
-// Skip daily popup if shown — click close area
-await tap(page, 640, 560);
-await page.waitForTimeout(400);
-
 // Nest HUD buttons (right stack)
-const HUD_X = 1236;
-const hudY = [52, 96, 140, 184];
 const hudNames = ['hud-daily', 'hud-shop', 'hud-breeding', 'hud-season'];
 for (let i = 0; i < hudNames.length; i++) {
   const before = await sceneKey(page);
-  await tap(page, HUD_X, hudY[i]);
+  await tap(page, HUD_X, HUD_Y[i]);
   await page.waitForTimeout(500);
-  // Close modal — click close button center
-  await tap(page, 640, 560);
+  await tap(page, MODAL_CLOSE.x, MODAL_CLOSE.y);
   await page.waitForTimeout(300);
   const after = await sceneKey(page);
-  results.push({ name: hudNames[i], x: HUD_X, y: hudY[i], before, after, ok: after === 'NestScene' });
+  results.push({ name: hudNames[i], x: HUD_X, y: HUD_Y[i], before, after, ok: after === 'NestScene' });
 }
 
 // Build panel first room button
-await tap(page, 1145, 174);
+await tap(page, BUILD_FIRST_ROOM.x, BUILD_FIRST_ROOM.y);
 await page.waitForTimeout(300);
 
 // Arcade — slipper (first)
-await runStep(page, 'arcade-slipper', 80, 650, 'SlipperDodgeScene');
+await runStep(page, 'arcade-slipper', ARCADE_SLIPPER.x, ARCADE_SLIPPER.y, 'SlipperDodgeScene');
 await page.waitForTimeout(600);
-// Back via ESC
 await page.keyboard.press('Escape');
 await waitScene(page, 'NestScene', 8000);
 
 // World map from defense panel
-await runStep(page, 'world-map', 150, 246, 'WorldMapScene');
+await runStep(page, 'world-map', WORLD_MAP.x, WORLD_MAP.y, 'WorldMapScene');
 await page.waitForTimeout(500);
 await page.keyboard.press('Escape');
-await waitScene(page, 'MenuScene', 8000);
+await waitScene(page, 'NestScene', 8000);
 
 log('\n=== UI TEST RESULTS ===');
 for (const r of results) {

@@ -159,7 +159,7 @@ export class HospitalScene extends Phaser.Scene {
     const zoneAlpha = inZone ? 0.85 : 0.35;
     this.sweetMinRing.setAlpha(zoneAlpha);
     this.sweetMaxRing.setAlpha(zoneAlpha);
-    this.timingHint.setText(inZone ? '● NOW ●' : '');
+    this.timingHint.setText(inZone ? L().arcade.hospital.now : '');
     this.timingHint.setAlpha(inZone ? 1 : 0.4);
   }
 

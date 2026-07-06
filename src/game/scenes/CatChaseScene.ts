@@ -10,12 +10,13 @@ import { L, fmt } from '../../i18n';
 import { monetizationService } from '../../platforms/MonetizationService';
 import { AnalyticsService } from '../../platforms/AnalyticsService';
 import { SoundManager } from '../audio/SoundManager';
+import { ARCADE_CAT_CHASE } from '../systems/GameBalance';
 
-const SURVIVE_SECONDS = 45;
-const CAT_SPEED = 165;
-const PLAYER_SPEED = 220;
-const BOOST_SPEED = 310;
-const CATCH_DISTANCE = 28;
+const SURVIVE_SECONDS = ARCADE_CAT_CHASE.surviveSeconds;
+const CAT_SPEED = ARCADE_CAT_CHASE.catSpeed;
+const PLAYER_SPEED = ARCADE_CAT_CHASE.playerSpeed;
+const CATCH_DISTANCE = ARCADE_CAT_CHASE.catchDistance;
+const BOOST_SPEED = Math.round(PLAYER_SPEED * 1.38);
 const NEAR_MISS_MAX = 58;
 const BOOST_DURATION_MS = 4500;
 
@@ -207,7 +208,7 @@ export class CatChaseScene extends Phaser.Scene {
     this.boostTimer = BOOST_DURATION_MS;
     this.player.setTint(0x4fc3f7);
     spawnSparkBurst(this, this.player.x, this.player.y, 10, 0x4fc3f7);
-    showScorePopup(this, this.player.x, this.player.y - 24, 'BOOST!', '#4fc3f7');
+    showScorePopup(this, this.player.x, this.player.y - 24, L().arcade.catChase.boost, '#4fc3f7');
   }
 
   private chasePlayer(): void {
@@ -238,11 +239,11 @@ export class CatChaseScene extends Phaser.Scene {
   private collectCrumb(crumb: Phaser.Physics.Arcade.Sprite): void {
     if (!crumb.active) return;
     crumb.destroy();
-    this.score += 10;
+    this.score += ARCADE_CAT_CHASE.crumbScore;
     this.scoreText.setText(fmt(L().arcade.catChase.score, { score: this.score }));
 
     spawnFoodPickup(this, crumb.x, crumb.y);
-    showScorePopup(this, crumb.x, crumb.y - 16, '+10', '#66bb6a');
+    showScorePopup(this, crumb.x, crumb.y - 16, `+${ARCADE_CAT_CHASE.crumbScore}`, '#66bb6a');
     screenShake(this, 100, 0.006);
 
     if (this.crumbs.filter((c) => c.active).length < 5) {
@@ -253,12 +254,12 @@ export class CatChaseScene extends Phaser.Scene {
   private win(): void {
     this.alive = false;
     this.runCompleted = true;
-    const finalScore = this.score + Math.floor(this.timeLeft * 5);
+    const finalScore = this.score + Math.floor(this.timeLeft * ARCADE_CAT_CHASE.timeBonusMult);
     this.state.updateHighScore(SCENES.CAT_CHASE, finalScore);
     AnalyticsService.getInstance().trackArcadeComplete(SCENES.CAT_CHASE, finalScore, true);
     SoundManager.getInstance().playSFX('arcade_win');
-    this.state.addFood(30);
-    this.state.addMoney(20);
+    this.state.addFood(ARCADE_CAT_CHASE.winFood);
+    this.state.addMoney(ARCADE_CAT_CHASE.winMoney);
     this.state.trackDailyProgress('arcade', 1);
     this.state.persist();
 
@@ -289,7 +290,7 @@ export class CatChaseScene extends Phaser.Scene {
     const finalScore = this.score;
     AnalyticsService.getInstance().trackArcadeComplete(SCENES.CAT_CHASE, finalScore, false);
     SoundManager.getInstance().playSFX('arcade_lose');
-    this.state.economy.damage(10);
+    this.state.economy.damage(ARCADE_CAT_CHASE.failDamage);
     this.state.persist();
 
     this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'ui-panel').setDisplaySize(420, 100).setAlpha(0.92);

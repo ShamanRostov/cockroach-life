@@ -12,6 +12,7 @@ import { AnalyticsService } from '../../platforms/AnalyticsService';
 import { SoundManager } from '../audio/SoundManager';
 import { leaderboardService, LEADERBOARD_IDS } from '../../platforms/LeaderboardService';
 import { LeaderboardPanel } from '../ui/LeaderboardPanel';
+import { ARCADE_SLIPPER } from '../systems/GameBalance';
 import { SS_REGISTRY } from '../../dev/screenshotRegistry';
 
 export class SlipperDodgeScene extends Phaser.Scene {
@@ -132,7 +133,7 @@ export class SlipperDodgeScene extends Phaser.Scene {
   update(_time: number, delta: number): void {
     if (!this.alive) return;
 
-    const speed = 280;
+    const speed = ARCADE_SLIPPER.playerSpeed;
     let vx = 0;
     if (this.cursors.left.isDown || this.wasd.A.isDown) vx = -speed;
     if (this.cursors.right.isDown || this.wasd.D.isDown) vx = speed;

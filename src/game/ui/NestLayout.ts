@@ -15,8 +15,8 @@ export const NEST_LAYOUT = {
   defensePanelH: 118,
   arcadePanelH: 100,
   arcadePanelBottom: 16,
-  gridCenterX: 520,
-  gridCenterY: 380,
+  gridCenterX: 500,
+  gridCenterY: 390,
 } as const;
 
 export function getNestHudButtonX(): number {

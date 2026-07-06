@@ -114,7 +114,7 @@ export const ru: LocalePack = {
       controls: 'WASD — собирай крошки до голодания!',
       hunger: 'Голод: {value}%',
       collected: 'Собрано: {current} / {target}',
-      win: 'Кухня разграблена!\n+40 еды, +10 денег\n{score}',
+      win: 'Кухня разграблена!\n+45 еды, +12 денег\n{score}',
       fail: 'Слишком голоден!',
     },
     hospital: {
@@ -122,14 +122,16 @@ export const ru: LocalePack = {
       controls: 'Нажми ПРОБЕЛ когда пульс в зелёной зоне!',
       progress: 'Лечение: {current} / {total}',
       healed: 'Вылечен! +30 ОЗ',
+      now: '● СЕЙЧАС ●',
     },
     catChase: {
       title: '🐱 Побег от кота!',
       controls: 'WASD — убегай от кота, собирай крошки!',
       timeLeft: 'Осталось: {seconds}с',
       score: 'Очки: {score}',
-      win: 'Пережил кота!\n+30 еды, +20 денег\n{score}',
+      win: 'Пережил кота!\n+35 еды, +22 денег\n{score}',
       fail: 'Кот поймал!',
+      boost: 'УСКОРЕНИЕ!',
     },
   },
   world: {

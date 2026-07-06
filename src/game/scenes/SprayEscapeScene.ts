@@ -10,6 +10,7 @@ import { L } from '../../i18n';
 import { monetizationService } from '../../platforms/MonetizationService';
 import { AnalyticsService } from '../../platforms/AnalyticsService';
 import { SoundManager } from '../audio/SoundManager';
+import { ARCADE_SPRAY } from '../systems/GameBalance';
 
 interface Hideout {
   sprite: Phaser.GameObjects.Sprite;
@@ -199,8 +200,8 @@ export class SprayEscapeScene extends Phaser.Scene {
     AnalyticsService.getInstance().trackArcadeComplete(SCENES.SPRAY, score, true);
     SoundManager.getInstance().playSFX('arcade_win');
     const scoreMult = this.state.liveOps.getEventMultiplier('spray_reward');
-    const foodReward = Math.floor(25 * scoreMult);
-    const moneyReward = Math.floor(15 * scoreMult);
+    const foodReward = Math.floor(ARCADE_SPRAY.winFood * scoreMult);
+    const moneyReward = Math.floor(ARCADE_SPRAY.winMoney * scoreMult);
     this.state.addFood(foodReward);
     this.state.addMoney(moneyReward);
     if (scoreMult > 1) {
@@ -220,7 +221,7 @@ export class SprayEscapeScene extends Phaser.Scene {
     const score = Math.floor(300 - this.state.economy.health);
     AnalyticsService.getInstance().trackArcadeComplete(SCENES.SPRAY, score, false);
     SoundManager.getInstance().playSFX('arcade_lose');
-    this.state.economy.health = 20;
+    this.state.economy.health = ARCADE_SPRAY.poisonedHealth;
     this.state.persist();
     this.add
       .image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'ui-panel')

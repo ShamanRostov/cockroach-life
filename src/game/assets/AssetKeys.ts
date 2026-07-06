@@ -8,6 +8,8 @@ export const BUILDING_TYPES: RoomType[] = [
   'hospital',
   'planter',
   'shelter',
+  'locker',
+  'niche',
 ];
 
 /** Phaser texture key for HD building sprite. */
