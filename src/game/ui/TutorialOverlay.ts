@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config';
+import { createTextButton } from './ButtonHelper';
 
 export interface TutorialTarget {
   x: number;
@@ -83,33 +84,31 @@ export class TutorialOverlay {
       this.container.add(dot);
     }
 
-    const nextBtn = scene.add
-      .image(GAME_WIDTH / 2 - 70, panelY + 58, 'ui-button')
-      .setDisplaySize(130, 40)
-      .setInteractive({ useHandCursor: true });
-    const nextText = scene.add
-      .text(GAME_WIDTH / 2 - 70, panelY + 58, options.nextLabel, {
-        fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '16px',
-        color: '#fff8e1',
-      })
-      .setOrigin(0.5);
-    nextBtn.on('pointerdown', options.onNext);
-    this.container.add([nextBtn, nextText]);
+    const nextBtn = createTextButton(
+      scene,
+      GAME_WIDTH / 2 - 70,
+      panelY + 58,
+      options.nextLabel,
+      options.onNext,
+      130,
+      40,
+      'ui_click',
+      depth + 1,
+    );
+    this.container.add(nextBtn);
 
-    const skipBtn = scene.add
-      .image(GAME_WIDTH / 2 + 90, panelY + 58, 'ui-button')
-      .setDisplaySize(110, 40)
-      .setInteractive({ useHandCursor: true });
-    const skipText = scene.add
-      .text(GAME_WIDTH / 2 + 90, panelY + 58, options.skipLabel, {
-        fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '14px',
-        color: '#bcaaa4',
-      })
-      .setOrigin(0.5);
-    skipBtn.on('pointerdown', options.onSkip);
-    this.container.add([skipBtn, skipText]);
+    const skipBtn = createTextButton(
+      scene,
+      GAME_WIDTH / 2 + 90,
+      panelY + 58,
+      options.skipLabel,
+      options.onSkip,
+      110,
+      40,
+      'none',
+      depth + 1,
+    );
+    this.container.add(skipBtn);
   }
 
   destroy(): void {

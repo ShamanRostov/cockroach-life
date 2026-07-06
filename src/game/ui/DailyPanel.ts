@@ -11,9 +11,12 @@ import {
 } from './ButtonHelper';
 import { L, fmt } from '../../i18n';
 import { SoundManager } from '../audio/SoundManager';
+import { DEPTH } from '../graphics/SceneDepth';
+import { ModalLayer } from './ModalLayer';
 
 export class DailyPanel {
   private readonly state = GameState.getInstance();
+  private modal = new ModalLayer();
   private overlay: Phaser.GameObjects.Rectangle | null = null;
   private container: Phaser.GameObjects.Container | null = null;
   private onClose: (() => void) | null = null;
@@ -35,20 +38,23 @@ export class DailyPanel {
       72,
       40,
     );
-    btn.setDepth(502);
+    btn.setDepth(DEPTH.hud + 12);
     return btn;
   }
 
   show(scene: Phaser.Scene, onClose?: () => void): void {
-    this.hide();
+    this.modal.destroyAll();
+    this.overlay = null;
+    this.container = null;
+    this.questTexts = [];
+    this.progressBars = [];
     this.onClose = onClose ?? null;
 
     const t = L().daily;
     const dual = scene.registry.get('screenshot.dualPanels') === true;
     const depth = 900;
 
-    this.overlay = createModalOverlay(scene, depth);
-    this.overlay.setInteractive();
+    this.overlay = this.modal.track(createModalOverlay(scene, depth));
     this.overlay.on('pointerdown', () => this.hide());
 
     const panelW = dual ? 460 : 520;
@@ -56,17 +62,19 @@ export class DailyPanel {
     const cx = dual ? 310 : GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 
-    createModalPanel(scene, cx, cy, panelW, panelH, depth + 1);
+    this.modal.track(createModalPanel(scene, cx, cy, panelW, panelH, depth + 1));
 
-    const panelBlocker = scene.add
-      .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
-      .setInteractive()
-      .setDepth(depth + 1);
+    const panelBlocker = this.modal.track(
+      scene.add
+        .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
+        .setInteractive()
+        .setDepth(depth + 1),
+    );
     panelBlocker.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
     });
 
-    this.container = scene.add.container(0, 0).setDepth(depth + 2);
+    this.container = this.modal.track(scene.add.container(0, 0).setDepth(depth + 2));
 
     const title = scene.add
       .text(cx, cy - 210, t.title, {
@@ -83,15 +91,17 @@ export class DailyPanel {
     this.renderBonusSection(scene, cx, cy - 150);
     this.renderQuestsSection(scene, cx, cy + 30);
 
-    createTextButton(
-      scene,
-      cx,
-      cy + 210,
-      t.close,
-      () => this.hide(),
-      160,
-      40,
-    ).setDepth(depth + 3);
+    this.modal.track(
+      createTextButton(
+        scene,
+        cx,
+        cy + 210,
+        t.close,
+        () => this.hide(),
+        160,
+        40,
+      ).setDepth(depth + 3),
+    );
   }
 
   private renderBonusSection(scene: Phaser.Scene, cx: number, y: number): void {
@@ -135,22 +145,24 @@ export class DailyPanel {
     }
 
     if (bonus.available) {
-      createTextButton(
-        scene,
-        cx,
-        y + 88,
-        t.claimBonus,
-        () => {
-          if (this.state.claimDailyBonus()) {
-            SoundManager.getInstance().playSFX('daily_bonus');
-            showToast(scene, t.bonusClaimed);
-            this.hide();
-            this.show(scene, this.onClose ?? undefined);
-          }
-        },
-        220,
-        40,
-      ).setDepth(903);
+      this.modal.track(
+        createTextButton(
+          scene,
+          cx,
+          y + 88,
+          t.claimBonus,
+          () => {
+            if (this.state.claimDailyBonus()) {
+              SoundManager.getInstance().playSFX('daily_bonus');
+              showToast(scene, t.bonusClaimed);
+              this.hide();
+              this.show(scene, this.onClose ?? undefined);
+            }
+          },
+          220,
+          40,
+        ).setDepth(903),
+      );
     } else {
       const claimed = scene.add
         .text(cx, y + 88, t.bonusClaimedToday, {
@@ -248,22 +260,24 @@ export class DailyPanel {
         .setOrigin(1, 0.5);
       this.container?.add(done);
     } else if (quest.progress >= quest.target) {
-      createTextButton(
-        scene,
-        cx + 60,
-        y + 38,
-        fmt(t.claimQuest, { reward: rewardStr }),
-        () => {
-          if (this.state.claimDailyQuest(quest.id)) {
-            SoundManager.getInstance().playSFX('quest_complete');
-            showToast(scene, t.questClaimed);
-            this.hide();
-            this.show(scene, this.onClose ?? undefined);
-          }
-        },
-        140,
-        32,
-      ).setDepth(903);
+      this.modal.track(
+        createTextButton(
+          scene,
+          cx + 60,
+          y + 38,
+          fmt(t.claimQuest, { reward: rewardStr }),
+          () => {
+            if (this.state.claimDailyQuest(quest.id)) {
+              SoundManager.getInstance().playSFX('quest_complete');
+              showToast(scene, t.questClaimed);
+              this.hide();
+              this.show(scene, this.onClose ?? undefined);
+            }
+          },
+          140,
+          32,
+        ).setDepth(903),
+      );
     } else {
       const pending = scene.add
         .text(cx + 200, y - 10, rewardStr, {
@@ -277,9 +291,8 @@ export class DailyPanel {
   }
 
   hide(): void {
-    this.overlay?.destroy();
+    this.modal.destroyAll();
     this.overlay = null;
-    this.container?.destroy();
     this.container = null;
     this.questTexts = [];
     this.progressBars = [];

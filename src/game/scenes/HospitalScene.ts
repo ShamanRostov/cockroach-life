@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { SCENES, COLORS, GAME_WIDTH, GAME_HEIGHT, isMobileDevice } from '../config';
 import { GameState } from '../GameState';
 import { createTextButton, addFullscreenBg, createMobileButton } from '../ui/ButtonHelper';
+import { spawnSparkBurst } from '../graphics/ParticleEffects';
+import { screenShake, showScorePopup } from '../graphics/VisualEffects';
 import { L, fmt } from '../../i18n';
 import { monetizationService } from '../../platforms/MonetizationService';
 import { AnalyticsService } from '../../platforms/AnalyticsService';
@@ -12,6 +14,9 @@ export class HospitalScene extends Phaser.Scene {
   private pulse!: Phaser.GameObjects.Image;
   private ringOuter!: Phaser.GameObjects.Image;
   private ringInner!: Phaser.GameObjects.Image;
+  private sweetMinRing!: Phaser.GameObjects.Image;
+  private sweetMaxRing!: Phaser.GameObjects.Image;
+  private timingHint!: Phaser.GameObjects.Text;
   private hits = 0;
   private required = ARCADE_HOSPITAL.requiredHits;
   private alive = true;
@@ -78,6 +83,28 @@ export class HospitalScene extends Phaser.Scene {
       .setAlpha(0.35)
       .setTint(COLORS.success);
 
+    this.sweetMinRing = this.add
+      .image(cx, cy, 'heart-pulse')
+      .setScale(0.55 * ARCADE_HOSPITAL.pulseMin)
+      .setAlpha(0.55)
+      .setTint(COLORS.success);
+
+    this.sweetMaxRing = this.add
+      .image(cx, cy, 'heart-pulse')
+      .setScale(0.55 * ARCADE_HOSPITAL.pulseMax)
+      .setAlpha(0.55)
+      .setTint(COLORS.success);
+
+    this.timingHint = this.add
+      .text(cx, cy + 120, '', {
+        fontFamily: 'Segoe UI, Arial, sans-serif',
+        fontSize: '20px',
+        color: '#a5d6a7',
+        stroke: '#1b5e20',
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5);
+
     this.pulse = this.add.image(cx, cy, 'heart-pulse').setScale(0.55).setAlpha(0.9);
 
     this.input.keyboard?.on('keydown-SPACE', () => this.onPulseHit());
@@ -126,6 +153,14 @@ export class HospitalScene extends Phaser.Scene {
     this.pulse.setScale(0.55 * this.pulseScale);
     this.ringInner.setScale(1.1 * (0.9 + this.pulseScale * 0.15));
     this.ringOuter.setScale(1.6 * (0.85 + this.pulseScale * 0.12));
+
+    const inZone =
+      this.pulseScale >= ARCADE_HOSPITAL.pulseMin && this.pulseScale <= ARCADE_HOSPITAL.pulseMax;
+    const zoneAlpha = inZone ? 0.85 : 0.35;
+    this.sweetMinRing.setAlpha(zoneAlpha);
+    this.sweetMaxRing.setAlpha(zoneAlpha);
+    this.timingHint.setText(inZone ? '● NOW ●' : '');
+    this.timingHint.setAlpha(inZone ? 1 : 0.4);
   }
 
   private onPulseHit(): void {
@@ -144,6 +179,8 @@ export class HospitalScene extends Phaser.Scene {
       );
       this.pulse.setTint(COLORS.success);
       this.cameras.main.flash(100, 67, 160, 71);
+      spawnSparkBurst(this, this.pulse.x, this.pulse.y, 10, COLORS.success);
+      showScorePopup(this, this.pulse.x, this.pulse.y - 40, `+${ARCADE_HOSPITAL.healPerHit}`, '#66bb6a');
 
       this.time.delayedCall(200, () => {
         this.pulse.clearTint();
@@ -154,7 +191,8 @@ export class HospitalScene extends Phaser.Scene {
       }
     } else {
       SoundManager.getInstance().playSFX('arcade_hit');
-      this.cameras.main.shake(100, 0.01);
+      screenShake(this, 120, 0.012);
+      spawnSparkBurst(this, this.pulse.x, this.pulse.y, 6, COLORS.danger);
       this.pulse.setTint(COLORS.danger);
       this.time.delayedCall(200, () => {
         this.pulse.clearTint();

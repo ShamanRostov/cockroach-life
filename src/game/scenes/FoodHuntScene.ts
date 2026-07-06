@@ -3,7 +3,8 @@ import { SCENES, GAME_WIDTH, GAME_HEIGHT, isMobileDevice } from '../config';
 import { GameState } from '../GameState';
 import { createTextButton, addFullscreenBg } from '../ui/ButtonHelper';
 import { createCockroachPhysics, syncCockroachMovement } from '../graphics/CockroachSprite';
-import { spawnFoodPickup } from '../graphics/ParticleEffects';
+import { spawnFoodPickup, spawnCrumbTrail, spawnSparkBurst } from '../graphics/ParticleEffects';
+import { screenShake, showScorePopup } from '../graphics/VisualEffects';
 import { TouchControls } from '../ui/TouchControls';
 import { L, fmt } from '../../i18n';
 import { monetizationService } from '../../platforms/MonetizationService';
@@ -28,6 +29,8 @@ export class FoodHuntScene extends Phaser.Scene {
   private runCompleted = false;
   private hungerText!: Phaser.GameObjects.Text;
   private collectText!: Phaser.GameObjects.Text;
+  private magnetRadius = 0;
+  private trailTimer = 0;
   private state = GameState.getInstance();
 
   constructor() {
@@ -125,6 +128,8 @@ export class FoodHuntScene extends Phaser.Scene {
     this.player.setVelocity(vx, vy);
     syncCockroachMovement(this.player, vx, vy);
 
+    this.applyMagnet(delta);
+
     this.hunger -= delta * 0.012;
     this.hungerText.setText(
       fmt(L().arcade.food.hunger, { value: Math.max(0, Math.floor(this.hunger)) }),
@@ -133,6 +138,26 @@ export class FoodHuntScene extends Phaser.Scene {
     if (this.hunger <= 0) {
       this.lose();
     }
+  }
+
+  private applyMagnet(delta: number): void {
+    if (this.magnetRadius <= 0) return;
+
+    this.trailTimer += delta;
+    for (const food of this.foods) {
+      if (!food.active) continue;
+      const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, food.x, food.y);
+      if (dist > this.magnetRadius || dist < 8) continue;
+      const pull = ((this.magnetRadius - dist) / this.magnetRadius) * 220;
+      food.setVelocity(
+        ((this.player.x - food.x) / dist) * pull,
+        ((this.player.y - food.y) / dist) * pull,
+      );
+      if (this.trailTimer > 120) {
+        spawnCrumbTrail(this, food.x, food.y);
+      }
+    }
+    if (this.trailTimer > 120) this.trailTimer = 0;
   }
 
   private spawnFood(): void {
@@ -154,15 +179,20 @@ export class FoodHuntScene extends Phaser.Scene {
 
   private collectFood(food: Phaser.Physics.Arcade.Sprite): void {
     if (!food.active) return;
+    const { x, y } = food;
     food.destroy();
     this.collected += 1;
     this.hunger = Math.min(100, this.hunger + 12);
+    this.magnetRadius = Math.min(95, this.magnetRadius + 14);
     const t = L();
     this.collectText.setText(
       fmt(t.arcade.food.collected, { current: this.collected, target: this.target }),
     );
 
-    spawnFoodPickup(this, food.x, food.y);
+    spawnFoodPickup(this, x, y);
+    spawnSparkBurst(this, x, y, 6);
+    screenShake(this, 120, 0.008);
+    showScorePopup(this, x, y - 20, '+12', '#66bb6a');
 
     if (this.collected >= this.target) {
       this.win();

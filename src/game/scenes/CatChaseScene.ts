@@ -3,8 +3,8 @@ import { SCENES, GAME_WIDTH, GAME_HEIGHT, isMobileDevice } from '../config';
 import { GameState } from '../GameState';
 import { createTextButton, addFullscreenBg } from '../ui/ButtonHelper';
 import { createCockroachPhysics, syncCockroachMovement } from '../graphics/CockroachSprite';
-import { spawnFoodPickup } from '../graphics/ParticleEffects';
-import { screenShake } from '../graphics/VisualEffects';
+import { spawnFoodPickup, spawnSparkBurst } from '../graphics/ParticleEffects';
+import { screenShake, showScorePopup } from '../graphics/VisualEffects';
 import { TouchControls } from '../ui/TouchControls';
 import { L, fmt } from '../../i18n';
 import { monetizationService } from '../../platforms/MonetizationService';
@@ -14,12 +14,16 @@ import { SoundManager } from '../audio/SoundManager';
 const SURVIVE_SECONDS = 45;
 const CAT_SPEED = 165;
 const PLAYER_SPEED = 220;
+const BOOST_SPEED = 310;
 const CATCH_DISTANCE = 28;
+const NEAR_MISS_MAX = 58;
+const BOOST_DURATION_MS = 4500;
 
 export class CatChaseScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
   private cat!: Phaser.Physics.Arcade.Sprite;
   private crumbs: Phaser.Physics.Arcade.Sprite[] = [];
+  private boosts: Phaser.Physics.Arcade.Sprite[] = [];
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: {
     W: Phaser.Input.Keyboard.Key;
@@ -34,6 +38,9 @@ export class CatChaseScene extends Phaser.Scene {
   private runCompleted = false;
   private timerText!: Phaser.GameObjects.Text;
   private scoreText!: Phaser.GameObjects.Text;
+  private boostTimer = 0;
+  private nearMissActive = false;
+  private boostSpawnTimer = 0;
   private state = GameState.getInstance();
 
   constructor() {
@@ -86,6 +93,7 @@ export class CatChaseScene extends Phaser.Scene {
     for (let i = 0; i < 10; i++) {
       this.spawnCrumb();
     }
+    this.spawnBoost();
 
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.wasd = {
@@ -124,14 +132,26 @@ export class CatChaseScene extends Phaser.Scene {
       return;
     }
 
+    if (this.boostTimer > 0) {
+      this.boostTimer -= delta;
+      if (this.boostTimer <= 0) this.player.clearTint();
+    }
+
+    this.boostSpawnTimer += delta;
+    if (this.boostSpawnTimer > 12000 && this.boosts.filter((b) => b.active).length < 1) {
+      this.boostSpawnTimer = 0;
+      this.spawnBoost();
+    }
+
+    const speed = this.boostTimer > 0 ? BOOST_SPEED : PLAYER_SPEED;
     let vx = 0;
     let vy = 0;
-    if (this.cursors.left.isDown || this.wasd.A.isDown) vx = -PLAYER_SPEED;
-    if (this.cursors.right.isDown || this.wasd.D.isDown) vx = PLAYER_SPEED;
-    if (this.cursors.up.isDown || this.wasd.W.isDown) vy = -PLAYER_SPEED;
-    if (this.cursors.down.isDown || this.wasd.S.isDown) vy = PLAYER_SPEED;
+    if (this.cursors.left.isDown || this.wasd.A.isDown) vx = -speed;
+    if (this.cursors.right.isDown || this.wasd.D.isDown) vx = speed;
+    if (this.cursors.up.isDown || this.wasd.W.isDown) vy = -speed;
+    if (this.cursors.down.isDown || this.wasd.S.isDown) vy = speed;
 
-    const touch = this.touchControls?.mergeVelocity(vx, vy, PLAYER_SPEED);
+    const touch = this.touchControls?.mergeVelocity(vx, vy, speed);
     if (touch) {
       vx = touch.vx;
       vy = touch.vy;
@@ -143,9 +163,51 @@ export class CatChaseScene extends Phaser.Scene {
     this.chasePlayer();
 
     const dist = Phaser.Math.Distance.Between(this.player.x, this.player.y, this.cat.x, this.cat.y);
+    if (dist >= CATCH_DISTANCE && dist < NEAR_MISS_MAX) {
+      this.nearMissActive = true;
+    } else if (this.nearMissActive && dist >= NEAR_MISS_MAX) {
+      this.nearMissActive = false;
+      this.awardNearMiss();
+    }
+
     if (dist < CATCH_DISTANCE) {
       this.lose();
     }
+  }
+
+  private awardNearMiss(): void {
+    const bonus = 15;
+    this.score += bonus;
+    this.scoreText.setText(fmt(L().arcade.catChase.score, { score: this.score }));
+    showScorePopup(this, this.player.x, this.player.y - 30, `+${bonus}`, '#ffd54f');
+    spawnSparkBurst(this, this.player.x, this.player.y, 6, 0xffd54f);
+  }
+
+  private spawnBoost(): void {
+    const x = Phaser.Math.Between(100, GAME_WIDTH - 100);
+    const y = Phaser.Math.Between(140, GAME_HEIGHT - 100);
+    const boost = this.physics.add.sprite(x, y, 'spark');
+    boost.setScale(0.55);
+    boost.setTint(0x4fc3f7);
+    this.physics.add.overlap(this.player, boost, () => this.collectBoost(boost), undefined, this);
+    this.boosts.push(boost);
+
+    this.tweens.add({
+      targets: boost,
+      scale: 0.7,
+      duration: 500,
+      yoyo: true,
+      repeat: -1,
+    });
+  }
+
+  private collectBoost(boost: Phaser.Physics.Arcade.Sprite): void {
+    if (!boost.active) return;
+    boost.destroy();
+    this.boostTimer = BOOST_DURATION_MS;
+    this.player.setTint(0x4fc3f7);
+    spawnSparkBurst(this, this.player.x, this.player.y, 10, 0x4fc3f7);
+    showScorePopup(this, this.player.x, this.player.y - 24, 'BOOST!', '#4fc3f7');
   }
 
   private chasePlayer(): void {
@@ -180,6 +242,8 @@ export class CatChaseScene extends Phaser.Scene {
     this.scoreText.setText(fmt(L().arcade.catChase.score, { score: this.score }));
 
     spawnFoodPickup(this, crumb.x, crumb.y);
+    showScorePopup(this, crumb.x, crumb.y - 16, '+10', '#66bb6a');
+    screenShake(this, 100, 0.006);
 
     if (this.crumbs.filter((c) => c.active).length < 5) {
       this.spawnCrumb();
@@ -221,6 +285,7 @@ export class CatChaseScene extends Phaser.Scene {
     this.alive = false;
     this.runCompleted = true;
     screenShake(this, 350, 0.03);
+    spawnSparkBurst(this, this.player.x, this.player.y, 12, 0xef5350);
     const finalScore = this.score;
     AnalyticsService.getInstance().trackArcadeComplete(SCENES.CAT_CHASE, finalScore, false);
     SoundManager.getInstance().playSFX('arcade_lose');

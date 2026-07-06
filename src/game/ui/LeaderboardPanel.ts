@@ -12,6 +12,7 @@ import {
   type LeaderboardData,
   type LeaderboardId,
 } from '../../platforms/LeaderboardService';
+import { ModalLayer } from './ModalLayer';
 
 const TAB_BOARDS: LeaderboardId[] = [
   LEADERBOARD_IDS.SLIPPER_HIGHSCORE,
@@ -20,6 +21,7 @@ const TAB_BOARDS: LeaderboardId[] = [
 ];
 
 export class LeaderboardPanel {
+  private modal = new ModalLayer();
   private overlay: Phaser.GameObjects.Rectangle | null = null;
   private container: Phaser.GameObjects.Container | null = null;
   private tabContainer: Phaser.GameObjects.Container | null = null;
@@ -30,7 +32,13 @@ export class LeaderboardPanel {
   private sceneRef: Phaser.Scene | null = null;
 
   show(scene: Phaser.Scene, onClose?: () => void, initialTab = 0): void {
-    this.hide();
+    this.modal.destroyAll();
+    this.overlay = null;
+    this.container = null;
+    this.tabContainer = null;
+    this.listContainer = null;
+    this.playerRankText = null;
+    this.sceneRef = null;
     this.onClose = onClose ?? null;
     this.activeTab = initialTab;
 
@@ -41,20 +49,22 @@ export class LeaderboardPanel {
     const panelW = 540;
     const panelH = 500;
 
-    this.overlay = createModalOverlay(scene, depth);
+    this.overlay = this.modal.track(createModalOverlay(scene, depth));
     this.overlay.on('pointerdown', () => this.hide());
 
-    createModalPanel(scene, cx, cy, panelW, panelH, depth + 1);
+    this.modal.track(createModalPanel(scene, cx, cy, panelW, panelH, depth + 1));
 
-    const panelBlocker = scene.add
-      .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
-      .setInteractive()
-      .setDepth(depth + 1);
+    const panelBlocker = this.modal.track(
+      scene.add
+        .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
+        .setInteractive()
+        .setDepth(depth + 1),
+    );
     panelBlocker.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
     });
 
-    this.container = scene.add.container(0, 0).setDepth(depth + 2);
+    this.container = this.modal.track(scene.add.container(0, 0).setDepth(depth + 2));
 
     const title = scene.add
       .text(cx, cy - 220, t.title, {
@@ -84,15 +94,16 @@ export class LeaderboardPanel {
       .setOrigin(0.5);
     this.container.add(this.playerRankText);
 
-    createTextButton(scene, cx, cy + 215, t.close, () => this.hide(), 160, 40).setDepth(depth + 3);
+    this.modal.track(
+      createTextButton(scene, cx, cy + 215, t.close, () => this.hide(), 160, 40).setDepth(depth + 3),
+    );
 
     void this.loadBoard(TAB_BOARDS[this.activeTab]!);
   }
 
   hide(): void {
-    this.overlay?.destroy();
+    this.modal.destroyAll();
     this.overlay = null;
-    this.container?.destroy();
     this.container = null;
     this.tabContainer = null;
     this.listContainer = null;
@@ -129,19 +140,21 @@ export class LeaderboardPanel {
     TAB_BOARDS.forEach((boardId, i) => {
       const x = cx + (i - 1) * (tabW + 8);
       const active = i === this.activeTab;
-      const btn = createTextButton(
-        this.sceneRef!,
-        x,
-        y,
-        this.tabLabel(boardId),
-        () => {
-          if (this.activeTab === i) return;
-          this.activeTab = i;
-          this.renderTabs(cx, y);
-          void this.loadBoard(TAB_BOARDS[this.activeTab]!);
-        },
-        tabW,
-        36,
+      const btn = this.modal.track(
+        createTextButton(
+          this.sceneRef!,
+          x,
+          y,
+          this.tabLabel(boardId),
+          () => {
+            if (this.activeTab === i) return;
+            this.activeTab = i;
+            this.renderTabs(cx, y);
+            void this.loadBoard(TAB_BOARDS[this.activeTab]!);
+          },
+          tabW,
+          36,
+        ),
       );
       this.tabContainer!.add(btn);
       if (active) {

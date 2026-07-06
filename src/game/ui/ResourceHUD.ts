@@ -25,7 +25,7 @@ export class ResourceHUD {
     const hudY = y ?? 16 + safe.top;
     this.container = scene.add.container(hudX, hudY).setDepth(DEPTH.hud);
 
-    const panel = scene.add.image(0, 0, 'ui-hud-panel').setOrigin(0, 0).setDisplaySize(300, 96);
+    const panel = scene.add.image(0, 0, 'ui-hud-panel').setOrigin(0, 0).setDisplaySize(280, 72);
 
     this.foodText = scene.add.text(16, 14, '', {
       fontFamily: 'Segoe UI, Arial, sans-serif',

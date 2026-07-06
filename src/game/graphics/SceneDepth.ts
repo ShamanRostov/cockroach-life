@@ -9,7 +9,7 @@ export const DEPTH = {
   ui: 100,
   hud: 500,
   overlay: 900,
-  vignette: 950,
+  vignette: 8,
   modal: 1000,
   touch: 1100,
 } as const;

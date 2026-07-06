@@ -23,6 +23,9 @@ if errorlevel 1 (
   exit /b 1
 )
 
+echo Копирование и обработка графики...
+call npm run deploy:assets
+
 echo.
 echo Запуск dev-сервера...
 echo Откройте в браузере: http://localhost:5173

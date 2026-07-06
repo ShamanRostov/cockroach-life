@@ -3,6 +3,8 @@ import { SCENES, COLORS, GAME_WIDTH, GAME_HEIGHT, isMobileDevice } from '../conf
 import { GameState } from '../GameState';
 import { createTextButton, addFullscreenBg, showToast } from '../ui/ButtonHelper';
 import { createCockroachPhysics, syncCockroachMovement } from '../graphics/CockroachSprite';
+import { spawnSparkBurst } from '../graphics/ParticleEffects';
+import { screenShake } from '../graphics/VisualEffects';
 import { TouchControls } from '../ui/TouchControls';
 import { L } from '../../i18n';
 import { monetizationService } from '../../platforms/MonetizationService';
@@ -13,7 +15,11 @@ interface Hideout {
   sprite: Phaser.GameObjects.Sprite;
   x: number;
   y: number;
+  radius: number;
 }
+
+const HIDEOUT_START_RADIUS = 58;
+const HIDEOUT_MIN_RADIUS = 22;
 
 export class SprayEscapeScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -34,6 +40,8 @@ export class SprayEscapeScene extends Phaser.Scene {
   private state = GameState.getInstance();
   private cloudScale = 0.35;
   private touchControls: TouchControls | null = null;
+  private wasInHideout = true;
+  private dangerPulse = 0;
 
   constructor() {
     super(SCENES.SPRAY);
@@ -78,7 +86,7 @@ export class SprayEscapeScene extends Phaser.Scene {
 
     for (const pos of positions) {
       const crack = this.add.sprite(pos.x, pos.y, 'crack').setScale(0.45);
-      this.hideouts.push({ sprite: crack, x: pos.x, y: pos.y });
+      this.hideouts.push({ sprite: crack, x: pos.x, y: pos.y, radius: HIDEOUT_START_RADIUS });
     }
 
     this.player = createCockroachPhysics(
@@ -133,22 +141,48 @@ export class SprayEscapeScene extends Phaser.Scene {
     this.player.setVelocity(vx, vy);
     syncCockroachMovement(this.player, vx, vy);
 
-    this.cloudScale += delta * 0.00025;
+    this.cloudScale += delta * 0.0003;
     this.cloud.setScale(this.cloudScale);
 
+    for (const h of this.hideouts) {
+      h.radius = Math.max(HIDEOUT_MIN_RADIUS, h.radius - delta * 0.014);
+      const scale = 0.28 + (h.radius / HIDEOUT_START_RADIUS) * 0.22;
+      h.sprite.setScale(scale);
+      h.sprite.setAlpha(0.55 + (h.radius / HIDEOUT_START_RADIUS) * 0.45);
+    }
+
     this.inHideout = this.hideouts.some(
-      (h) => Phaser.Math.Distance.Between(this.player.x, this.player.y, h.x, h.y) < 55,
+      (h) => Phaser.Math.Distance.Between(this.player.x, this.player.y, h.x, h.y) < h.radius,
     );
 
     if (!this.inHideout) {
-      this.state.economy.damage(delta * 0.015);
+      this.state.economy.damage(delta * 0.018);
       this.player.setTint(COLORS.danger);
+      this.dangerPulse += delta;
+      if (this.dangerPulse > 900) {
+        this.dangerPulse = 0;
+        screenShake(this, 140, 0.012);
+      }
     } else {
       this.player.clearTint();
+      this.dangerPulse = 0;
+      if (!this.wasInHideout) {
+        spawnSparkBurst(this, this.player.x, this.player.y, 6, 0x81c784);
+      }
     }
+    this.wasInHideout = this.inHideout;
 
     this.timer -= delta / 1000;
-    this.timerText.setText(Math.ceil(Math.max(0, this.timer)).toString());
+    const secs = Math.ceil(Math.max(0, this.timer));
+    this.timerText.setText(secs.toString());
+    if (this.timer <= 10) {
+      this.timerText.setColor('#ef5350');
+      if (secs !== parseInt(this.timerText.getData('lastFlash') ?? '-1', 10)) {
+        this.timerText.setData('lastFlash', secs);
+        this.timerText.setScale(1.15);
+        this.tweens.add({ targets: this.timerText, scale: 1, duration: 200 });
+      }
+    }
 
     if (this.timer <= 0) {
       this.win();
@@ -181,6 +215,8 @@ export class SprayEscapeScene extends Phaser.Scene {
   private lose(): void {
     this.alive = false;
     this.runCompleted = true;
+    screenShake(this, 300, 0.025);
+    spawnSparkBurst(this, this.player.x, this.player.y, 12, COLORS.danger);
     const score = Math.floor(300 - this.state.economy.health);
     AnalyticsService.getInstance().trackArcadeComplete(SCENES.SPRAY, score, false);
     SoundManager.getInstance().playSFX('arcade_lose');

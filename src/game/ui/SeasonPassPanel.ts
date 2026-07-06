@@ -13,9 +13,12 @@ import { SoundManager } from '../audio/SoundManager';
 import { iapService } from '../../platforms/IAPService';
 import type { SeasonPassReward } from '../systems/SeasonPassSystem';
 import { SEASON_PASS_TIERS } from '../systems/SeasonPassSystem';
+import { DEPTH } from '../graphics/SceneDepth';
+import { ModalLayer } from './ModalLayer';
 
 export class SeasonPassPanel {
   private readonly state = GameState.getInstance();
+  private modal = new ModalLayer();
   private overlay: Phaser.GameObjects.Rectangle | null = null;
   private container: Phaser.GameObjects.Container | null = null;
   private onClose: (() => void) | null = null;
@@ -32,19 +35,21 @@ export class SeasonPassPanel {
       72,
       40,
     );
-    btn.setDepth(502);
+    btn.setDepth(DEPTH.hud + 12);
     return btn;
   }
 
   show(scene: Phaser.Scene, onClose?: () => void): void {
-    this.hide();
+    this.modal.destroyAll();
+    this.overlay = null;
+    this.container = null;
     this.onClose = onClose ?? null;
     this.state.seasonPass.checkSeasonReset();
 
     const t = L().seasonPass;
     const depth = 900;
 
-    this.overlay = createModalOverlay(scene, depth);
+    this.overlay = this.modal.track(createModalOverlay(scene, depth));
     this.overlay.on('pointerdown', () => this.hide());
 
     const panelW = 700;
@@ -52,17 +57,19 @@ export class SeasonPassPanel {
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 
-    createModalPanel(scene, cx, cy, panelW, panelH, depth + 1);
+    this.modal.track(createModalPanel(scene, cx, cy, panelW, panelH, depth + 1));
 
-    const panelBlocker = scene.add
-      .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
-      .setInteractive()
-      .setDepth(depth + 1);
+    const panelBlocker = this.modal.track(
+      scene.add
+        .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
+        .setInteractive()
+        .setDepth(depth + 1),
+    );
     panelBlocker.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
     });
 
-    this.container = scene.add.container(0, 0).setDepth(depth + 2);
+    this.container = this.modal.track(scene.add.container(0, 0).setDepth(depth + 2));
 
     const title = scene.add
       .text(cx, cy - 252, t.title, {
@@ -111,15 +118,17 @@ export class SeasonPassPanel {
 
     if (!this.state.seasonPass.isPremium()) {
       const price = iapService.getProducts().find((p) => p.id === 'season_pass_premium')?.priceLabel ?? '$2.99';
-      createTextButton(
-        scene,
-        cx,
-        cy + 248,
-        fmt(t.buyPremium, { price }),
-        () => void this.purchasePremium(scene),
-        280,
-        40,
-      ).setDepth(depth + 3);
+      this.modal.track(
+        createTextButton(
+          scene,
+          cx,
+          cy + 248,
+          fmt(t.buyPremium, { price }),
+          () => void this.purchasePremium(scene),
+          280,
+          40,
+        ).setDepth(depth + 3),
+      );
     } else {
       const owned = scene.add
         .text(cx, cy + 248, t.premiumActive, {
@@ -131,7 +140,9 @@ export class SeasonPassPanel {
       this.container.add(owned);
     }
 
-    createTextButton(scene, cx + 260, cy + 248, t.close, () => this.hide(), 100, 36).setDepth(depth + 4);
+    this.modal.track(
+      createTextButton(scene, cx, cy + 248, t.close, () => this.hide(), 100, 36).setDepth(depth + 4),
+    );
   }
 
   private renderProgressBar(scene: Phaser.Scene, cx: number, y: number, depth: number): void {
@@ -284,9 +295,8 @@ export class SeasonPassPanel {
   }
 
   hide(): void {
-    this.overlay?.destroy();
+    this.modal.destroyAll();
     this.overlay = null;
-    this.container?.destroy();
     this.container = null;
     const cb = this.onClose;
     this.onClose = null;

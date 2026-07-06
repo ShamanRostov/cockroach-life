@@ -11,11 +11,14 @@ import {
 } from './ButtonHelper';
 import { L, fmt } from '../../i18n';
 import { SoundManager } from '../audio/SoundManager';
+import { DEPTH } from '../graphics/SceneDepth';
+import { ModalLayer } from './ModalLayer';
 
 const ROLES: CockroachRole[] = ['worker', 'scout', 'fighter'];
 
 export class BreedingPanel {
   private readonly state = GameState.getInstance();
+  private modal = new ModalLayer();
   private hudButton: Phaser.GameObjects.Container | null = null;
   private overlay: Phaser.GameObjects.Rectangle | null = null;
   private container: Phaser.GameObjects.Container | null = null;
@@ -43,7 +46,7 @@ export class BreedingPanel {
       120,
       40,
     );
-    this.hudButton.setDepth(502);
+    this.hudButton.setDepth(DEPTH.hud + 12);
   }
 
   destroyHudButton(): void {
@@ -52,11 +55,19 @@ export class BreedingPanel {
   }
 
   show(scene: Phaser.Scene): void {
-    this.hide();
+    this.refreshTimer?.destroy();
+    this.refreshTimer = null;
+    this.modal.destroyAll();
+    this.overlay = null;
+    this.container = null;
+    this.listText = null;
+    this.bonusText = null;
+    this.timerText = null;
+
     const t = L().breeding;
     const depth = 900;
 
-    this.overlay = createModalOverlay(scene, depth);
+    this.overlay = this.modal.track(createModalOverlay(scene, depth));
     this.overlay.on('pointerdown', () => this.hide());
 
     const panelW = 540;
@@ -64,17 +75,19 @@ export class BreedingPanel {
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 
-    createModalPanel(scene, cx, cy, panelW, panelH, depth + 1);
+    this.modal.track(createModalPanel(scene, cx, cy, panelW, panelH, depth + 1));
 
-    const panelBlocker = scene.add
-      .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
-      .setInteractive()
-      .setDepth(depth + 1);
+    const panelBlocker = this.modal.track(
+      scene.add
+        .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
+        .setInteractive()
+        .setDepth(depth + 1),
+    );
     panelBlocker.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
     });
 
-    this.container = scene.add.container(0, 0).setDepth(depth + 2);
+    this.container = this.modal.track(scene.add.container(0, 0).setDepth(depth + 2));
 
     const title = scene.add
       .text(cx, cy - 220, t.title, {
@@ -131,54 +144,62 @@ export class BreedingPanel {
       .setOrigin(0.5);
     this.container.add(this.timerText);
 
-    scene.add
-      .text(cx, cy + 70, t.selectRole, {
-        fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '15px',
-        color: '#bcaaa4',
-      })
-      .setOrigin(0.5)
-      .setDepth(depth + 2);
+    this.modal.track(
+      scene.add
+        .text(cx, cy + 70, t.selectRole, {
+          fontFamily: 'Segoe UI, Arial, sans-serif',
+          fontSize: '15px',
+          color: '#bcaaa4',
+        })
+        .setOrigin(0.5)
+        .setDepth(depth + 2),
+    );
 
     ROLES.forEach((role, i) => {
       const isSelected = role === this.selectedRole;
       const label = isSelected
         ? `✓ ${this.roleLabel(role)}`
         : this.roleLabel(role);
-      createAdaptiveButton(
-        scene,
-        cx - 160 + i * 160,
-        cy + 110,
-        label,
-        () => {
-          this.selectedRole = role;
-          this.show(scene);
-        },
-        140,
-        40,
-      ).setDepth(depth + 2);
+      this.modal.track(
+        createAdaptiveButton(
+          scene,
+          cx - 160 + i * 160,
+          cy + 110,
+          label,
+          () => {
+            this.selectedRole = role;
+            this.show(scene);
+          },
+          140,
+          40,
+        ).setDepth(depth + 2),
+      );
     });
 
     const cost = this.state.breeding.getBreedCost();
-    createAdaptiveButton(
-      scene,
-      cx,
-      cy + 170,
-      fmt(t.breedButton, { food: cost.food, money: cost.money }),
-      () => this.onBreed(scene),
-      320,
-      44,
-    ).setDepth(depth + 2);
+    this.modal.track(
+      createAdaptiveButton(
+        scene,
+        cx,
+        cy + 170,
+        fmt(t.breedButton, { food: cost.food, money: cost.money }),
+        () => this.onBreed(scene),
+        320,
+        44,
+      ).setDepth(depth + 2),
+    );
 
-    createAdaptiveButton(
-      scene,
-      cx,
-      cy + 225,
-      L().daily.close,
-      () => this.hide(),
-      160,
-      40,
-    ).setDepth(depth + 2);
+    this.modal.track(
+      createAdaptiveButton(
+        scene,
+        cx,
+        cy + 225,
+        L().daily.close,
+        () => this.hide(),
+        160,
+        40,
+      ).setDepth(depth + 4),
+    );
 
     this.refreshTimer = scene.time.addEvent({
       delay: 1000,
@@ -193,9 +214,8 @@ export class BreedingPanel {
   hide(): void {
     this.refreshTimer?.destroy();
     this.refreshTimer = null;
-    this.overlay?.destroy();
+    this.modal.destroyAll();
     this.overlay = null;
-    this.container?.destroy(true);
     this.container = null;
     this.listText = null;
     this.bonusText = null;

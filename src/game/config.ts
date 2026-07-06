@@ -66,3 +66,9 @@ export function isMobileDevice(): boolean {
 
   return touchCapable && (mobileUa || narrowViewport);
 }
+
+/** Playwright / CI automated UI runs (`?autotest=1`). */
+export function isAutotestMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).get('autotest') === '1';
+}

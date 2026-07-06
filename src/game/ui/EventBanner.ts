@@ -1,15 +1,20 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../config';
+import { getEventBannerY } from './NestLayout';
 import { GameState } from '../GameState';
 import {
   createTextButton,
   createModalOverlay,
   createModalPanel,
 } from './ButtonHelper';
+import { setContainerHitArea } from './uiHitArea';
+import { DEPTH } from '../graphics/SceneDepth';
 import { L, fmt } from '../../i18n';
+import { ModalLayer } from './ModalLayer';
 
 export class EventBanner {
   private readonly state = GameState.getInstance();
+  private modal = new ModalLayer();
   private container: Phaser.GameObjects.Container | null = null;
   private timerText: Phaser.GameObjects.Text | null = null;
   private overlay: Phaser.GameObjects.Rectangle | null = null;
@@ -23,13 +28,14 @@ export class EventBanner {
     const t = L().events;
     const { days, hours } = this.state.liveOps.formatTimeRemaining();
 
-    const container = scene.add.container(GAME_WIDTH / 2, 36).setDepth(501);
+    const container = scene.add.container(340, getEventBannerY()).setDepth(DEPTH.hud + 1);
 
+    const bannerW = 360;
+    const bannerH = 36;
     const bg = scene.add
       .image(0, 0, 'ui-panel')
-      .setDisplaySize(480, 44)
-      .setAlpha(0.9)
-      .setInteractive({ useHandCursor: true });
+      .setDisplaySize(bannerW, bannerH)
+      .setAlpha(0.92);
 
     const label = scene.add
       .text(-200, 0, `${event.icon} ${this.state.liveOps.getEventName()}`, {
@@ -50,8 +56,7 @@ export class EventBanner {
       .setOrigin(1, 0.5);
 
     container.add([bg, label, this.timerText]);
-
-    bg.on('pointerdown', () => this.showDetails(scene));
+    setContainerHitArea(container, bannerW, bannerH, () => this.showDetails(scene));
 
     this.container = container;
     this.timerEvent = scene.time.addEvent({
@@ -70,14 +75,16 @@ export class EventBanner {
   }
 
   private showDetails(scene: Phaser.Scene): void {
-    this.hideDetails();
+    this.modal.destroyAll();
+    this.overlay = null;
+    this.detailContainer = null;
 
     const t = L().events;
     const event = this.state.liveOps.getCurrentEvent();
     const { days, hours } = this.state.liveOps.formatTimeRemaining();
     const depth = 900;
 
-    this.overlay = createModalOverlay(scene, depth);
+    this.overlay = this.modal.track(createModalOverlay(scene, depth));
     this.overlay.on('pointerdown', () => this.hideDetails());
 
     const panelW = 480;
@@ -85,17 +92,19 @@ export class EventBanner {
     const cx = GAME_WIDTH / 2;
     const cy = 360;
 
-    createModalPanel(scene, cx, cy, panelW, panelH, depth + 1);
+    this.modal.track(createModalPanel(scene, cx, cy, panelW, panelH, depth + 1));
 
-    const panelBlocker = scene.add
-      .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
-      .setInteractive()
-      .setDepth(depth + 1);
+    const panelBlocker = this.modal.track(
+      scene.add
+        .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
+        .setInteractive()
+        .setDepth(depth + 1),
+    );
     panelBlocker.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
     });
 
-    this.detailContainer = scene.add.container(0, 0).setDepth(depth + 2);
+    this.detailContainer = this.modal.track(scene.add.container(0, 0).setDepth(depth + 2));
 
     const title = scene.add
       .text(cx, cy - 90, `${event.icon} ${this.state.liveOps.getEventName()}`, {
@@ -127,21 +136,22 @@ export class EventBanner {
 
     this.detailContainer.add([title, desc, timer]);
 
-    createTextButton(
-      scene,
-      cx,
-      cy + 110,
-      t.close,
-      () => this.hideDetails(),
-      160,
-      40,
-    ).setDepth(depth + 3);
+    this.modal.track(
+      createTextButton(
+        scene,
+        cx,
+        cy + 110,
+        t.close,
+        () => this.hideDetails(),
+        160,
+        40,
+      ).setDepth(depth + 3),
+    );
   }
 
   hideDetails(): void {
-    this.overlay?.destroy();
+    this.modal.destroyAll();
     this.overlay = null;
-    this.detailContainer?.destroy();
     this.detailContainer = null;
   }
 

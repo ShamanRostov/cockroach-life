@@ -12,9 +12,12 @@ import { L, fmt } from '../../i18n';
 import { SoundManager } from '../audio/SoundManager';
 import { iapService, type IAPProduct, type ProductId } from '../../platforms/IAPService';
 import { monetizationService, type RewardType } from '../../platforms/MonetizationService';
+import { DEPTH } from '../graphics/SceneDepth';
+import { ModalLayer } from './ModalLayer';
 
 export class ShopPanel {
   private readonly state = GameState.getInstance();
+  private modal = new ModalLayer();
   private overlay: Phaser.GameObjects.Rectangle | null = null;
   private container: Phaser.GameObjects.Container | null = null;
   private onClose: (() => void) | null = null;
@@ -31,12 +34,14 @@ export class ShopPanel {
       72,
       40,
     );
-    btn.setDepth(502);
+    btn.setDepth(DEPTH.hud + 12);
     return btn;
   }
 
   show(scene: Phaser.Scene, onClose?: () => void): void {
-    this.hide();
+    this.modal.destroyAll();
+    this.overlay = null;
+    this.container = null;
     this.onClose = onClose ?? null;
 
     const t = L().shop;
@@ -44,7 +49,7 @@ export class ShopPanel {
     const depth = dual ? 902 : 900;
 
     if (!dual) {
-      this.overlay = createModalOverlay(scene, depth);
+      this.overlay = this.modal.track(createModalOverlay(scene, depth));
       this.overlay.on('pointerdown', () => this.hide());
     }
 
@@ -53,17 +58,19 @@ export class ShopPanel {
     const cx = dual ? 970 : GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
 
-    createModalPanel(scene, cx, cy, panelW, panelH, depth + 1);
+    this.modal.track(createModalPanel(scene, cx, cy, panelW, panelH, depth + 1));
 
-    const panelBlocker = scene.add
-      .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
-      .setInteractive()
-      .setDepth(depth + 1);
+    const panelBlocker = this.modal.track(
+      scene.add
+        .rectangle(cx, cy, panelW, panelH, 0x000000, 0)
+        .setInteractive()
+        .setDepth(depth + 1),
+    );
     panelBlocker.on('pointerdown', (_p: Phaser.Input.Pointer, _x: number, _y: number, ev: Phaser.Types.Input.EventData) => {
       ev.stopPropagation();
     });
 
-    this.container = scene.add.container(0, 0).setDepth(depth + 2);
+    this.container = this.modal.track(scene.add.container(0, 0).setDepth(depth + 2));
 
     const titleY = dual ? cy - 210 : cy - 262;
     const title = scene.add
@@ -103,27 +110,31 @@ export class ShopPanel {
       ];
 
       rewards.forEach((r, i) => {
-        createTextButton(
-          scene,
-          cx,
-          adY + 44 + i * 48,
-          `📺 ${r.label}`,
-          () => this.watchAd(scene, r.type),
-          400,
-          38,
-        ).setDepth(depth + 3);
+        this.modal.track(
+          createTextButton(
+            scene,
+            cx,
+            adY + 44 + i * 48,
+            `📺 ${r.label}`,
+            () => this.watchAd(scene, r.type),
+            400,
+            38,
+          ).setDepth(depth + 3),
+        );
       });
     }
 
-    createTextButton(
-      scene,
-      cx,
-      dual ? cy + 210 : cy + 258,
-      t.close,
-      () => this.hide(),
-      160,
-      40,
-    ).setDepth(depth + 3);
+    this.modal.track(
+      createTextButton(
+        scene,
+        cx,
+        dual ? cy + 210 : cy + 258,
+        t.close,
+        () => this.hide(),
+        160,
+        40,
+      ).setDepth(depth + 3),
+    );
   }
 
   private renderProductRow(
@@ -165,15 +176,17 @@ export class ShopPanel {
         .setOrigin(0.5);
       this.container?.add(ownedLabel);
     } else {
-      createTextButton(
-        scene,
-        cx + 170,
-        y,
-        t.buy,
-        () => this.buyProduct(scene, product.id),
-        90,
-        32,
-      ).setDepth(depth + 3);
+      this.modal.track(
+        createTextButton(
+          scene,
+          cx + 170,
+          y,
+          t.buy,
+          () => this.buyProduct(scene, product.id),
+          90,
+          32,
+        ).setDepth(depth + 3),
+      );
     }
   }
 
@@ -215,9 +228,8 @@ export class ShopPanel {
   }
 
   hide(): void {
-    this.overlay?.destroy();
+    this.modal.destroyAll();
     this.overlay = null;
-    this.container?.destroy();
     this.container = null;
     const cb = this.onClose;
     this.onClose = null;

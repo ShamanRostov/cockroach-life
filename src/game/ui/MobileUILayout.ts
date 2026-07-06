@@ -1,5 +1,18 @@
 import { GAME_WIDTH, GAME_HEIGHT, MOBILE_UI_SCALE, isMobileDevice } from '../config';
 
+export {
+  getNestHudButtonX,
+  getNestHudButtonY,
+  getRightPanelWidth,
+  getLeftPanelWidth,
+  isNestUIRegion,
+  NEST_LAYOUT,
+  getBuildPanelX,
+  getBuildPanelCenterX,
+  getEventBannerY,
+  getRegionSwitcherY,
+} from './NestLayout';
+
 export const MIN_TOUCH_TARGET = 44;
 
 export interface SafeAreaInsets {
@@ -56,32 +69,6 @@ export function mobileButtonSize(width: number, height: number): { width: number
   };
 }
 
-/** Right-side HUD icon Y positions (stacked, non-overlapping). */
-export function getNestHudButtonY(slot: 'daily' | 'shop' | 'breeding' | 'seasonPass'): number {
-  const safe = getSafeAreaInsets();
-  const base = 52 + safe.top;
-  const gap = isMobileDevice() ? 48 : 44;
-  const order = ['daily', 'shop', 'breeding', 'seasonPass'] as const;
-  const idx = order.indexOf(slot);
-  return base + idx * gap;
-}
-
-/** Right-side HUD icon X (accounts for safe area). */
-export function getNestHudButtonX(): number {
-  const safe = getSafeAreaInsets();
-  return GAME_WIDTH - 56 - safe.right;
-}
-
-/** Right-side build panel width. */
-export function getRightPanelWidth(): number {
-  return isMobileDevice() ? 260 : 250;
-}
-
-/** Left-side defense panel width. */
-export function getLeftPanelWidth(): number {
-  return isMobileDevice() ? 300 : 280;
-}
-
 /** Position a UI element with safe-area offset on mobile. */
 export function layoutCorner(
   corner: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight',
@@ -99,17 +86,6 @@ export function layoutCorner(
     case 'bottomRight':
       return { x: GAME_WIDTH - offsetX - safe.right, y: GAME_HEIGHT - offsetY - safe.bottom };
   }
-}
-
-/** True when a pointer is over the nest scene side panels (not the build grid). */
-export function isNestUIRegion(x: number, y: number): boolean {
-  const rightPanel = getRightPanelWidth();
-  const leftPanel = getLeftPanelWidth();
-  if (y < 100) return true;
-  if (x > GAME_WIDTH - rightPanel - 10) return true;
-  if (x < leftPanel + 16 && y < 270) return true;
-  if (x < 420 && y > GAME_HEIGHT - 140) return true;
-  return false;
 }
 
 /** True when a pointer is over world-map chrome (not the map). */

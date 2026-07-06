@@ -95,7 +95,12 @@ function startGame(): void {
     bindAnalytics(game);
     wireMobileScrollLock(game);
 
-    if (new URLSearchParams(location.search).get('screenshots') === '1') {
+    const params = new URLSearchParams(location.search);
+    if (import.meta.env.DEV || params.get('autotest') === '1') {
+      void import('./dev/gameTestHook').then(({ installGameTestHook }) => installGameTestHook(game));
+    }
+
+    if (params.get('screenshots') === '1') {
       void import('./dev/ScreenshotMode').then(({ initScreenshotMode }) => initScreenshotMode(game));
     }
   } catch (error) {

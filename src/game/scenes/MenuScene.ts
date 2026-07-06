@@ -31,7 +31,7 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     addFullscreenBg(this, 'menu-bg', DEPTH.background);
     addWarmGlow(this, GAME_WIDTH * 0.72, 80, DEPTH.ambient, 1.8);
-    addVignette(this, DEPTH.vignette);
+    addVignette(this);
     this.createBackgroundParticles();
 
     const cx = GAME_WIDTH / 2;

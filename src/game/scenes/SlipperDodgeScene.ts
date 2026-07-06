@@ -3,7 +3,8 @@ import { SCENES, COLORS, GAME_WIDTH, GAME_HEIGHT, isMobileDevice } from '../conf
 import { GameState } from '../GameState';
 import { createTextButton, addFullscreenBg } from '../ui/ButtonHelper';
 import { createCockroachPhysics, syncCockroachMovement } from '../graphics/CockroachSprite';
-import { screenShake } from '../graphics/VisualEffects';
+import { screenShake, showScorePopup } from '../graphics/VisualEffects';
+import { spawnSparkBurst } from '../graphics/ParticleEffects';
 import { TouchControls } from '../ui/TouchControls';
 import { L, fmt } from '../../i18n';
 import { monetizationService } from '../../platforms/MonetizationService';
@@ -23,6 +24,8 @@ export class SlipperDodgeScene extends Phaser.Scene {
   private alive = true;
   private runCompleted = false;
   private scoreText!: Phaser.GameObjects.Text;
+  private comboText!: Phaser.GameObjects.Text;
+  private combo = 0;
   private spawnTimer = 0;
   private slippers: Phaser.Physics.Arcade.Sprite[] = [];
   private state = GameState.getInstance();
@@ -58,6 +61,12 @@ export class SlipperDodgeScene extends Phaser.Scene {
       color: '#ffca28',
     });
 
+    this.comboText = this.add.text(24, 44, '', {
+      fontFamily: 'Segoe UI, Arial, sans-serif',
+      fontSize: '16px',
+      color: '#81d4fa',
+    });
+
     this.player = createCockroachPhysics(
       this,
       GAME_WIDTH / 2,
@@ -69,6 +78,7 @@ export class SlipperDodgeScene extends Phaser.Scene {
 
     this.slipper = this.physics.add.sprite(GAME_WIDTH / 2, -50, 'slipper');
     this.slipper.setScale(0.55);
+    this.slipper.setData('dodged', false);
     this.slippers.push(this.slipper);
 
     this.physics.add.overlap(this.player, this.slipper, () => this.onHit(), undefined, this);
@@ -112,6 +122,7 @@ export class SlipperDodgeScene extends Phaser.Scene {
 
     const extra = this.physics.add.sprite(GAME_WIDTH / 2 + 200, GAME_HEIGHT * 0.28, 'slipper');
     extra.setScale(0.5);
+    extra.setData('dodged', false);
     extra.setVelocity(-40, 220);
     extra.setAngularVelocity(-160);
     this.slippers.push(extra);
@@ -136,12 +147,17 @@ export class SlipperDodgeScene extends Phaser.Scene {
     this.scoreText.setText(fmt(L().common.score, { score: Math.floor(this.score) }));
 
     this.spawnTimer += delta;
-    if (this.spawnTimer > 2500) {
+    const spawnInterval = Math.max(1400, 2500 - this.score * 2);
+    if (this.spawnTimer > spawnInterval) {
       this.spawnTimer = 0;
       this.spawnNewSlipper();
     }
 
     for (const s of this.slippers) {
+      if (s.active && !s.getData('dodged') && s.y > this.player.y + 25) {
+        s.setData('dodged', true);
+        this.onDodge(s);
+      }
       if (s.y > GAME_HEIGHT + 60) {
         s.destroy();
       }
@@ -151,23 +167,44 @@ export class SlipperDodgeScene extends Phaser.Scene {
 
   private spawnNewSlipper(): void {
     const s = this.physics.add.sprite(Phaser.Math.Between(100, GAME_WIDTH - 100), -50, 'slipper');
-    s.setScale(0.45 + Math.random() * 0.2);
+    const sizeRoll = Math.random();
+    const scale = sizeRoll < 0.2 ? 0.7 + Math.random() * 0.15 : 0.38 + Math.random() * 0.22;
+    s.setScale(scale);
+    s.setData('dodged', false);
     this.slippers.push(s);
     this.physics.add.overlap(this.player, s, () => this.onHit(), undefined, this);
     this.launchSlipper(s);
   }
 
   private launchSlipper(s: Phaser.Physics.Arcade.Sprite): void {
-    s.setVelocity(Phaser.Math.Between(-80, 80), Phaser.Math.Between(200, 350));
-    s.setAngularVelocity(Phaser.Math.Between(-200, 200));
+    const difficulty = 1 + Math.min(this.score / 400, 1.5);
+    const scale = s.scaleX;
+    const sizeSpeed = scale > 0.6 ? 0.75 : scale < 0.45 ? 1.25 : 1;
+    const baseY = Phaser.Math.Between(200, 380) * sizeSpeed * difficulty;
+    s.setVelocity(Phaser.Math.Between(-110, 110), baseY);
+    s.setAngularVelocity(Phaser.Math.Between(-260, 260));
+  }
+
+  private onDodge(s: Phaser.Physics.Arcade.Sprite): void {
+    if (!this.alive) return;
+    this.combo += 1;
+    const bonus = 5 + this.combo * 3;
+    this.score += bonus;
+    this.comboText.setText(this.combo > 1 ? `x${this.combo}` : '');
+    showScorePopup(this, s.x, s.y, `+${bonus}`, '#81d4fa');
+    if (this.combo % 3 === 0) {
+      spawnSparkBurst(this, s.x, s.y, 8, 0x81d4fa);
+    }
   }
 
   private onHit(): void {
     if (!this.alive) return;
     this.alive = false;
     this.runCompleted = true;
+    this.combo = 0;
     this.player.setTint(COLORS.danger);
     screenShake(this, 320, 0.028);
+    spawnSparkBurst(this, this.player.x, this.player.y, 14, COLORS.danger);
     SoundManager.getInstance().playSFX('arcade_hit');
 
     const finalScore = Math.floor(this.score);
