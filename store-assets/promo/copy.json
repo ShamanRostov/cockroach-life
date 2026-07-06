@@ -33,11 +33,10 @@
         "ageRating": "6+",
         "ageJustification": "Мультяшная 2D-графика, комичные опасности (тапок, спрей, кот), без крови и реалистичного насилия.",
         "whatsNew": [
-          "Сезонный пропуск — 15 уровней наград (бесплатный и премиум трек)",
-          "Район «Подъезд» — третий регион с шкафчиками и нишами",
-          "16 районов на карте мира (квартира, балкон, подъезд)",
-          "Процедурная графика — все текстуры генерируются в рантайме",
-          "Скины таракана: золотой, неон, зомби, повар + набор в магазине"
+          "Прокачка тараканов — опыт за время и успешные налёты (до 5 уровня)",
+          "Ловушки отбивают бот-налёты — ежедневная награда за защиту гнезда",
+          "Разведчик ускоряет движение в налётах, боец усиливает мощь колонии",
+          "Баланс пассивного дохода и сезонного пропуска за экономику"
         ]
       },
       "en": {
@@ -53,11 +52,10 @@
         "ageRating": "6+",
         "ageJustification": "Cartoon 2D art, comedic hazards (slipper, spray, cat), no blood or realistic violence.",
         "whatsNew": [
-          "Season Pass — 15 reward tiers (free and premium track)",
-          "Stairwell district — third region with lockers and niches",
-          "16 world map districts (apartment, balcony, stairwell)",
-          "Procedural graphics — all textures generated at runtime",
-          "Cockroach skins: golden, neon, zombie, chef + skin pack in shop"
+          "Cockroach leveling — XP from playtime and successful raids (max level 5)",
+          "Traps repel bot raids — daily defense reward when your nest is protected",
+          "Scout speeds up raid movement; fighter boosts colony power on the map",
+          "Passive income balance and season pass XP for economy actions"
         ]
       },
       "leaderboards": [
