@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
       strictPort: false,
       open: true,
       host: true,
+      allowedHosts: ['.cursorvm.com'],
     },
     build: {
       outDir: 'dist',
