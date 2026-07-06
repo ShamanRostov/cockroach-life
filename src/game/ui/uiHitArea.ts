@@ -11,8 +11,9 @@ export function setContainerHitArea(
   const w = displayWidth;
   const h = displayHeight;
   container.setSize(w, h);
+  // Hit area is top-left aligned: Phaser adds displayOrigin before testing.
   container.setInteractive({
-    hitArea: new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
+    hitArea: new Phaser.Geom.Rectangle(0, 0, w, h),
     hitAreaCallback: Phaser.Geom.Rectangle.Contains,
     useHandCursor: !isMobileDevice(),
   });

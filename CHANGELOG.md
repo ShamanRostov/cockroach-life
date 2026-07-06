@@ -25,6 +25,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - White/checkerboard backgrounds stripped from PNG sprites at load
+- UI button hit areas cover the full button (Phaser Container origin offset)
 - UI test coordinates aligned with `NestLayout` (7/7 passing)
 - Asset processor writes via temp file (in-place reprocess works on Linux)
 

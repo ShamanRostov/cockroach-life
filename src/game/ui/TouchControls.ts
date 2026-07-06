@@ -278,7 +278,8 @@ export class TouchControls {
 
     btn.add([bg, text]);
     btn.setSize(88, 88);
-    btn.setInteractive(new Phaser.Geom.Circle(0, 0, 44), Phaser.Geom.Circle.Contains);
+    // Center matches displayOrigin (half of setSize) after Phaser normalizes input coords.
+    btn.setInteractive(new Phaser.Geom.Circle(44, 44, 44), Phaser.Geom.Circle.Contains);
 
     btn.on('pointerdown', () => {
       bg.setFillStyle(0xffa726, 0.7);
