@@ -7,22 +7,19 @@ import type { SoundKey } from '../audio/generateSounds';
 
 const UI_TEXTURE_KEYS = ['ui-panel', 'ui-button', 'ui-button-hover', 'ui-hud-panel'] as const;
 
-function wireContainerButton(
+function wireButtonHitRect(
+  scene: Phaser.Scene,
   container: Phaser.GameObjects.Container,
+  bg: Phaser.GameObjects.Image,
   w: number,
   h: number,
   onClick: () => void,
   sfx: SoundKey | 'none',
-  scene: Phaser.Scene,
-): void {
-  container.setSize(w, h);
-  container.setInteractive({
-    hitArea: new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
-    hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-    useHandCursor: !isMobileDevice(),
-  });
+): Phaser.GameObjects.Rectangle {
+  const hitRect = scene.add.rectangle(0, 0, w, h, 0x000000, 0);
+  hitRect.setInteractive({ useHandCursor: !isMobileDevice() });
 
-  container.on('pointerdown', (
+  hitRect.on('pointerdown', (
     _p: Phaser.Input.Pointer,
     _lx: number,
     _ly: number,
@@ -42,6 +39,13 @@ function wireContainerButton(
     });
     onClick();
   });
+
+  if (!isMobileDevice()) {
+    hitRect.on('pointerover', () => bg.setTexture('ui-button-hover'));
+    hitRect.on('pointerout', () => bg.setTexture('ui-button'));
+  }
+
+  return hitRect;
 }
 
 export function createTextButton(
@@ -73,13 +77,8 @@ export function createTextButton(
   });
   text.setOrigin(0.5);
 
-  container.add([bg, text]);
-  wireContainerButton(container, w, h, onClick, sfx, scene);
-
-  if (!isMobileDevice()) {
-    container.on('pointerover', () => bg.setTexture('ui-button-hover'));
-    container.on('pointerout', () => bg.setTexture('ui-button'));
-  }
+  const hitRect = wireButtonHitRect(scene, container, bg, w, h, onClick, sfx);
+  container.add([bg, text, hitRect]);
 
   return container;
 }

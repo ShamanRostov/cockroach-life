@@ -17,7 +17,6 @@ import { SS_REGISTRY } from '../../dev/screenshotRegistry';
 
 export class SlipperDodgeScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
-  private slipper!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: { A: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
   private touchControls: TouchControls | null = null;
@@ -77,12 +76,7 @@ export class SlipperDodgeScene extends Phaser.Scene {
     );
     this.player.setCollideWorldBounds(true);
 
-    this.slipper = this.physics.add.sprite(GAME_WIDTH / 2, -50, 'slipper');
-    this.slipper.setScale(0.55);
-    this.slipper.setData('dodged', false);
-    this.slippers.push(this.slipper);
-
-    this.physics.add.overlap(this.player, this.slipper, () => this.onHit(), undefined, this);
+    this.spawnSlipperWave(2);
 
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.wasd = {
@@ -104,7 +98,6 @@ export class SlipperDodgeScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.launchSlipper(this.slipper);
     this.applyScreenshotMidGame();
   }
 
@@ -117,17 +110,16 @@ export class SlipperDodgeScene extends Phaser.Scene {
     this.player.setX(GAME_WIDTH / 2 + 120);
     this.spawnTimer = 2100;
 
-    this.slipper.setPosition(GAME_WIDTH / 2 - 90, GAME_HEIGHT * 0.42);
-    this.slipper.setVelocity(60, 180);
-    this.slipper.setAngularVelocity(140);
+    const primary = this.slippers[0];
+    if (primary) {
+      primary.setPosition(GAME_WIDTH / 2 - 90, GAME_HEIGHT * 0.42);
+      primary.setVelocity(60, 180);
+      primary.setAngularVelocity(140);
+    }
 
-    const extra = this.physics.add.sprite(GAME_WIDTH / 2 + 200, GAME_HEIGHT * 0.28, 'slipper');
-    extra.setScale(0.5);
-    extra.setData('dodged', false);
+    const extra = this.spawnSlipperAt(GAME_WIDTH / 2 + 200, GAME_HEIGHT * 0.28);
     extra.setVelocity(-40, 220);
     extra.setAngularVelocity(-160);
-    this.slippers.push(extra);
-    this.physics.add.overlap(this.player, extra, () => this.onHit(), undefined, this);
   }
 
   update(_time: number, delta: number): void {
@@ -151,7 +143,7 @@ export class SlipperDodgeScene extends Phaser.Scene {
     const spawnInterval = Math.max(1400, 2500 - this.score * 2);
     if (this.spawnTimer > spawnInterval) {
       this.spawnTimer = 0;
-      this.spawnNewSlipper();
+      this.spawnSlipperWave();
     }
 
     for (const s of this.slippers) {
@@ -166,21 +158,44 @@ export class SlipperDodgeScene extends Phaser.Scene {
     this.slippers = this.slippers.filter((s) => s.active);
   }
 
-  private spawnNewSlipper(): void {
-    const s = this.physics.add.sprite(Phaser.Math.Between(100, GAME_WIDTH - 100), -50, 'slipper');
+  private rollSlipperScale(): number {
     const sizeRoll = Math.random();
-    const scale = sizeRoll < 0.2 ? 0.7 + Math.random() * 0.15 : 0.38 + Math.random() * 0.22;
-    s.setScale(scale);
+    if (sizeRoll < 0.2) {
+      return ARCADE_SLIPPER.scaleBigMin + Math.random() * (ARCADE_SLIPPER.scaleBigMax - ARCADE_SLIPPER.scaleBigMin);
+    }
+    return ARCADE_SLIPPER.scaleMin + Math.random() * (ARCADE_SLIPPER.scaleMax - ARCADE_SLIPPER.scaleMin);
+  }
+
+  private spawnSlipperAt(x: number, y: number): Phaser.Physics.Arcade.Sprite {
+    const s = this.physics.add.sprite(x, y, 'slipper');
+    s.setScale(this.rollSlipperScale());
     s.setData('dodged', false);
     this.slippers.push(s);
     this.physics.add.overlap(this.player, s, () => this.onHit(), undefined, this);
     this.launchSlipper(s);
+    return s;
+  }
+
+  private spawnSlipperWave(forcedCount?: number): void {
+    const extra = Math.min(2, Math.floor(this.score / 500));
+    const count =
+      forcedCount ??
+      Phaser.Math.Between(ARCADE_SLIPPER.waveMin + extra, ARCADE_SLIPPER.waveMax + extra);
+    const margin = 100;
+    const span = GAME_WIDTH - margin * 2;
+    const step = span / count;
+
+    for (let i = 0; i < count; i++) {
+      const x = margin + step * i + step / 2 + Phaser.Math.Between(-24, 24);
+      const y = -50 - Phaser.Math.Between(0, 40 * i);
+      this.spawnSlipperAt(x, y);
+    }
   }
 
   private launchSlipper(s: Phaser.Physics.Arcade.Sprite): void {
     const difficulty = 1 + Math.min(this.score / 400, 1.5);
     const scale = s.scaleX;
-    const sizeSpeed = scale > 0.6 ? 0.75 : scale < 0.45 ? 1.25 : 1;
+    const sizeSpeed = scale > 1.2 ? 0.75 : scale < 0.9 ? 1.25 : 1;
     const baseY = Phaser.Math.Between(200, 380) * sizeSpeed * difficulty;
     s.setVelocity(Phaser.Math.Between(-110, 110), baseY);
     s.setAngularVelocity(Phaser.Math.Between(-260, 260));

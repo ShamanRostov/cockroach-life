@@ -221,4 +221,12 @@ export const ARCADE_HOSPITAL = {
 
 export const ARCADE_SLIPPER = {
   playerSpeed: 280,
+  /** Display scale for slipper sprite (2× previous size). */
+  initialScale: 1.1,
+  scaleMin: 0.76,
+  scaleMax: 1.2,
+  scaleBigMin: 1.4,
+  scaleBigMax: 1.7,
+  waveMin: 2,
+  waveMax: 4,
 };

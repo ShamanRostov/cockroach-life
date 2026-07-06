@@ -15,6 +15,7 @@ import { platformManager } from '../../platforms/PlatformManager';
 import { spawnRaidSmoke } from '../graphics/ParticleEffects';
 import { screenShake } from '../graphics/VisualEffects';
 import { DEPTH } from '../graphics/SceneDepth';
+import { ARCADE_SLIPPER } from '../systems/GameBalance';
 import { SS_REGISTRY } from '../../dev/screenshotRegistry';
 
 type Phase = 'intro' | 'infiltrate' | 'loot' | 'escape' | 'result';
@@ -41,7 +42,7 @@ export class RaidScene extends Phaser.Scene {
 
   private traps: Phaser.GameObjects.Group | null = null;
   private foods: Phaser.Physics.Arcade.Group | null = null;
-  private slipper: Phaser.Physics.Arcade.Sprite | null = null;
+  private escapeSlippers: Phaser.Physics.Arcade.Sprite[] = [];
   private exitZone: Phaser.GameObjects.Zone | null = null;
   private phaseObjects: Phaser.GameObjects.GameObject[] = [];
   private touchControls: TouchControls | null = null;
@@ -182,14 +183,15 @@ export class RaidScene extends Phaser.Scene {
     this.touchControls = null;
     this.traps?.clear(true, true);
     this.foods?.clear(true, true);
-    this.slipper?.destroy();
+    this.escapeSlippers.forEach((s) => s.destroy());
+    this.escapeSlippers = [];
     this.exitZone?.destroy();
     this.player?.destroy();
     this.phaseObjects.forEach((o) => o.destroy());
     this.phaseObjects = [];
     this.traps = null;
     this.foods = null;
-    this.slipper = null;
+    this.escapeSlippers = [];
     this.exitZone = null;
   }
 
@@ -239,7 +241,7 @@ export class RaidScene extends Phaser.Scene {
 
     for (const cfg of trapConfigs) {
       if (cfg.type === 'slipper') {
-        const s = this.add.sprite(cfg.x, cfg.y, 'slipper').setScale(0.45).setAlpha(0.95).setDepth(8);
+        const s = this.add.sprite(cfg.x, cfg.y, 'slipper').setScale(0.9).setAlpha(0.95).setDepth(8);
         this.traps?.add(s);
         this.tweens.add({
           targets: s,
@@ -421,26 +423,41 @@ export class RaidScene extends Phaser.Scene {
     ).setDepth(10);
     this.player.setCollideWorldBounds(true);
 
-    this.slipper = this.physics.add.sprite(GAME_WIDTH / 2, 80, 'slipper').setScale(0.55).setDepth(12);
-    this.physics.add.overlap(this.player, this.slipper, () => {
-      if (this.phase !== 'escape') return;
-      this.escapeScore = Math.max(0, this.escapeScore - 40);
-      screenShake(this, 300, 0.032);
-      this.player.setTint(COLORS.danger);
-      this.time.delayedCall(300, () => this.player.clearTint());
-    });
+    this.spawnEscapeSlipperWave(2);
 
     this.time.addEvent({
       delay: 1800,
       loop: true,
       callback: () => {
-        if (this.slipper && this.phase === 'escape') {
-          this.slipper.setX(Phaser.Math.Between(100, GAME_WIDTH - 100));
-          this.slipper.setY(80);
-          this.slipper.setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(280, 380));
+        if (this.phase === 'escape') {
+          this.spawnEscapeSlipperWave();
         }
       },
     });
+  }
+
+  private spawnEscapeSlipperWave(forcedCount?: number): void {
+    if (this.phase !== 'escape' || !this.player?.active) return;
+
+    const count = forcedCount ?? Phaser.Math.Between(ARCADE_SLIPPER.waveMin, ARCADE_SLIPPER.waveMax);
+    const margin = 100;
+    const span = GAME_WIDTH - margin * 2;
+    const step = span / count;
+
+    for (let i = 0; i < count; i++) {
+      const x = margin + step * i + step / 2 + Phaser.Math.Between(-20, 20);
+      const s = this.physics.add.sprite(x, 80, 'slipper').setScale(ARCADE_SLIPPER.initialScale).setDepth(12);
+      s.setVelocity(Phaser.Math.Between(-100, 100), Phaser.Math.Between(280, 380));
+      s.setAngularVelocity(Phaser.Math.Between(-200, 200));
+      this.escapeSlippers.push(s);
+      this.physics.add.overlap(this.player, s, () => {
+        if (this.phase !== 'escape') return;
+        this.escapeScore = Math.max(0, this.escapeScore - 40);
+        screenShake(this, 300, 0.032);
+        this.player.setTint(COLORS.danger);
+        this.time.delayedCall(300, () => this.player.clearTint());
+      });
+    }
   }
 
   private updateEscape(delta: number): void {

@@ -28,7 +28,7 @@ export class EventBanner {
     const t = L().events;
     const { days, hours } = this.state.liveOps.formatTimeRemaining();
 
-    const container = scene.add.container(340, getEventBannerY()).setDepth(DEPTH.hud + 1);
+    const container = scene.add.container(GAME_WIDTH / 2, getEventBannerY()).setDepth(DEPTH.hud + 1);
 
     const bannerW = 360;
     const bannerH = 36;

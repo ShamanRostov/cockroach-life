@@ -8,7 +8,7 @@ import { ShopPanel } from '../ui/ShopPanel';
 import { SeasonPassPanel } from '../ui/SeasonPassPanel';
 import { EventBanner } from '../ui/EventBanner';
 import { createPanel, showToast, createAdaptiveButton } from '../ui/ButtonHelper';
-import { isNestUIRegion, getRightPanelWidth, getBuildPanelX, getBuildPanelCenterX, NEST_LAYOUT, getRegionSwitcherY } from '../ui/MobileUILayout';
+import { isNestUIRegion, getRightPanelWidth, getBuildPanelX, getBuildPanelCenterX, getDefensePanelCenterX, NEST_LAYOUT, getRegionSwitcherY } from '../ui/MobileUILayout';
 import { ROOM_DEFINITIONS, type RoomDefinition, type RoomType } from '../systems/BuildingSystem';
 import { gridToScreen, screenToGrid } from '../utils/isometric';
 import { buildingTextureKey, buildingDisplayScale } from '../assets/AssetKeys';
@@ -17,7 +17,7 @@ import { addVignette, addWarmGlow } from '../graphics/VisualEffects';
 import { DEPTH } from '../graphics/SceneDepth';
 import { spawnBuildSparkles } from '../graphics/ParticleEffects';
 import { playBuildAnimation, playUpgradeAnimation } from '../graphics/BuildAnimation';
-import { createCockroachSprite } from '../graphics/CockroachSprite';
+import { createCockroachSprite, syncCockroachDirection } from '../graphics/CockroachSprite';
 import { i18n, L, fmt } from '../../i18n';
 import { AnalyticsService } from '../../platforms/AnalyticsService';
 import { SoundManager } from '../audio/SoundManager';
@@ -58,7 +58,7 @@ export class NestScene extends Phaser.Scene {
   private nestBg!: Phaser.GameObjects.Image;
   private tutorialOverlay = new TutorialOverlay();
   private foodArcadeBtn = { x: 320, y: GAME_HEIGHT - 70, width: 100, height: 40 };
-  private worldMapBtn = { x: 156, y: 218, width: 200, height: 36 };
+  private worldMapBtn = { x: 122, y: 322, width: 196, height: 36 };
 
   constructor() {
     super(SCENES.NEST);
@@ -186,7 +186,7 @@ export class NestScene extends Phaser.Scene {
           ? t.nest.switchStairwell
           : t.nest.switchBalcony;
 
-    createAdaptiveButton(this, 400, getRegionSwitcherY(), label, () => {
+    createAdaptiveButton(this, GAME_WIDTH / 2, getRegionSwitcherY(), label, () => {
       const target = this.state.getNextNestRegion();
       if (target === 'balcony' && !this.state.isBalconyUnlocked()) {
         showToast(this, t.nest.balconyLocked);
@@ -271,7 +271,7 @@ export class NestScene extends Phaser.Scene {
     const step = this.roachSpeed * (delta / 1000);
     this.cockroach.x += (dx / dist) * step;
     this.cockroach.y += (dy / dist) * step;
-    this.cockroach.setFlipX(dx < 0);
+    syncCockroachDirection(this.cockroach, dx, dy);
   }
 
   private pickRoachWaypoint(): { x: number; y: number } {
@@ -355,6 +355,10 @@ export class NestScene extends Phaser.Scene {
     const uiDepth = DEPTH.hud + 4;
     const panelTop = NEST_LAYOUT.defensePanelTop;
     const panelW = NEST_LAYOUT.defensePanelW;
+    const btnW = panelW - 24;
+    const btnH = 38;
+    const btnStartY = panelTop + 40;
+    const btnGap = 44;
     createPanel(this, NEST_LAYOUT.sideMargin, panelTop, panelW, NEST_LAYOUT.defensePanelH, 0.92, DEPTH.ui);
     this.add
       .text(NEST_LAYOUT.sideMargin + 12, panelTop + 10, t.nest.defense, {
@@ -376,8 +380,8 @@ export class NestScene extends Phaser.Scene {
       const active = this.state.raid.defenseTraps.includes(tr.key);
       createAdaptiveButton(
         this,
-        NEST_LAYOUT.sideMargin + 52 + i * 82,
-        panelTop + 52,
+        getDefensePanelCenterX(),
+        btnStartY + i * btnGap,
         active ? `✓ ${tr.label}` : tr.label,
         () => {
           this.state.raid.toggleTrap(tr.key);
@@ -385,27 +389,29 @@ export class NestScene extends Phaser.Scene {
           showToast(this, t.nest.trapsSaved);
           this.scene.restart();
         },
-        76,
-        34,
+        btnW,
+        btnH,
         'ui_click',
         uiDepth,
       );
     });
 
+    const worldMapY = panelTop + NEST_LAYOUT.defensePanelH + 22;
     createAdaptiveButton(
       this,
-      NEST_LAYOUT.sideMargin + panelW / 2,
-      panelTop + NEST_LAYOUT.defensePanelH + 28,
+      getDefensePanelCenterX(),
+      worldMapY,
       t.nest.worldMap,
       () => {
         this.state.persist();
         this.scene.start(SCENES.WORLD_MAP);
       },
-      180,
-      34,
+      btnW,
+      btnH,
       'ui_click',
       uiDepth,
     );
+    this.worldMapBtn = { x: getDefensePanelCenterX(), y: worldMapY, width: btnW, height: btnH };
   }
 
   private createArcadePanel(): void {
@@ -452,18 +458,12 @@ export class NestScene extends Phaser.Scene {
           this.scene.start(m.scene);
         },
         btnW,
-        34,
+        38,
         'ui_click',
         uiDepth,
       );
     });
-    this.foodArcadeBtn = { x: startX + 2 * btnGap, y: panelY + 58, width: btnW, height: 34 };
-    this.worldMapBtn = {
-      x: NEST_LAYOUT.sideMargin + NEST_LAYOUT.defensePanelW / 2,
-      y: NEST_LAYOUT.defensePanelTop + NEST_LAYOUT.defensePanelH + 28,
-      width: 180,
-      height: 34,
-    };
+    this.foodArcadeBtn = { x: startX + 2 * btnGap, y: panelY + 58, width: btnW, height: 38 };
   }
 
   private clearHoverTint(): void {
