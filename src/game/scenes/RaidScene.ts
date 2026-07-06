@@ -16,6 +16,7 @@ import { spawnRaidSmoke } from '../graphics/ParticleEffects';
 import { screenShake } from '../graphics/VisualEffects';
 import { DEPTH } from '../graphics/SceneDepth';
 import { SS_REGISTRY } from '../../dev/screenshotRegistry';
+import { RAID_MOVE_SPEED } from '../systems/GameBalance';
 
 type Phase = 'intro' | 'infiltrate' | 'loot' | 'escape' | 'result';
 
@@ -286,7 +287,7 @@ export class RaidScene extends Phaser.Scene {
   }
 
   private updateInfiltrate(delta: number): void {
-    this.movePlayer(220);
+    this.movePlayer(this.getMoveSpeed(RAID_MOVE_SPEED.infiltrate));
     this.phaseTimer -= delta;
     this.hudText.setText(
       fmt(L().raid.infiltrateHud, { time: Math.ceil(this.phaseTimer / 1000), damage: Math.floor(this.damage) }),
@@ -387,7 +388,7 @@ export class RaidScene extends Phaser.Scene {
   }
 
   private updateLoot(delta: number): void {
-    this.movePlayer(200);
+    this.movePlayer(this.getMoveSpeed(RAID_MOVE_SPEED.loot));
     this.phaseTimer -= delta;
     this.hudText.setText(
       fmt(L().raid.lootHud, {
@@ -444,7 +445,7 @@ export class RaidScene extends Phaser.Scene {
   }
 
   private updateEscape(delta: number): void {
-    this.movePlayer(260, this.escapeHorizontalOnly);
+    this.movePlayer(this.getMoveSpeed(RAID_MOVE_SPEED.escape), this.escapeHorizontalOnly);
     this.escapeTimer += delta;
     this.escapeScore = Math.min(100, Math.floor(this.escapeTimer / 200));
     this.hudText.setText(fmt(L().raid.escapeHud, { time: Math.floor(this.escapeTimer / 1000) }));
@@ -453,6 +454,10 @@ export class RaidScene extends Phaser.Scene {
       this.escapeScore = Math.min(100, this.escapeScore + 30);
       this.finishRaid();
     }
+  }
+
+  private getMoveSpeed(base: number): number {
+    return base * (1 + this.state.breeding.getRoleBonus('scout'));
   }
 
   private movePlayer(speed: number, horizontalOnly = false): void {
@@ -510,6 +515,7 @@ export class RaidScene extends Phaser.Scene {
     if (result.success) {
       this.state.addFood(result.foodStolen);
       this.state.addMoney(result.moneyStolen);
+      this.state.grantRaidColonyXP();
     } else {
       this.state.economy.damage(15);
     }

@@ -78,6 +78,7 @@ export const ru: LocalePack = {
     stairwellLocked: '10 построек, рейтинг 1500+ или балкон + 3 постройки',
     balconyTitle: 'Гнездо на балконе',
     stairwellTitle: 'Гнездо в подъезде',
+    defenseRepelled: '🛡 Ловушки отбили налёт! +{food} еды, +{money} денег',
   },
   rooms: {
     kitchen: { name: 'Кухня', desc: 'Картонная коробка с крошками и соломинкой-трубой' },
@@ -334,6 +335,7 @@ export const ru: LocalePack = {
     selectRole: 'Выберите роль для разведения:',
     breedButton: 'Развести ({food}🍞 {money}💰)',
     breedStarted: 'Разведение: {role}...',
+    levelUp: '⬆ {names} повысили уровень!',
     roles: { worker: 'Рабочий', scout: 'Разведчик', fighter: 'Боец' },
     errors: {
       noNursery: 'Сначала постройте Питомник',
@@ -359,6 +361,7 @@ export const ru: LocalePack = {
     rewardDoubleLoot: 'Удвоить добычу налёта',
     rewardExtraEnergy: '+1 энергия налёта',
     rewardSpeedBuild: 'Мгновенная постройка',
+    unavailable: 'Покупки доступны в Яндекс Играх, Steam и на порталах операторов',
     products: {
       food_pack_small: 'Малый набор еды (200)',
       food_pack_large: 'Большой набор еды (1000)',

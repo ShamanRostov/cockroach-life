@@ -7,6 +7,30 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.5.0] — 2026-07-06
+
+### Added
+
+- **Cockroach leveling** — colony members gain XP passively and from successful raids (max level 5)
+- **Defense repel event** — traps can block incoming bot raids once per day (food + money reward)
+- **Season pass economy XP** — earning food/money grants pass progress
+- **Operator portal ad protocol** — postMessage round-trip for interstitial/rewarded ads and cloud load
+
+### Changed
+
+- **Scout bonus** now increases raid movement speed (not just loot multiplier)
+- **Fighter bonus** boosts displayed colony power on the world map
+- Passive income rates tuned for smoother mid-game progression
+- Shop button hidden on platforms without IAP/ads (production web)
+- Analytics tracks ad shown/rewarded events
+
+### Fixed
+
+- Breeding balance constants unified in `GameBalance.ts`
+- Duplicate season pass XP sources aligned for earn quests
+
+---
+
 ## [0.4.1] — 2026-07-06
 
 ### Added

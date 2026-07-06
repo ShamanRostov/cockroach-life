@@ -102,6 +102,13 @@ export class NestScene extends Phaser.Scene {
     this.seasonPassPanel.createHudButton(this);
 
     this.state.dailyQuests.checkAndReset();
+    this.state.processDefenseRepel();
+    const repel = this.state.consumeDefenseRepelNotice();
+    if (repel) {
+      this.time.delayedCall(600, () => {
+        showToast(this, fmt(L().nest.defenseRepelled, { food: repel.food, money: repel.money }));
+      });
+    }
     const bonus = this.state.dailyBonus.checkDailyBonus();
     if (
       bonus.available &&
@@ -217,6 +224,12 @@ export class NestScene extends Phaser.Scene {
       if (hatched.length > 0) {
         this.state.breeding.syncMaxCapacity(rooms);
         this.breedingPanel.refreshHudButton(this);
+        this.state.persist();
+      }
+      const leveled = this.state.tickColonyGrowth(this.lastTick);
+      if (leveled.length > 0) {
+        this.breedingPanel.refreshHudButton(this);
+        showToast(this, fmt(L().breeding.levelUp, { names: leveled.join(', ') }));
         this.state.persist();
       }
       this.state.economy.tickNest(this.lastTick);

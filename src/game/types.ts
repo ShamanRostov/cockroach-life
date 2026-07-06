@@ -13,6 +13,7 @@ export interface CockroachUnit {
   name: string;
   level: number;
   role: CockroachRole;
+  xp?: number;
 }
 
 export interface PlacedRoom {
@@ -73,6 +74,7 @@ export interface GameSaveData {
   seasonPass?: SeasonPassSaveData;
   unlockedSkins?: CockroachSkinId[];
   equippedSkin?: CockroachSkinId;
+  lastDefenseRepelDay?: string;
 }
 
 export interface BreedingTimer {
@@ -121,6 +123,7 @@ export interface GameStateSnapshot {
   seasonPass?: SeasonPassSaveData;
   unlockedSkins?: CockroachSkinId[];
   equippedSkin?: CockroachSkinId;
+  lastDefenseRepelDay?: string;
 }
 
 export const DEFAULT_GAME_STATE: GameStateSnapshot = {
