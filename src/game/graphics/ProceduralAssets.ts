@@ -285,28 +285,30 @@ function drawFloorTile(g: Phaser.GameObjects.Graphics): void {
 function drawWorldMapBg(g: Phaser.GameObjects.Graphics): void {
   const w = 640;
   const h = 360;
-  g.fillStyle(0x1a2838, 1);
-  g.fillRect(0, 0, w, h);
-  g.lineStyle(1, 0x4fc3f7, 0.25);
-  for (let x = 0; x < w; x += 32) g.lineBetween(x, 0, x, h);
-  for (let y = 0; y < h; y += 32) g.lineBetween(0, y, w, y);
-  const rooms = [
-    { x: 80, y: 60, rw: 160, rh: 100, label: 0x4dd0e1 },
-    { x: 260, y: 50, rw: 140, rh: 120, label: 0x81c784 },
-    { x: 420, y: 70, rw: 160, rh: 90, label: 0xffb74d },
-    { x: 100, y: 190, rw: 200, rh: 120, label: 0xce93d8 },
-    { x: 320, y: 200, rw: 260, rh: 110, label: 0x90caf9 },
+  verticalGradient(g, 0, 0, w, h, 0x2d1f0e, 0x1a1208);
+  drawTileGrid(g, w, h, 48, 24, 0xc9b896, 0xb39a72, NEST_PALETTE.linoleumGrout);
+  drawWarmLampGlow(g, w * 0.5, h * 0.2, 140);
+
+  const furniture = [
+    { x: 70, y: 50, rw: 170, rh: 110, color: 0x8d6e63, label: 'fridge' },
+    { x: 250, y: 45, rw: 150, rh: 125, color: 0x795548, label: 'stove' },
+    { x: 420, y: 55, rw: 170, rh: 95, color: 0x6d4c41, label: 'sink' },
+    { x: 90, y: 185, rw: 210, rh: 125, color: 0x5d4037, label: 'table' },
+    { x: 330, y: 195, rw: 250, rh: 115, color: 0x4e342e, label: 'plinth' },
   ];
-  for (const r of rooms) {
-    g.lineStyle(2, r.label, 0.55);
-    g.strokeRect(r.x, r.y, r.rw, r.rh);
-    g.fillStyle(r.label, 0.08);
-    g.fillRect(r.x, r.y, r.rw, r.rh);
+  for (const f of furniture) {
+    g.fillStyle(f.color, 0.35);
+    g.fillRoundedRect(f.x, f.y, f.rw, f.rh, 6);
+    g.lineStyle(2, lighten(f.color, 0.15), 0.65);
+    g.strokeRoundedRect(f.x, f.y, f.rw, f.rh, 6);
+    g.fillStyle(0xfff8e1, 0.08);
+    g.fillRect(f.x + 8, f.y + 8, f.rw - 16, 12);
   }
-  g.lineStyle(3, 0xffa726, 0.7);
-  g.strokeCircle(520, 280, 28);
-  g.fillStyle(0xffa726, 0.15);
-  g.fillCircle(520, 280, 28);
+
+  g.lineStyle(2, COLORS.accent, 0.5);
+  g.strokeCircle(520, 285, 32);
+  g.fillStyle(COLORS.accent, 0.12);
+  g.fillCircle(520, 285, 32);
 }
 
 function drawRaidBg(g: Phaser.GameObjects.Graphics): void {

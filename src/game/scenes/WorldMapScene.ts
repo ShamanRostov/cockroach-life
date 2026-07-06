@@ -15,6 +15,7 @@ import {
   addWorldMapBackground,
   addNestMarker,
   addNeutralCrumb,
+  addDistrictGlow,
   createRaidTrailImages,
 } from '../graphics/WorldMapRenderer';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
@@ -70,6 +71,14 @@ export class WorldMapScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(COLORS.bgDark);
     this.state.raid.refreshDailyRaids();
     addWorldMapBackground(this, this.mapRegion);
+    const visibleDistricts = getDistrictsForRegion(
+      this.mapRegion,
+      this.state.getTotalBuildingCount(),
+      this.state.raid.raidRating,
+      this.state.getBalconyBuildingCount(),
+      this.state.isBalconyUnlocked(),
+    );
+    addDistrictGlow(this, visibleDistricts);
     this.markersLayer = this.add.container(0, 0).setDepth(20);
     this.trailLayer = this.add.container(0, 0).setDepth(30);
 

@@ -5,9 +5,12 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: env.VITE_BASE_PATH || './',
+    envPrefix: 'VITE_',
     server: {
       port: 5173,
+      strictPort: false,
       open: true,
+      host: true,
     },
     build: {
       outDir: 'dist',
@@ -30,5 +33,14 @@ export default defineConfig(({ mode }) => {
     define: {
       __BUILD_MODE__: JSON.stringify(mode),
     },
+    plugins: [
+      {
+        name: 'inject-yandex-sdk-flag',
+        transformIndexHtml(html) {
+          const loadSdk = env.VITE_LOAD_YANDEX_SDK === 'true';
+          return html.replace(/%VITE_LOAD_YANDEX_SDK%/g, loadSdk ? 'true' : 'false');
+        },
+      },
+    ],
   };
 });

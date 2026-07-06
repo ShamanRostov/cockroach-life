@@ -10,6 +10,7 @@ import { leaderboardService } from '../../platforms/LeaderboardService';
 import { iapService } from '../../platforms/IAPService';
 import { attachCockroachAnim, COCKROACH_TEXTURE_KEY } from '../graphics/CockroachSprite';
 import { DEPTH } from '../graphics/SceneDepth';
+import { withBootTimeout, showLaunchError } from '../../boot/launchGuard';
 
 export class BootScene extends Phaser.Scene {
   private loadFill!: Phaser.GameObjects.Rectangle;
@@ -39,20 +40,27 @@ export class BootScene extends Phaser.Scene {
   }
 
   private async bootGame(): Promise<void> {
-    SoundManager.getInstance().init(this.game);
-    await platformManager.init();
-    await leaderboardService.init();
-    if (new URLSearchParams(location.search).get('screenshots') === '1') {
-      const { applyScreenshotSaveToStorage } = await import('../../dev/setupScreenshotState');
-      applyScreenshotSaveToStorage();
+    try {
+      SoundManager.getInstance().init();
+      await withBootTimeout(platformManager.init(), 8000, 'Platform init');
+      await withBootTimeout(leaderboardService.init(), 5000, 'Leaderboards init');
+      if (new URLSearchParams(location.search).get('screenshots') === '1') {
+        const { applyScreenshotSaveToStorage } = await import('../../dev/setupScreenshotState');
+        applyScreenshotSaveToStorage();
+      }
+      const state = GameState.getInstance();
+      await withBootTimeout(state.init(), 5000, 'Game state init');
+      await withBootTimeout(iapService.init(state.getPurchasedProducts()), 5000, 'IAP init');
+      await state.syncIAPPurchases();
+      AnalyticsService.getInstance().trackEvent('session_start');
+      platformManager.gameReady();
+      this.scene.start(SCENES.MENU);
+    } catch (error) {
+      console.error('[BootScene] Failed to start:', error);
+      showLaunchError(
+        'Ошибка загрузки игры. Попробуйте очистить localStorage или откройте в режиме инкогнито.',
+      );
     }
-    const state = GameState.getInstance();
-    await state.init();
-    await iapService.init(state.getPurchasedProducts());
-    await state.syncIAPPurchases();
-    AnalyticsService.getInstance().trackEvent('session_start');
-    platformManager.gameReady();
-    this.scene.start(SCENES.MENU);
   }
 
   private createLoadingBar(): void {

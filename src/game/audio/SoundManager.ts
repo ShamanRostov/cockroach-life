@@ -3,13 +3,14 @@ import { generateAllSounds, type SoundKey } from './generateSounds';
 
 const MUTE_KEY = 'cockroach-life-muted';
 
-/** Lightweight singleton wrapping Phaser's Web Audio sound manager. */
+/** Procedural Web Audio — does not rely on Phaser audio cache. */
 export class SoundManager {
   private static instance: SoundManager | null = null;
 
-  private game: Phaser.Game | null = null;
+  private ctx: AudioContext | null = null;
+  private buffers = new Map<SoundKey, AudioBuffer>();
   private muted = false;
-  private musicKey: SoundKey | null = null;
+  private musicSource: AudioBufferSourceNode | null = null;
   private initialized = false;
 
   static getInstance(): SoundManager {
@@ -19,85 +20,94 @@ export class SoundManager {
     return SoundManager.instance;
   }
 
-  init(game: Phaser.Game): void {
+  /** @param _game Kept for call-site compatibility with Phaser scenes. */
+  init(_game?: Phaser.Game): void {
     if (this.initialized) return;
 
-    this.game = game;
     this.muted = localStorage.getItem(MUTE_KEY) === 'true';
 
-    const sound = game.sound;
-    if (!(sound instanceof Phaser.Sound.WebAudioSoundManager)) {
-      console.warn('[SoundManager] Web Audio unavailable');
-      return;
-    }
-
-    const ctx = sound.context;
-    if (!ctx) {
-      console.warn('[SoundManager] Web Audio unavailable');
-      return;
-    }
-
-    const buffers = generateAllSounds(ctx);
-    for (const [key, buffer] of Object.entries(buffers)) {
-      if (!game.cache.audio.exists(key)) {
-        sound.add(key, { buffer } as unknown as Phaser.Types.Sound.SoundConfig);
+    try {
+      const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!Ctx) {
+        console.warn('[SoundManager] Web Audio API unavailable');
+        return;
       }
-    }
 
-    this.initialized = true;
+      this.ctx = new Ctx();
+      const generated = generateAllSounds(this.ctx);
+      for (const [key, buffer] of Object.entries(generated)) {
+        this.buffers.set(key as SoundKey, buffer);
+      }
+      this.initialized = true;
+    } catch (error) {
+      console.warn('[SoundManager] Init failed — game continues without sound', error);
+    }
+  }
+
+  private ensureResumed(): void {
+    if (this.ctx?.state === 'suspended') {
+      void this.ctx.resume();
+    }
   }
 
   playSFX(key: SoundKey, volume = 0.65): void {
-    if (this.muted || !this.game || !this.initialized) return;
+    if (this.muted || !this.ctx || !this.initialized) return;
+    const buffer = this.buffers.get(key);
+    if (!buffer) return;
+
     try {
-      this.game.sound.play(key, { volume });
+      this.ensureResumed();
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+      const gain = this.ctx.createGain();
+      gain.gain.value = volume;
+      source.connect(gain);
+      gain.connect(this.ctx.destination);
+      source.start(0);
     } catch {
-      // Audio may be blocked until user gesture — fail silently.
+      // Blocked until user gesture — fail silently.
     }
   }
 
   playMusic(key: SoundKey, volume = 0.18): void {
-    if (!this.game || !this.initialized) return;
+    if (!this.ctx || !this.initialized) return;
 
-    if (this.musicKey && this.musicKey !== key) {
-      this.game.sound.stopByKey(this.musicKey);
-    }
-
-    this.musicKey = key;
-
+    this.stopMusic();
     if (this.muted) return;
 
+    const buffer = this.buffers.get(key);
+    if (!buffer) return;
+
     try {
-      if (!this.game.sound.isPlaying(key)) {
-        this.game.sound.play(key, { volume, loop: true });
-      }
+      this.ensureResumed();
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      const gain = this.ctx.createGain();
+      gain.gain.value = volume;
+      source.connect(gain);
+      gain.connect(this.ctx.destination);
+      source.start(0);
+      this.musicSource = source;
     } catch {
       // ignore
     }
   }
 
   stopMusic(): void {
-    if (!this.game || !this.musicKey) return;
-    this.game.sound.stopByKey(this.musicKey);
-    this.musicKey = null;
+    try {
+      this.musicSource?.stop();
+    } catch {
+      // already stopped
+    }
+    this.musicSource = null;
   }
 
   setMuted(muted: boolean): void {
     this.muted = muted;
     localStorage.setItem(MUTE_KEY, String(muted));
-
-    if (!this.game) return;
-
     if (muted) {
-      this.game.sound.mute = true;
-      if (this.musicKey) {
-        this.game.sound.stopByKey(this.musicKey);
-      }
-    } else {
-      this.game.sound.mute = false;
-      if (this.musicKey) {
-        this.playMusic(this.musicKey);
-      }
+      this.stopMusic();
     }
   }
 

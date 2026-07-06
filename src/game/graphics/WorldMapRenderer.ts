@@ -87,6 +87,28 @@ export function addNestMarker(
   return marker;
 }
 
+/** Soft glowing zones under each district on the world map. */
+export function addDistrictGlow(
+  scene: Phaser.Scene,
+  districts: MapDistrict[],
+  depth = 12,
+): Phaser.GameObjects.Graphics {
+  const g = scene.add.graphics().setDepth(depth);
+  const palette = [0xff7043, 0xab47bc, 0x42a5f5, 0x66bb6a, 0xffca28, 0xef5350, 0x26a69a, 0x78909c];
+  for (let i = 0; i < districts.length; i++) {
+    const d = districts[i];
+    const color = palette[i % palette.length];
+    const radius = 54 + (d.id.length % 4) * 6;
+    g.fillStyle(color, 0.09);
+    g.fillCircle(d.mapX, d.mapY, radius);
+    g.lineStyle(2, color, 0.28);
+    g.strokeCircle(d.mapX, d.mapY, radius);
+    g.fillStyle(0xfff8e1, 0.06);
+    g.fillCircle(d.mapX - 8, d.mapY - 10, radius * 0.35);
+  }
+  return g;
+}
+
 export function addNeutralCrumb(
   scene: Phaser.Scene,
   x: number,

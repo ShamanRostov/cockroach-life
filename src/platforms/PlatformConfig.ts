@@ -73,7 +73,7 @@ function featureFlagsFor(platform: PlatformId, environment: Environment): Platfo
         enableAds: environment === 'dev',
         enableIAP: environment === 'dev',
         enableAnalytics: true,
-        enableCloudSave: environment !== 'production',
+        enableCloudSave: false,
       };
   }
 }

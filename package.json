@@ -1,10 +1,12 @@
 {
   "name": "cockroach-life",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start": "vite",
+    "smoke": "node scripts/smoke-test.mjs",
     "build": "tsc && vite build",
     "build:staging": "tsc && vite build --mode staging",
     "build:yandex": "tsc && vite build --mode yandex",
