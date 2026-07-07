@@ -23,6 +23,11 @@ src/i18n/locales/
 
 Чтобы добавить язык: создайте `src/i18n/locales/xx.ts` по образцу `en.ts` и добавьте код в `SUPPORTED_LOCALES` в `src/i18n/index.ts`.
 
+## Открыть дома в Cursor
+
+Клон: `git clone https://github.com/ShamanRostov/cockroach-life.git` → открыть папку в Cursor.  
+Пошагово: **[docs/HOME_CURSOR.md](docs/HOME_CURSOR.md)**
+
 ## Запуск
 
 **Windows (проще всего):** дважды кликните `start.bat` — установит зависимости и откроет браузер.
