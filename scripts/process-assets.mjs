@@ -93,19 +93,93 @@ async function resolveSrc(rel) {
   return null;
 }
 
-/** Make near-white pixels transparent. */
+/** Match runtime backdrop stripping in textureUtils.ts — fully key, no semi-transparent halos. */
+function isBackdropPixel(r, g, b) {
+  if (r < 32 && g < 32 && b < 32) return true;
+  if (r > 230 && g > 230 && b > 230) return true;
+
+  const spread = Math.max(r, g, b) - Math.min(r, g, b);
+  const avg = (r + g + b) / 3;
+
+  // Photoshop / AI checkerboard grays
+  if (spread < 18) {
+    if (avg >= 175 && avg <= 215) return true;
+    if (avg >= 115 && avg <= 165) return true;
+  }
+
+  // Residual near-white fringe after export compression
+  if (r > 200 && g > 200 && b > 200 && spread < 28) return true;
+
+  return false;
+}
+
+/** Make backdrop and near-white fringe pixels fully transparent. */
 async function keyWhite(input) {
   const { data, info } = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const px = new Uint8Array(data);
   for (let i = 0; i < px.length; i += 4) {
-    const r = px[i], g = px[i + 1], b = px[i + 2];
-    if (r > 235 && g > 235 && b > 235) {
+    if (isBackdropPixel(px[i], px[i + 1], px[i + 2])) {
       px[i + 3] = 0;
-    } else if (r > 210 && g > 210 && b > 210) {
-      px[i + 3] = Math.min(px[i + 3], 80);
     }
   }
   return sharp(px, { raw: { width: info.width, height: info.height, channels: 4 } }).png();
+}
+
+/** Paint rectangles over baked English text on arcade backgrounds (1280×720). */
+const BG_TEXT_REGIONS = {
+  'backgrounds/arcade-hospital-bg.png': [
+    { x: 0, y: 555, w: 1280, h: 165, r: 31, g: 24, b: 72 },
+    { x: 900, y: 455, w: 210, h: 95, r: 106, g: 158, b: 184 },
+  ],
+  'backgrounds/arcade-spray-bg.png': [
+    { x: 35, y: 175, w: 360, h: 420, r: 58, g: 92, b: 104 },
+    { x: 95, y: 255, w: 240, h: 260, r: 74, g: 112, b: 120 },
+  ],
+  'backgrounds/arcade-food-bg.png': [
+    { x: 55, y: 345, w: 200, h: 95, r: 242, g: 236, b: 228 },
+    { x: 215, y: 285, w: 90, h: 175, r: 90, g: 142, b: 196 },
+  ],
+  'backgrounds/arcade-catch-bg.png': [
+    { x: 25, y: 175, w: 150, h: 200, r: 216, g: 207, b: 192 },
+    { x: 40, y: 565, w: 160, h: 55, r: 139, g: 105, b: 20 },
+    { x: 575, y: 55, w: 130, h: 55, r: 46, g: 125, b: 50 },
+    { x: 95, y: 318, w: 55, h: 40, r: 61, g: 111, b: 168 },
+    { x: 1085, y: 318, w: 55, h: 40, r: 198, g: 40, b: 40 },
+  ],
+};
+
+function paintRect(px, imgW, imgH, x, y, w, h, r, g, b) {
+  const x0 = Math.max(0, x);
+  const y0 = Math.max(0, y);
+  const x1 = Math.min(imgW, x + w);
+  const y1 = Math.min(imgH, y + h);
+  for (let py = y0; py < y1; py++) {
+    for (let px_x = x0; px_x < x1; px_x++) {
+      const i = (py * imgW + px_x) * 4;
+      px[i] = r;
+      px[i + 1] = g;
+      px[i + 2] = b;
+      px[i + 3] = 255;
+    }
+  }
+}
+
+async function sanitizeBgText(rel) {
+  const regions = BG_TEXT_REGIONS[rel];
+  if (!regions) return;
+  const out = path.join(ROOT, rel);
+  if (!(await exists(out))) return;
+
+  const { data, info } = await sharp(out).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const px = new Uint8Array(data);
+  for (const region of regions) {
+    paintRect(px, info.width, info.height, region.x, region.y, region.w, region.h, region.r, region.g, region.b);
+  }
+  const tmp = `${out}.san.tmp`;
+  await sharp(px, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toFile(tmp);
+  await unlink(out);
+  await rename(tmp, out);
+  console.log('SANITIZED', rel);
 }
 
 async function processOne(rel, opts) {
@@ -139,6 +213,7 @@ async function processOne(rel, opts) {
     // first write
   }
   await rename(tmp, out);
+  await sanitizeBgText(rel);
   console.log('OK', rel);
 }
 

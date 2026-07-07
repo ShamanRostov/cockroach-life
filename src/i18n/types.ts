@@ -98,7 +98,7 @@ export interface LocalePack {
     slipper: { title: string; controls: string; hit: string };
     spray: { title: string; controls: string; win: string; poisoned: string };
     food: { title: string; controls: string; hunger: string; collected: string; win: string; fail: string };
-    hospital: { title: string; controls: string; progress: string; healed: string; now: string };
+    hospital: { title: string; controls: string; progress: string; healed: string; now: string; zoneHint: string; wait: string };
     catChase: {
       title: string;
       controls: string;

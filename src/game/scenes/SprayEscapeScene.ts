@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { SCENES, COLORS, GAME_WIDTH, GAME_HEIGHT, isMobileDevice } from '../config';
 import { GameState } from '../GameState';
-import { createTextButton, addFullscreenBg, showToast } from '../ui/ButtonHelper';
+import { createTextButton, createPanel, showToast } from '../ui/ButtonHelper';
+import { addLocaleSafeArcadeBg } from '../graphics/ArcadeBackground';
 import { createCockroachPhysics, syncCockroachMovement } from '../graphics/CockroachSprite';
 import { spawnSparkBurst } from '../graphics/ParticleEffects';
 import { screenShake } from '../graphics/VisualEffects';
@@ -50,13 +51,10 @@ export class SprayEscapeScene extends Phaser.Scene {
 
   create(): void {
     const t = L();
-    addFullscreenBg(this, 'arcade-spray-bg');
+    addLocaleSafeArcadeBg(this, 'arcade-spray-bg');
     this.physics.world.setBounds(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
-    this.add
-      .image(GAME_WIDTH / 2, 40, 'ui-panel')
-      .setDisplaySize(380, 52)
-      .setAlpha(0.88);
+    createPanel(this, GAME_WIDTH / 2 - 190, 14, 380, 52, 0.88);
 
     this.add
       .text(GAME_WIDTH / 2, 40, t.arcade.spray.title, {
@@ -94,7 +92,7 @@ export class SprayEscapeScene extends Phaser.Scene {
       this,
       GAME_WIDTH / 2,
       GAME_HEIGHT / 2,
-      1.5,
+      ARCADE_SPRAY.roachScale,
       GameState.getInstance().skins.getTint(),
     );
     this.player.setCollideWorldBounds(true);
@@ -223,10 +221,7 @@ export class SprayEscapeScene extends Phaser.Scene {
     SoundManager.getInstance().playSFX('arcade_lose');
     this.state.economy.health = ARCADE_SPRAY.poisonedHealth;
     this.state.persist();
-    this.add
-      .image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'ui-panel')
-      .setDisplaySize(480, 120)
-      .setAlpha(0.92);
+    createPanel(this, GAME_WIDTH / 2 - 240, GAME_HEIGHT / 2 - 60, 480, 120, 0.92);
     this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, L().arcade.spray.poisoned, {
         fontFamily: 'Segoe UI, Arial, sans-serif',

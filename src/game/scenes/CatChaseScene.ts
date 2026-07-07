@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { SCENES, GAME_WIDTH, GAME_HEIGHT, isMobileDevice } from '../config';
 import { GameState } from '../GameState';
-import { createTextButton, addFullscreenBg } from '../ui/ButtonHelper';
+import { createTextButton, createPanel } from '../ui/ButtonHelper';
+import { addLocaleSafeArcadeBg } from '../graphics/ArcadeBackground';
 import { createCockroachPhysics, syncCockroachMovement } from '../graphics/CockroachSprite';
 import { spawnFoodPickup, spawnSparkBurst } from '../graphics/ParticleEffects';
 import { screenShake, showScorePopup } from '../graphics/VisualEffects';
@@ -50,13 +51,10 @@ export class CatChaseScene extends Phaser.Scene {
 
   create(): void {
     const t = L();
-    addFullscreenBg(this, 'arcade-catch-bg');
+    addLocaleSafeArcadeBg(this, 'arcade-catch-bg');
     this.physics.world.setBounds(60, 100, GAME_WIDTH - 120, GAME_HEIGHT - 160);
 
-    this.add
-      .image(GAME_WIDTH / 2, 40, 'ui-panel')
-      .setDisplaySize(420, 52)
-      .setAlpha(0.88);
+    createPanel(this, GAME_WIDTH / 2 - 210, 14, 420, 52, 0.88);
 
     this.add
       .text(GAME_WIDTH / 2, 40, t.arcade.catChase.title, {
@@ -82,7 +80,7 @@ export class CatChaseScene extends Phaser.Scene {
       this,
       GAME_WIDTH / 2,
       GAME_HEIGHT - 140,
-      1.5,
+      ARCADE_CAT_CHASE.roachScale,
       GameState.getInstance().skins.getTint(),
     );
     this.player.setCollideWorldBounds(true);
@@ -223,7 +221,10 @@ export class CatChaseScene extends Phaser.Scene {
     const x = Phaser.Math.Between(100, GAME_WIDTH - 100);
     const y = Phaser.Math.Between(140, GAME_HEIGHT - 100);
     const crumb = this.physics.add.sprite(x, y, 'food-crumb');
-    crumb.setScale(0.3 + Math.random() * 0.12);
+    crumb.setScale(
+      ARCADE_CAT_CHASE.crumbScaleMin +
+        Math.random() * (ARCADE_CAT_CHASE.crumbScaleMax - ARCADE_CAT_CHASE.crumbScaleMin),
+    );
     this.physics.add.overlap(this.player, crumb, () => this.collectCrumb(crumb), undefined, this);
     this.crumbs.push(crumb);
 
@@ -264,7 +265,7 @@ export class CatChaseScene extends Phaser.Scene {
     this.state.persist();
 
     const t = L();
-    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'ui-panel').setDisplaySize(500, 130).setAlpha(0.92);
+    createPanel(this, GAME_WIDTH / 2 - 250, GAME_HEIGHT / 2 - 65, 500, 130, 0.92);
     this.add
       .text(
         GAME_WIDTH / 2,
@@ -293,7 +294,7 @@ export class CatChaseScene extends Phaser.Scene {
     this.state.economy.damage(ARCADE_CAT_CHASE.failDamage);
     this.state.persist();
 
-    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'ui-panel').setDisplaySize(420, 100).setAlpha(0.92);
+    createPanel(this, GAME_WIDTH / 2 - 210, GAME_HEIGHT / 2 - 50, 420, 100, 0.92);
     this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, L().arcade.catChase.fail, {
         fontFamily: 'Segoe UI, Arial, sans-serif',

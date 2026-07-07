@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { SCENES, COLORS, GAME_WIDTH, GAME_HEIGHT, isMobileDevice } from '../config';
 import { GameState } from '../GameState';
-import { createTextButton, addFullscreenBg } from '../ui/ButtonHelper';
+import { createTextButton, addFullscreenBg, createPanel } from '../ui/ButtonHelper';
 import { createCockroachPhysics, syncCockroachMovement } from '../graphics/CockroachSprite';
 import { screenShake, showScorePopup } from '../graphics/VisualEffects';
 import { spawnSparkBurst } from '../graphics/ParticleEffects';
@@ -17,7 +17,6 @@ import { SS_REGISTRY } from '../../dev/screenshotRegistry';
 
 export class SlipperDodgeScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
-  private slipper!: Phaser.Physics.Arcade.Sprite;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private wasd!: { A: Phaser.Input.Keyboard.Key; D: Phaser.Input.Keyboard.Key };
   private touchControls: TouchControls | null = null;
@@ -41,10 +40,7 @@ export class SlipperDodgeScene extends Phaser.Scene {
     addFullscreenBg(this, 'arcade-slipper-bg');
     this.physics.world.setBounds(0, 80, GAME_WIDTH, GAME_HEIGHT - 80);
 
-    this.add
-      .image(GAME_WIDTH / 2, 36, 'ui-panel')
-      .setDisplaySize(420, 52)
-      .setAlpha(0.85);
+    createPanel(this, GAME_WIDTH / 2 - 210, 10, 420, 52, 0.85);
 
     this.add
       .text(GAME_WIDTH / 2, 36, t.arcade.slipper.title, {
@@ -72,17 +68,10 @@ export class SlipperDodgeScene extends Phaser.Scene {
       this,
       GAME_WIDTH / 2,
       GAME_HEIGHT - 120,
-      1.5,
+      ARCADE_SLIPPER.roachScale,
       GameState.getInstance().skins.getTint(),
     );
     this.player.setCollideWorldBounds(true);
-
-    this.slipper = this.physics.add.sprite(GAME_WIDTH / 2, -50, 'slipper');
-    this.slipper.setScale(0.55);
-    this.slipper.setData('dodged', false);
-    this.slippers.push(this.slipper);
-
-    this.physics.add.overlap(this.player, this.slipper, () => this.onHit(), undefined, this);
 
     this.cursors = this.input.keyboard!.createCursorKeys();
     this.wasd = {
@@ -104,8 +93,52 @@ export class SlipperDodgeScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.launchSlipper(this.slipper);
-    this.applyScreenshotMidGame();
+    if (this.registry.get(SS_REGISTRY.SLIPPER_MID)) {
+      this.applyScreenshotMidGame();
+    } else {
+      this.spawnSlipperWave();
+    }
+  }
+
+  private randomSlipperScale(): number {
+    const { slipperScaleMin, slipperScaleMax, slipperScaleLarge } = ARCADE_SLIPPER;
+    const sizeRoll = Math.random();
+    if (sizeRoll < 0.2) {
+      return slipperScaleLarge * (0.92 + Math.random() * 0.12);
+    }
+    return slipperScaleMin + Math.random() * (slipperScaleMax - slipperScaleMin);
+  }
+
+  private refreshSlipperBody(s: Phaser.Physics.Arcade.Sprite): void {
+    const body = s.body as Phaser.Physics.Arcade.Body | null;
+    if (!body) return;
+    body.setSize(s.displayWidth * 0.72, s.displayHeight * 0.55);
+    body.setOffset(s.displayWidth * 0.14, s.displayHeight * 0.2);
+  }
+
+  private spawnOneSlipper(x?: number, y = -80): Phaser.Physics.Arcade.Sprite {
+    const spawnX = x ?? Phaser.Math.Between(120, GAME_WIDTH - 120);
+    const s = this.physics.add.sprite(spawnX, y, 'slipper');
+    s.setScale(this.randomSlipperScale());
+    s.setData('dodged', false);
+    this.refreshSlipperBody(s);
+    this.slippers.push(s);
+    this.physics.add.overlap(this.player, s, () => this.onHit(), undefined, this);
+    this.launchSlipper(s);
+    return s;
+  }
+
+  private spawnSlipperWave(): void {
+    const count = Phaser.Math.Between(ARCADE_SLIPPER.waveMin, ARCADE_SLIPPER.waveMax);
+    const margin = 140;
+    const usableW = GAME_WIDTH - margin * 2;
+    const step = count > 1 ? usableW / (count - 1) : 0;
+    for (let i = 0; i < count; i++) {
+      const x = count === 1
+        ? GAME_WIDTH / 2
+        : margin + step * i + Phaser.Math.Between(-28, 28);
+      this.spawnOneSlipper(Phaser.Math.Clamp(x, margin, GAME_WIDTH - margin), -80 - i * 36);
+    }
   }
 
   private applyScreenshotMidGame(): void {
@@ -117,17 +150,13 @@ export class SlipperDodgeScene extends Phaser.Scene {
     this.player.setX(GAME_WIDTH / 2 + 120);
     this.spawnTimer = 2100;
 
-    this.slipper.setPosition(GAME_WIDTH / 2 - 90, GAME_HEIGHT * 0.42);
-    this.slipper.setVelocity(60, 180);
-    this.slipper.setAngularVelocity(140);
+    const slipperA = this.spawnOneSlipper(GAME_WIDTH / 2 - 90, GAME_HEIGHT * 0.42);
+    slipperA.setVelocity(60, 180);
+    slipperA.setAngularVelocity(140);
 
-    const extra = this.physics.add.sprite(GAME_WIDTH / 2 + 200, GAME_HEIGHT * 0.28, 'slipper');
-    extra.setScale(0.5);
-    extra.setData('dodged', false);
-    extra.setVelocity(-40, 220);
-    extra.setAngularVelocity(-160);
-    this.slippers.push(extra);
-    this.physics.add.overlap(this.player, extra, () => this.onHit(), undefined, this);
+    const slipperB = this.spawnOneSlipper(GAME_WIDTH / 2 + 200, GAME_HEIGHT * 0.28);
+    slipperB.setVelocity(-40, 220);
+    slipperB.setAngularVelocity(-160);
   }
 
   update(_time: number, delta: number): void {
@@ -151,11 +180,11 @@ export class SlipperDodgeScene extends Phaser.Scene {
     const spawnInterval = Math.max(1400, 2500 - this.score * 2);
     if (this.spawnTimer > spawnInterval) {
       this.spawnTimer = 0;
-      this.spawnNewSlipper();
+      this.spawnSlipperWave();
     }
 
     for (const s of this.slippers) {
-      if (s.active && !s.getData('dodged') && s.y > this.player.y + 25) {
+      if (s.active && !s.getData('dodged') && s.y > this.player.y + this.player.displayHeight * 0.35) {
         s.setData('dodged', true);
         this.onDodge(s);
       }
@@ -166,21 +195,10 @@ export class SlipperDodgeScene extends Phaser.Scene {
     this.slippers = this.slippers.filter((s) => s.active);
   }
 
-  private spawnNewSlipper(): void {
-    const s = this.physics.add.sprite(Phaser.Math.Between(100, GAME_WIDTH - 100), -50, 'slipper');
-    const sizeRoll = Math.random();
-    const scale = sizeRoll < 0.2 ? 0.7 + Math.random() * 0.15 : 0.38 + Math.random() * 0.22;
-    s.setScale(scale);
-    s.setData('dodged', false);
-    this.slippers.push(s);
-    this.physics.add.overlap(this.player, s, () => this.onHit(), undefined, this);
-    this.launchSlipper(s);
-  }
-
   private launchSlipper(s: Phaser.Physics.Arcade.Sprite): void {
     const difficulty = 1 + Math.min(this.score / 400, 1.5);
     const scale = s.scaleX;
-    const sizeSpeed = scale > 0.6 ? 0.75 : scale < 0.45 ? 1.25 : 1;
+    const sizeSpeed = scale > ARCADE_SLIPPER.slipperScaleLarge * 0.95 ? 0.75 : scale < ARCADE_SLIPPER.slipperScaleMin * 1.1 ? 1.25 : 1;
     const baseY = Phaser.Math.Between(200, 380) * sizeSpeed * difficulty;
     s.setVelocity(Phaser.Math.Between(-110, 110), baseY);
     s.setAngularVelocity(Phaser.Math.Between(-260, 260));
@@ -236,10 +254,14 @@ export class SlipperDodgeScene extends Phaser.Scene {
       record: isRecord ? t.common.record : '',
     });
 
-    this.add
-      .image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'ui-panel')
-      .setDisplaySize(520, isRecord ? 200 : 140)
-      .setAlpha(0.92);
+    createPanel(
+      this,
+      GAME_WIDTH / 2 - 260,
+      GAME_HEIGHT / 2 - (isRecord ? 100 : 70),
+      520,
+      isRecord ? 200 : 140,
+      0.92,
+    );
 
     this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2 - (isRecord ? 20 : 0), message, {

@@ -1,35 +1,48 @@
 import { GAME_WIDTH, GAME_HEIGHT } from '../config';
 import { getSafeAreaInsets } from './MobileUILayout';
 
-/** Nest scene chrome layout — no overlapping panels. */
+/**
+ * Nest scene layout — three columns, no overlap:
+ * [ left chrome 0–272 ] [ play 272–1008 ] [ rail+build 1008–1280 ]
+ */
 export const NEST_LAYOUT = {
-  topBarH: 96,
-  sideMargin: 12,
-  hudW: 300,
-  hudH: 88,
-  rightRailW: 56,
-  buildPanelW: 228,
-  buildPanelTop: 100,
-  defensePanelW: 268,
-  defensePanelTop: 100,
-  defensePanelH: 118,
-  arcadePanelH: 100,
-  arcadePanelBottom: 16,
-  gridCenterX: 500,
-  gridCenterY: 390,
+  leftChromeW: 272,
+  rightChromeW: 272,
+  topBarH: 100,
+  sideMargin: 10,
+  hudW: 252,
+  hudH: 76,
+  rightRailW: 48,
+  buildPanelW: 220,
+  buildPanelTop: 112,
+  buildPanelH: 340,
+  defensePanelW: 252,
+  defensePanelTop: 120,
+  defensePanelH: 168,
+  arcadePanelH: 118,
+  arcadePanelBottom: 12,
+  /** Isometric cell (0,0) center — aligned to nest-bg floor tiles at 1280×720. */
+  gridOriginX: 608,
+  gridOriginY: 252,
+  eventBannerX: 640,
+  eventBannerY: 40,
+  regionSwitcherX: 640,
+  regionSwitcherY: 96,
 } as const;
 
-export function getNestHudButtonX(): number {
-  const safe = getSafeAreaInsets();
-  return GAME_WIDTH - NEST_LAYOUT.sideMargin - NEST_LAYOUT.rightRailW / 2 - safe.right;
+export type NestHudSlot = 'daily' | 'shop' | 'breeding' | 'seasonPass';
+
+const HUD_SLOTS: NestHudSlot[] = ['daily', 'shop', 'breeding', 'seasonPass'];
+
+/** Icon buttons in a row above the build panel — no overlap with construction rail. */
+export function getNestHudButtonX(slot: NestHudSlot): number {
+  const idx = HUD_SLOTS.indexOf(slot);
+  const startX = getBuildPanelX() + 22;
+  return startX + idx * 56;
 }
 
-export function getNestHudButtonY(slot: 'daily' | 'shop' | 'breeding' | 'seasonPass'): number {
-  const safe = getSafeAreaInsets();
-  const base = 108 + safe.top;
-  const gap = 46;
-  const order = ['daily', 'shop', 'breeding', 'seasonPass'] as const;
-  return base + order.indexOf(slot) * gap;
+export function getNestHudButtonY(_slot?: NestHudSlot): number {
+  return 56 + getSafeAreaInsets().top;
 }
 
 export function getRightPanelWidth(): number {
@@ -51,22 +64,28 @@ export function getBuildPanelCenterX(): number {
 export function isNestUIRegion(x: number, y: number): boolean {
   const safe = getSafeAreaInsets();
   const buildX = getBuildPanelX();
-  const rightRailX = GAME_WIDTH - NEST_LAYOUT.sideMargin - NEST_LAYOUT.rightRailW - safe.right;
 
   if (y < NEST_LAYOUT.topBarH + safe.top) return true;
-  if (x >= rightRailX && y < 320) return true;
-  if (x >= buildX - 8) return true;
-  if (x < NEST_LAYOUT.defensePanelW + NEST_LAYOUT.sideMargin + 16 && y < 240) return true;
-  if (x < 440 && y > GAME_HEIGHT - NEST_LAYOUT.arcadePanelH - NEST_LAYOUT.arcadePanelBottom - 20) return true;
+  if (x >= buildX - 4) return true;
+  if (x < NEST_LAYOUT.leftChromeW && y < 340) return true;
+  if (x < NEST_LAYOUT.leftChromeW && y > GAME_HEIGHT - NEST_LAYOUT.arcadePanelH - 24) return true;
   return false;
 }
 
+export function getEventBannerX(): number {
+  return NEST_LAYOUT.eventBannerX;
+}
+
 export function getEventBannerY(): number {
-  return 52;
+  return NEST_LAYOUT.eventBannerY;
+}
+
+export function getRegionSwitcherX(): number {
+  return NEST_LAYOUT.regionSwitcherX;
 }
 
 export function getRegionSwitcherY(): number {
-  return 78;
+  return NEST_LAYOUT.regionSwitcherY;
 }
 
 export { GAME_WIDTH, GAME_HEIGHT };

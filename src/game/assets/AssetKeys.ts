@@ -19,9 +19,9 @@ export function buildingTextureKey(type: RoomType, _level = 1): string {
 
 export const COCKROACH_FRAMES = 8;
 
-/** Scale trimmed 256×256 building sprites to isometric cell (~70–90 px tall). */
+/** Scale trimmed 256×256 building sprites to isometric cell (~140–180 px tall). */
 export function buildingDisplayScale(level: number): number {
-  return 0.32 + (level - 1) * 0.045;
+  return 0.52 + (level - 1) * 0.07;
 }
 
 export const TEXTURE_KEYS = {

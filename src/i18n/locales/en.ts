@@ -29,7 +29,7 @@ export const en: LocalePack = {
     tapToBuild: 'Tap the grid to build',
   },
   common: {
-    esc: 'ESC',
+    esc: 'Menu',
     record: '\n🏆 New record!',
     score: 'Score: {score}',
     health: '❤️ {current} HP',
@@ -123,6 +123,8 @@ export const en: LocalePack = {
       progress: 'Healing: {current} / {total}',
       healed: 'Healed! +30 HP',
       now: '● NOW ●',
+      zoneHint: 'Green ring — press SPACE!',
+      wait: 'Wait until the heart enters the green ring',
     },
     catChase: {
       title: '🐱 Cat Chase!',

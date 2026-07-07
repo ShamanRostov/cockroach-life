@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { SCENES, COLORS, GAME_WIDTH, GAME_HEIGHT, isMobileDevice } from '../config';
 import { GameState } from '../GameState';
-import { createTextButton, addFullscreenBg, createMobileButton } from '../ui/ButtonHelper';
+import { createTextButton, createPanel, createMobileButton } from '../ui/ButtonHelper';
+import { addLocaleSafeArcadeBg } from '../graphics/ArcadeBackground';
 import { spawnSparkBurst } from '../graphics/ParticleEffects';
 import { screenShake, showScorePopup } from '../graphics/VisualEffects';
 import { L, fmt } from '../../i18n';
@@ -9,6 +10,7 @@ import { monetizationService } from '../../platforms/MonetizationService';
 import { AnalyticsService } from '../../platforms/AnalyticsService';
 import { SoundManager } from '../audio/SoundManager';
 import { ARCADE_HOSPITAL } from '../systems/GameBalance';
+import { DEPTH } from '../graphics/SceneDepth';
 
 export class HospitalScene extends Phaser.Scene {
   private pulse!: Phaser.GameObjects.Image;
@@ -16,6 +18,7 @@ export class HospitalScene extends Phaser.Scene {
   private ringInner!: Phaser.GameObjects.Image;
   private sweetMinRing!: Phaser.GameObjects.Image;
   private sweetMaxRing!: Phaser.GameObjects.Image;
+  private zoneGfx!: Phaser.GameObjects.Graphics;
   private timingHint!: Phaser.GameObjects.Text;
   private hits = 0;
   private required = ARCADE_HOSPITAL.requiredHits;
@@ -32,17 +35,15 @@ export class HospitalScene extends Phaser.Scene {
 
   create(): void {
     const t = L();
-    addFullscreenBg(this, 'arcade-hospital-bg');
+    addLocaleSafeArcadeBg(this, 'arcade-hospital-bg');
 
-    this.add
-      .image(GAME_WIDTH / 2, 50, 'ui-panel')
-      .setDisplaySize(420, 52)
-      .setAlpha(0.88);
+    createPanel(this, GAME_WIDTH / 2 - 210, 24, 420, 52, 0.88, DEPTH.ui);
 
     this.add
       .text(GAME_WIDTH / 2, 50, t.arcade.hospital.title, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '26px',
+        fontSize: '28px',
+        fontStyle: 'bold',
         color: '#fff8e1',
       })
       .setOrigin(0.5);
@@ -107,6 +108,19 @@ export class HospitalScene extends Phaser.Scene {
 
     this.pulse = this.add.image(cx, cy, 'heart-pulse').setScale(0.55).setAlpha(0.9);
 
+    this.zoneGfx = this.add.graphics().setDepth(DEPTH.world);
+
+    this.add
+      .text(cx, cy - 108, t.arcade.hospital.zoneHint, {
+        fontFamily: 'Segoe UI, Arial, sans-serif',
+        fontSize: '20px',
+        color: '#a5d6a7',
+        stroke: '#1b5e20',
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5)
+      .setDepth(DEPTH.ui);
+
     this.input.keyboard?.on('keydown-SPACE', () => this.onPulseHit());
 
     if (isMobileDevice()) {
@@ -156,11 +170,29 @@ export class HospitalScene extends Phaser.Scene {
 
     const inZone =
       this.pulseScale >= ARCADE_HOSPITAL.pulseMin && this.pulseScale <= ARCADE_HOSPITAL.pulseMax;
-    const zoneAlpha = inZone ? 0.85 : 0.35;
+    const zoneAlpha = inZone ? 0.9 : 0.55;
     this.sweetMinRing.setAlpha(zoneAlpha);
     this.sweetMaxRing.setAlpha(zoneAlpha);
-    this.timingHint.setText(inZone ? L().arcade.hospital.now : '');
-    this.timingHint.setAlpha(inZone ? 1 : 0.4);
+
+    const heartBase = 24;
+    const rMin = heartBase * ARCADE_HOSPITAL.pulseMin;
+    const rMax = heartBase * ARCADE_HOSPITAL.pulseMax;
+    this.zoneGfx.clear();
+    this.zoneGfx.fillStyle(0x66bb6a, inZone ? 0.28 : 0.12);
+    this.zoneGfx.beginPath();
+    this.zoneGfx.arc(this.pulse.x, this.pulse.y, rMax, 0, Math.PI * 2);
+    this.zoneGfx.arc(this.pulse.x, this.pulse.y, rMin, 0, Math.PI * 2, true);
+    this.zoneGfx.closePath();
+    this.zoneGfx.fillPath();
+    this.zoneGfx.lineStyle(4, 0x43a047, zoneAlpha);
+    this.zoneGfx.strokeCircle(this.pulse.x, this.pulse.y, rMin);
+    this.zoneGfx.strokeCircle(this.pulse.x, this.pulse.y, rMax);
+
+    const t = L();
+    this.timingHint.setText(inZone ? t.arcade.hospital.now : t.arcade.hospital.wait);
+    this.timingHint.setColor(inZone ? '#ffeb3b' : '#a5d6a7');
+    this.timingHint.setFontSize(inZone ? '30px' : '18px');
+    this.timingHint.setAlpha(1);
   }
 
   private onPulseHit(): void {
@@ -211,7 +243,7 @@ export class HospitalScene extends Phaser.Scene {
     this.state.trackDailyProgress('arcade', 1);
     this.state.persist();
 
-    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT - 100, 'ui-panel').setDisplaySize(420, 72).setAlpha(0.92);
+    createPanel(this, GAME_WIDTH / 2 - 210, GAME_HEIGHT - 136, 420, 72, 0.92, DEPTH.ui);
     this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT - 100, L().arcade.hospital.healed, {
         fontFamily: 'Segoe UI, Arial, sans-serif',

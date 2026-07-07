@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
 import { SCENES, GAME_WIDTH, GAME_HEIGHT, isMobileDevice } from '../config';
 import { GameState } from '../GameState';
-import { createTextButton, addFullscreenBg } from '../ui/ButtonHelper';
+import { createTextButton, createPanel } from '../ui/ButtonHelper';
+import { addLocaleSafeArcadeBg } from '../graphics/ArcadeBackground';
 import { createCockroachPhysics, syncCockroachMovement } from '../graphics/CockroachSprite';
 import { spawnFoodPickup, spawnCrumbTrail, spawnSparkBurst } from '../graphics/ParticleEffects';
 import { screenShake, showScorePopup } from '../graphics/VisualEffects';
@@ -40,13 +41,10 @@ export class FoodHuntScene extends Phaser.Scene {
 
   create(): void {
     const t = L();
-    addFullscreenBg(this, 'arcade-food-bg');
+    addLocaleSafeArcadeBg(this, 'arcade-food-bg');
     this.physics.world.setBounds(60, 100, GAME_WIDTH - 120, GAME_HEIGHT - 160);
 
-    this.add
-      .image(GAME_WIDTH / 2, 40, 'ui-panel')
-      .setDisplaySize(360, 52)
-      .setAlpha(0.88);
+    createPanel(this, GAME_WIDTH / 2 - 180, 14, 360, 52, 0.88);
 
     this.add
       .text(GAME_WIDTH / 2, 40, t.arcade.food.title, {
@@ -77,7 +75,7 @@ export class FoodHuntScene extends Phaser.Scene {
       this,
       GAME_WIDTH / 2,
       GAME_HEIGHT / 2,
-      1.5,
+      ARCADE_FOOD_HUNT.roachScale,
       GameState.getInstance().skins.getTint(),
     );
     this.player.setCollideWorldBounds(true);
@@ -165,7 +163,10 @@ export class FoodHuntScene extends Phaser.Scene {
     const x = Phaser.Math.Between(100, GAME_WIDTH - 100);
     const y = Phaser.Math.Between(140, GAME_HEIGHT - 100);
     const food = this.physics.add.sprite(x, y, 'food-crumb');
-    food.setScale(0.35 + Math.random() * 0.15);
+    food.setScale(
+      ARCADE_FOOD_HUNT.crumbScaleMin +
+        Math.random() * (ARCADE_FOOD_HUNT.crumbScaleMax - ARCADE_FOOD_HUNT.crumbScaleMin),
+    );
     this.physics.add.overlap(this.player, food, () => this.collectFood(food), undefined, this);
     this.foods.push(food);
 
@@ -215,7 +216,7 @@ export class FoodHuntScene extends Phaser.Scene {
     this.state.persist();
 
     const t = L();
-    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'ui-panel').setDisplaySize(480, 120).setAlpha(0.92);
+    createPanel(this, GAME_WIDTH / 2 - 240, GAME_HEIGHT / 2 - 60, 480, 120, 0.92);
     this.add
       .text(
         GAME_WIDTH / 2,
@@ -241,7 +242,7 @@ export class FoodHuntScene extends Phaser.Scene {
     SoundManager.getInstance().playSFX('arcade_lose');
     this.state.economy.damage(ARCADE_FOOD_HUNT.failDamage);
     this.state.persist();
-    this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'ui-panel').setDisplaySize(420, 100).setAlpha(0.92);
+    createPanel(this, GAME_WIDTH / 2 - 210, GAME_HEIGHT / 2 - 50, 420, 100, 0.92);
     this.add
       .text(GAME_WIDTH / 2, GAME_HEIGHT / 2, L().arcade.food.fail, {
         fontFamily: 'Segoe UI, Arial, sans-serif',

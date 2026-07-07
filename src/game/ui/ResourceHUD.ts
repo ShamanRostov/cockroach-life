@@ -10,7 +10,7 @@ export class ResourceHUD {
   private container!: Phaser.GameObjects.Container;
   private foodText!: Phaser.GameObjects.Text;
   private moneyText!: Phaser.GameObjects.Text;
-  private healthFill!: Phaser.GameObjects.Image;
+  private healthFill!: Phaser.GameObjects.Rectangle;
   private healthText!: Phaser.GameObjects.Text;
   private readonly state = GameState.getInstance();
   private readonly barW = 96;
@@ -25,30 +25,32 @@ export class ResourceHUD {
     const hudY = y ?? 16 + safe.top;
     this.container = scene.add.container(hudX, hudY).setDepth(DEPTH.hud);
 
-    const panel = scene.add.image(0, 0, 'ui-hud-panel').setOrigin(0, 0).setDisplaySize(280, 72);
+    const panel = scene.add
+      .rectangle(0, 0, 268, 88, 0x1e140c, 0.9)
+      .setOrigin(0, 0)
+      .setStrokeStyle(2, 0xffa726, 0.5);
 
-    this.foodText = scene.add.text(16, 14, '', {
+    this.foodText = scene.add.text(16, 16, '', {
       fontFamily: 'Segoe UI, Arial, sans-serif',
-      fontSize: '16px',
+      fontSize: '18px',
       color: '#ffca28',
     });
 
-    this.moneyText = scene.add.text(16, 38, '', {
+    this.moneyText = scene.add.text(16, 42, '', {
       fontFamily: 'Segoe UI, Arial, sans-serif',
-      fontSize: '16px',
+      fontSize: '18px',
       color: '#66bb6a',
     });
 
-    this.healthText = scene.add.text(16, 62, '', {
+    this.healthText = scene.add.text(16, 68, '', {
       fontFamily: 'Segoe UI, Arial, sans-serif',
-      fontSize: '14px',
+      fontSize: '16px',
       color: '#ef5350',
     });
 
     this.healthFill = scene.add
-      .image(178, 72, 'ui-button')
-      .setOrigin(0, 0.5)
-      .setDisplaySize(this.barW, 10);
+      .rectangle(178, 76, this.barW, 12, 0x43a047, 0.95)
+      .setOrigin(0, 0.5);
 
     this.container.add([panel, this.healthFill, this.foodText, this.moneyText, this.healthText]);
     this.refresh();
@@ -69,8 +71,8 @@ export class ResourceHUD {
     );
 
     const ratio = Phaser.Math.Clamp(economy.health / economy.maxHealth, 0, 1);
-    this.healthFill.setDisplaySize(this.barW * ratio, 10);
-    this.healthFill.setTint(ratio > 0.3 ? 0x43a047 : 0xe53935);
+    this.healthFill.setSize(this.barW * ratio, 12);
+    this.healthFill.setFillStyle(ratio > 0.3 ? 0x43a047 : 0xe53935, 0.95);
 
     if (this.prevFood >= 0) {
       if (food > this.prevFood) {

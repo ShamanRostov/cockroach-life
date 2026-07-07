@@ -33,18 +33,16 @@ export class BreedingPanel {
     const rooms = this.state.building.getRooms();
     if (!this.state.breeding.hasNursery(rooms)) return;
 
-    const t = L().breeding;
     const count = this.state.breeding.getCockroaches().length;
-    const cap = this.state.breeding.getMaxCockroaches(rooms);
 
     this.hudButton = createAdaptiveButton(
       scene,
-      getNestHudButtonX(),
+      getNestHudButtonX('breeding'),
       getNestHudButtonY('breeding'),
-      fmt(t.hudButton, { current: count, max: cap }),
+      `🐣${count}`,
       () => this.show(scene),
-      120,
-      40,
+      48,
+      36,
     );
     this.hudButton.setDepth(DEPTH.hud + 12);
   }

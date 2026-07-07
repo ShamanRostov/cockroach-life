@@ -20,6 +20,10 @@ const TAB_BOARDS: LeaderboardId[] = [
   LEADERBOARD_IDS.COLONY_SIZE,
 ];
 
+const MAX_VISIBLE_ENTRIES = 8;
+const LIST_LINE_H = 36;
+const LIST_FONT = '20px';
+
 export class LeaderboardPanel {
   private modal = new ModalLayer();
   private overlay: Phaser.GameObjects.Rectangle | null = null;
@@ -46,8 +50,8 @@ export class LeaderboardPanel {
     const depth = 900;
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
-    const panelW = 540;
-    const panelH = 500;
+    const panelW = 580;
+    const panelH = 540;
 
     this.overlay = this.modal.track(createModalOverlay(scene, depth));
     this.overlay.on('pointerdown', () => this.hide());
@@ -67,9 +71,10 @@ export class LeaderboardPanel {
     this.container = this.modal.track(scene.add.container(0, 0).setDepth(depth + 2));
 
     const title = scene.add
-      .text(cx, cy - 220, t.title, {
+      .text(cx, cy - 232, t.title, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '26px',
+        fontSize: '30px',
+        fontStyle: 'bold',
         color: '#fff8e1',
         stroke: '#5d2e00',
         strokeThickness: 3,
@@ -80,22 +85,36 @@ export class LeaderboardPanel {
     this.tabContainer = scene.add.container(0, 0).setDepth(depth + 2);
     this.container.add(this.tabContainer);
     this.sceneRef = scene;
-    this.renderTabs(cx, cy - 170);
+    this.renderTabs(cx, cy - 175);
+
+    const listTop = cy - 128;
+    const listH = MAX_VISIBLE_ENTRIES * LIST_LINE_H + 8;
+    const listBg = scene.add
+      .rectangle(cx, listTop + listH / 2 - 4, panelW - 48, listH, 0x000000, 0.35)
+      .setStrokeStyle(1, 0xffa726, 0.35);
+    this.container.add(listBg);
 
     this.listContainer = scene.add.container(0, 0).setDepth(depth + 2);
     this.container.add(this.listContainer);
 
+    const separator = scene.add
+      .rectangle(cx, cy + 138, panelW - 80, 2, 0xffa726, 0.45);
+    this.container.add(separator);
+
     this.playerRankText = scene.add
-      .text(cx, cy + 170, t.loading, {
+      .text(cx, cy + 168, t.loading, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '16px',
+        fontSize: '22px',
+        fontStyle: 'bold',
         color: '#ffca28',
+        align: 'center',
+        wordWrap: { width: panelW - 64 },
       })
       .setOrigin(0.5);
     this.container.add(this.playerRankText);
 
     this.modal.track(
-      createTextButton(scene, cx, cy + 215, t.close, () => this.hide(), 160, 40).setDepth(depth + 3),
+      createTextButton(scene, cx, cy + 228, t.close, () => this.hide(), 220, 50).setDepth(depth + 3),
     );
 
     void this.loadBoard(TAB_BOARDS[this.activeTab]!);
@@ -136,9 +155,9 @@ export class LeaderboardPanel {
     if (!this.tabContainer || !this.sceneRef) return;
     this.tabContainer.removeAll(true);
 
-    const tabW = 160;
+    const tabW = 172;
     TAB_BOARDS.forEach((boardId, i) => {
-      const x = cx + (i - 1) * (tabW + 8);
+      const x = cx + (i - 1) * (tabW + 10);
       const active = i === this.activeTab;
       const btn = this.modal.track(
         createTextButton(
@@ -153,13 +172,13 @@ export class LeaderboardPanel {
             void this.loadBoard(TAB_BOARDS[this.activeTab]!);
           },
           tabW,
-          36,
+          44,
         ),
       );
       this.tabContainer!.add(btn);
       if (active) {
         const underline = this.sceneRef!.add
-          .rectangle(x, y + 22, tabW - 12, 3, 0xffca28);
+          .rectangle(x, y + 26, tabW - 16, 4, 0xffca28);
         this.tabContainer!.add(underline);
       }
     });
@@ -183,20 +202,33 @@ export class LeaderboardPanel {
 
     if (!this.listContainer || !this.playerRankText) return;
 
-    const startY = cy - 120;
-    data.entries.forEach((entry, i) => {
-      const y = startY + i * 32;
+    const startY = cy - 118;
+    const rankX = cx - 220;
+    const nameX = cx - 70;
+    const scoreX = cx + 210;
+    const textStyle = {
+      fontFamily: 'Segoe UI, Arial, sans-serif',
+      fontSize: LIST_FONT,
+      color: '#fff8e1',
+    } as const;
+
+    data.entries.slice(0, MAX_VISIBLE_ENTRIES).forEach((entry, i) => {
+      const y = startY + i * LIST_LINE_H;
       const color = entry.isPlayer ? '#ffca28' : '#fff8e1';
       const rankStr = fmt(t.rank, { rank: entry.rank });
       const scoreStr = fmt(t.score, { score: entry.score });
-      const line = this.sceneRef!.add
-        .text(cx, y, `${rankStr}  ${entry.name}  ${scoreStr}`, {
-          fontFamily: 'Segoe UI, Arial, sans-serif',
-          fontSize: '15px',
-          color,
-        })
-        .setOrigin(0.5);
-      this.listContainer!.add(line);
+
+      const rankText = this.sceneRef!.add
+        .text(rankX, y, rankStr, { ...textStyle, color, fontStyle: 'bold' })
+        .setOrigin(0, 0.5);
+      const nameText = this.sceneRef!.add
+        .text(nameX, y, entry.name, { ...textStyle, color })
+        .setOrigin(0, 0.5);
+      const scoreText = this.sceneRef!.add
+        .text(scoreX, y, scoreStr, { ...textStyle, color, fontStyle: 'bold' })
+        .setOrigin(1, 0.5);
+
+      this.listContainer!.add([rankText, nameText, scoreText]);
     });
 
     if (data.playerRank !== null && data.playerScore !== null) {

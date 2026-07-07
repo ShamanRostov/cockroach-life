@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH } from '../config';
-import { getEventBannerY } from './NestLayout';
+import { getEventBannerY, getEventBannerX } from './NestLayout';
 import { GameState } from '../GameState';
 import {
   createTextButton,
@@ -28,19 +28,18 @@ export class EventBanner {
     const t = L().events;
     const { days, hours } = this.state.liveOps.formatTimeRemaining();
 
-    const container = scene.add.container(340, getEventBannerY()).setDepth(DEPTH.hud + 1);
+    const container = scene.add.container(getEventBannerX(), getEventBannerY()).setDepth(DEPTH.hud + 1);
 
     const bannerW = 360;
     const bannerH = 36;
     const bg = scene.add
-      .image(0, 0, 'ui-panel')
-      .setDisplaySize(bannerW, bannerH)
-      .setAlpha(0.92);
+      .rectangle(0, 0, bannerW, bannerH, 0x1e140c, 0.9)
+      .setStrokeStyle(2, 0xffa726, 0.55);
 
     const label = scene.add
       .text(-200, 0, `${event.icon} ${this.state.liveOps.getEventName()}`, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '15px',
+        fontSize: '17px',
         color: '#fff8e1',
         stroke: '#5d2e00',
         strokeThickness: 2,
@@ -50,7 +49,7 @@ export class EventBanner {
     this.timerText = scene.add
       .text(200, 0, fmt(t.timeRemaining, { days, hours }), {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '14px',
+        fontSize: '16px',
         color: '#ffca28',
       })
       .setOrigin(1, 0.5);

@@ -32,19 +32,23 @@ export function drawIsoTile(
   y: number,
   fillColor: number,
   strokeColor?: number,
+  fillAlpha = 1,
+  strokeAlpha = 0.5,
 ): void {
   const hw = TILE.width / 2;
   const hh = TILE.height / 2;
-  graphics.fillStyle(fillColor, 1);
+  graphics.fillStyle(fillColor, fillAlpha);
   graphics.beginPath();
   graphics.moveTo(x, y - hh);
   graphics.lineTo(x + hw, y);
   graphics.lineTo(x, y + hh);
   graphics.lineTo(x - hw, y);
   graphics.closePath();
-  graphics.fillPath();
-  if (strokeColor !== undefined) {
-    graphics.lineStyle(1, strokeColor, 0.5);
+  if (fillAlpha > 0) {
+    graphics.fillPath();
+  }
+  if (strokeColor !== undefined && strokeAlpha > 0) {
+    graphics.lineStyle(1, strokeColor, strokeAlpha);
     graphics.strokePath();
   }
 }

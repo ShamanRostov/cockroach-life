@@ -3,8 +3,8 @@ import Phaser from 'phaser';
 export const COCKROACH_TEXTURE_KEY = 'cockroach';
 export const COCKROACH_ANIM_WALK = 'roach-walk';
 
-/** Top-down cockroach ~24 px on nest grid (texture 64×40 trimmed). */
-export const COCKROACH_DISPLAY_SCALE = 0.55;
+/** Top-down cockroach ~24 px wide on nest grid (texture 64×40). */
+export const COCKROACH_DISPLAY_SCALE = 0.42;
 
 export function cockroachScale(mult = 1): number {
   return COCKROACH_DISPLAY_SCALE * mult;
@@ -18,6 +18,8 @@ export function attachCockroachAnim(
   sprite.setTexture(`${COCKROACH_TEXTURE_KEY}-0`);
   sprite.setScale(cockroachScale(scaleMult));
   sprite.setOrigin(0.5, 0.58);
+  sprite.setFlipX(false);
+  sprite.setRotation(0);
   if (tint !== null) {
     sprite.setTint(tint);
   } else {
@@ -64,17 +66,31 @@ export function createCockroachPhysics(
   return attachCockroachAnim(sprite, scaleMult, tint) as Phaser.Physics.Arcade.Sprite;
 }
 
+/** Cockroach frame 0 faces left — rotate toward velocity. */
+const ART_FACING_ANGLE = Math.PI;
+
 export function syncCockroachMovement(
   sprite: Phaser.GameObjects.Sprite | Phaser.Physics.Arcade.Sprite,
   vx: number,
   vy = 0,
 ): void {
-  const moving = Math.abs(vx) > 2 || Math.abs(vy) > 2;
-  if (moving) {
-    sprite.anims.resume();
-    if (vx < -2) sprite.setFlipX(true);
-    else if (vx > 2) sprite.setFlipX(false);
-  } else {
+  const moving = Math.hypot(vx, vy) > 2;
+  if (!moving) {
     sprite.anims.pause();
+    return;
   }
+
+  sprite.anims.resume();
+
+  // Side-scroller (vy ≈ 0): mirror on X when going right — a 180° spin flips the sprite upside down.
+  const horizontal = Math.abs(vy) < Math.abs(vx) * 0.2;
+  if (horizontal) {
+    sprite.setFlipX(vx > 0);
+    sprite.setRotation(0);
+    return;
+  }
+
+  // Isometric / free movement: rotate toward velocity, no mirror.
+  sprite.setFlipX(false);
+  sprite.setRotation(Math.atan2(vy, vx) - ART_FACING_ANGLE);
 }

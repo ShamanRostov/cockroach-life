@@ -190,12 +190,17 @@ export const ARCADE_FOOD_HUNT = {
   failDamage: 12,
   hungerDrain: 0.011,
   hungerPerCrumb: 14,
+  /** × COCKROACH_DISPLAY_SCALE */
+  roachScale: 4.5,
+  crumbScaleMin: 0.7,
+  crumbScaleMax: 1.0,
 };
 
 export const ARCADE_SPRAY = {
   winFood: 25,
   winMoney: 15,
   poisonedHealth: 20,
+  roachScale: 4.5,
 };
 
 export const ARCADE_CAT_CHASE = {
@@ -208,6 +213,9 @@ export const ARCADE_CAT_CHASE = {
   winFood: 35,
   winMoney: 22,
   failDamage: 8,
+  roachScale: 3.0,
+  crumbScaleMin: 0.6,
+  crumbScaleMax: 0.84,
 };
 
 export const ARCADE_HOSPITAL = {
@@ -221,4 +229,13 @@ export const ARCADE_HOSPITAL = {
 
 export const ARCADE_SLIPPER = {
   playerSpeed: 280,
+  /** Arcade roach scale mult (× COCKROACH_DISPLAY_SCALE). Was 1.5 → 2× = 3.0 */
+  roachScale: 3.0,
+  /** Slipper display scale — ~4× previous 0.55 baseline */
+  slipperScaleBase: 2.2,
+  slipperScaleMin: 1.52,
+  slipperScaleMax: 2.2,
+  slipperScaleLarge: 2.8,
+  waveMin: 2,
+  waveMax: 4,
 };

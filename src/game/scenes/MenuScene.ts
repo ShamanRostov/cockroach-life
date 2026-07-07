@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { SCENES, GAME_WIDTH, GAME_HEIGHT, isMobileDevice } from '../config';
-import { createAdaptiveButton, addFullscreenBg, createModalOverlay, createModalPanel } from '../ui/ButtonHelper';
-import { addVignette, addWarmGlow } from '../graphics/VisualEffects';
+import { createAdaptiveButton, addFullscreenBg, createModalOverlay, createModalPanel, createPanel } from '../ui/ButtonHelper';
+import { addWarmGlow } from '../graphics/VisualEffects';
 import { DEPTH } from '../graphics/SceneDepth';
 import { GameState } from '../GameState';
 import { i18n, L, SUPPORTED_LOCALES } from '../../i18n';
@@ -30,19 +30,14 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     addFullscreenBg(this, 'menu-bg', DEPTH.background);
-    addWarmGlow(this, GAME_WIDTH * 0.72, 80, DEPTH.ambient, 1.8);
-    addVignette(this);
+    addWarmGlow(this, GAME_WIDTH * 0.72, 80, DEPTH.ambient, 0.8);
     this.createBackgroundParticles();
 
     const cx = GAME_WIDTH / 2;
     const t = L();
     const startY = 268;
 
-    this.add
-      .image(cx, 108, 'ui-panel')
-      .setDisplaySize(680, 130)
-      .setAlpha(0.9)
-      .setDepth(DEPTH.ui);
+    createPanel(this, cx - 340, 48, 680, 120, 0.9, DEPTH.ui);
 
     const titleShadow = this.add
       .text(cx + 3, 111, t.game.title, {
@@ -250,18 +245,6 @@ export class MenuScene extends Phaser.Scene {
     const t = L();
     const depth = 900;
 
-    createModalOverlay(this, depth);
-    createModalPanel(this, cx, cy, 520, 540, depth + 1);
-
-    this.add
-      .text(cx, cy - 190, t.menu.arcadeTitle, {
-        fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '30px',
-        color: '#fff8e1',
-      })
-      .setOrigin(0.5)
-      .setDepth(depth + 2);
-
     const arcades = [
       { label: t.arcade.slipper.title, scene: SCENES.SLIPPER },
       { label: t.arcade.spray.title, scene: SCENES.SPRAY },
@@ -270,30 +253,64 @@ export class MenuScene extends Phaser.Scene {
       { label: t.arcade.hospital.title, scene: SCENES.HOSPITAL },
     ];
 
+    const btnW = 440;
+    const btnH = 56;
+    const btnGap = 14;
+    const rowStep = btnH + btnGap;
+    const backBtnH = 50;
+    const backMargin = 28;
+    const titleH = 48;
+    const panelPad = 36;
+
+    const contentH = titleH + 20 + arcades.length * rowStep + backMargin + backBtnH + panelPad;
+    const panelH = Math.max(560, contentH);
+    const panelW = 540;
+
+    createModalOverlay(this, depth);
+    createModalPanel(this, cx, cy, panelW, panelH, depth + 1);
+
+    const panelTop = cy - panelH / 2;
+
+    this.add
+      .text(cx, panelTop + 40, t.menu.arcadeTitle, {
+        fontFamily: 'Segoe UI, Arial, sans-serif',
+        fontSize: '30px',
+        fontStyle: 'bold',
+        color: '#fff8e1',
+        stroke: '#5d2e00',
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5)
+      .setDepth(depth + 2);
+
+    const firstBtnY = panelTop + titleH + 52;
+
     arcades.forEach((a, i) => {
       createAdaptiveButton(
         this,
         cx,
-        cy - 110 + i * 76,
+        firstBtnY + i * rowStep,
         a.label,
         () => {
           this.scene.start(a.scene);
         },
-        420,
-        62,
+        btnW,
+        btnH,
       ).setDepth(depth + 3);
     });
+
+    const backY = firstBtnY + arcades.length * rowStep + backMargin + backBtnH / 2;
 
     createAdaptiveButton(
       this,
       cx,
-      cy + 210,
+      backY,
       t.menu.back,
       () => {
         this.scene.restart();
       },
       220,
-      52,
+      backBtnH,
     ).setDepth(depth + 3);
   }
 }

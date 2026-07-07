@@ -53,7 +53,6 @@ export const GAME_ASSET_MANIFEST: AssetEntry[] = [
   sprite('spark.png', 'spark'),
   sprite('nest-marker.png', 'nest-marker'),
   sprite('cat.png', 'cat'),
-  bg('vignette.png', 'fx-vignette'),
   ...ALL_BUILDING_TYPES.map((t) => building(t)),
   ...Array.from({ length: COCKROACH_FRAMES }, (_, i) => roach(i)),
 ];

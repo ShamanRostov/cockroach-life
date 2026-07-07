@@ -10,7 +10,10 @@ export {
   getBuildPanelX,
   getBuildPanelCenterX,
   getEventBannerY,
+  getEventBannerX,
   getRegionSwitcherY,
+  getRegionSwitcherX,
+  type NestHudSlot,
 } from './NestLayout';
 
 export const MIN_TOUCH_TARGET = 44;

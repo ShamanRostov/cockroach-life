@@ -31,12 +31,12 @@ export class DailyPanel {
 
     const btn = createTextButton(
       scene,
-      getNestHudButtonX(),
+      getNestHudButtonX('daily'),
       getNestHudButtonY('daily'),
       label,
       () => this.show(scene),
-      72,
-      40,
+      48,
+      38,
     );
     btn.setDepth(DEPTH.hud + 12);
     return btn;

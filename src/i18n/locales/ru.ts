@@ -29,7 +29,7 @@ export const ru: LocalePack = {
     tapToBuild: 'Нажмите на сетку, чтобы строить',
   },
   common: {
-    esc: 'ESC',
+    esc: 'Меню',
     record: '\n🏆 Рекорд!',
     score: 'Счёт: {score}',
     health: '❤️ {current} ОЗ',
@@ -123,6 +123,8 @@ export const ru: LocalePack = {
       progress: 'Лечение: {current} / {total}',
       healed: 'Вылечен! +30 ОЗ',
       now: '● СЕЙЧАС ●',
+      zoneHint: 'Зелёное кольцо — жми ПРОБЕЛ!',
+      wait: 'Жди, пока сердце войдёт в зелёное кольцо',
     },
     catChase: {
       title: '🐱 Побег от кота!',

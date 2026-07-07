@@ -5,33 +5,45 @@ import { DEPTH } from '../graphics/SceneDepth';
 import { SoundManager } from '../audio/SoundManager';
 import type { SoundKey } from '../audio/generateSounds';
 
-const UI_TEXTURE_KEYS = ['ui-panel', 'ui-button', 'ui-button-hover', 'ui-hud-panel'] as const;
+const PANEL_FILL = 0x1e140c;
+const PANEL_STROKE = 0xffa726;
+const BTN_FILL = 0xe65100;
+const BTN_HOVER = 0xff9800;
 
-function wireContainerButton(
+function buttonFontSize(w: number, h: number, label: string): string {
+  const lines = label.split('\n').length;
+  if (w >= 400 && h >= 60) return '28px';
+  if (w >= 350 && h >= 52) return '26px';
+  if (w >= 280) return '22px';
+  if (w >= 200) return lines > 1 ? '19px' : '21px';
+  if (w >= 120) return lines > 1 ? '17px' : '19px';
+  return '17px';
+}
+
+function buttonStroke(w: number): number {
+  return w >= 280 ? 3 : 2;
+}
+
+function wireButtonHitRect(
+  scene: Phaser.Scene,
   container: Phaser.GameObjects.Container,
+  bg: Phaser.GameObjects.Rectangle,
   w: number,
   h: number,
   onClick: () => void,
   sfx: SoundKey | 'none',
-  scene: Phaser.Scene,
-): void {
-  container.setSize(w, h);
-  container.setInteractive({
-    hitArea: new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
-    hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-    useHandCursor: !isMobileDevice(),
-  });
+): Phaser.GameObjects.Rectangle {
+  const hitRect = scene.add.rectangle(0, 0, w, h, 0x000000, 0);
+  hitRect.setInteractive({ useHandCursor: !isMobileDevice() });
 
-  container.on('pointerdown', (
+  hitRect.on('pointerdown', (
     _p: Phaser.Input.Pointer,
     _lx: number,
     _ly: number,
     event: Phaser.Types.Input.EventData,
   ) => {
     event.stopPropagation();
-    if (sfx !== 'none') {
-      SoundManager.getInstance().playSFX(sfx);
-    }
+    if (sfx !== 'none') SoundManager.getInstance().playSFX(sfx);
     scene.tweens.add({
       targets: container,
       scaleX: 0.96,
@@ -42,6 +54,13 @@ function wireContainerButton(
     });
     onClick();
   });
+
+  if (!isMobileDevice()) {
+    hitRect.on('pointerover', () => bg.setFillStyle(BTN_HOVER, 0.98));
+    hitRect.on('pointerout', () => bg.setFillStyle(BTN_FILL, 0.95));
+  }
+
+  return hitRect;
 }
 
 export function createTextButton(
@@ -58,28 +77,29 @@ export function createTextButton(
   const sizes = mobileButtonSize(width, height);
   const w = sizes.width;
   const h = sizes.height;
-  const fontSize = w >= 380 ? '24px' : w >= 280 ? '20px' : isMobileDevice() ? '18px' : '16px';
+  const fontSize = buttonFontSize(w, h, label);
+  const pad = 12;
 
   const container = scene.add.container(x, y).setDepth(depth);
-
-  const bg = scene.add.image(0, 0, 'ui-button').setDisplaySize(w, h);
+  const bg = scene.add
+    .rectangle(0, 0, w, h, BTN_FILL, 0.95)
+    .setStrokeStyle(2, PANEL_STROKE, 0.85);
 
   const text = scene.add.text(0, 0, label, {
     fontFamily: 'Segoe UI, Arial, sans-serif',
     fontSize,
+    fontStyle: 'bold',
     color: '#fff8e1',
     stroke: '#3e2723',
-    strokeThickness: 3,
+    strokeThickness: buttonStroke(w),
+    align: 'center',
+    lineSpacing: 2,
+    wordWrap: { width: w - pad * 2, useAdvancedWrap: true },
   });
   text.setOrigin(0.5);
 
-  container.add([bg, text]);
-  wireContainerButton(container, w, h, onClick, sfx, scene);
-
-  if (!isMobileDevice()) {
-    container.on('pointerover', () => bg.setTexture('ui-button-hover'));
-    container.on('pointerout', () => bg.setTexture('ui-button'));
-  }
+  const hitRect = wireButtonHitRect(scene, container, bg, w, h, onClick, sfx);
+  container.add([bg, text, hitRect]);
 
   return container;
 }
@@ -100,23 +120,22 @@ export function createMobileButton(
   return createTextButton(scene, x, y, label, onClick, hitW, hitH, sfx, depth);
 }
 
+/** Flat semi-transparent panel — no stretched PNG chrome. */
 export function createPanel(
   scene: Phaser.Scene,
   x: number,
   y: number,
   w: number,
   h: number,
-  alpha = 0.94,
+  alpha = 0.88,
   depth = DEPTH.ui,
-): Phaser.GameObjects.Image {
+): Phaser.GameObjects.Rectangle {
   return scene.add
-    .image(x + w / 2, y + h / 2, 'ui-panel')
-    .setDisplaySize(w, h)
-    .setAlpha(alpha)
+    .rectangle(x + w / 2, y + h / 2, w, h, PANEL_FILL, alpha)
+    .setStrokeStyle(2, PANEL_STROKE, 0.55)
     .setDepth(depth);
 }
 
-/** Dim layer — click outside modal to close. */
 export function createModalOverlay(scene: Phaser.Scene, depth: number = DEPTH.overlay): Phaser.GameObjects.Rectangle {
   return scene.add
     .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.75)
@@ -131,27 +150,25 @@ export function createModalPanel(
   w: number,
   h: number,
   depth = DEPTH.overlay + 1,
-): Phaser.GameObjects.Image {
+): Phaser.GameObjects.Rectangle {
   return scene.add
-    .image(cx, cy, 'ui-panel')
-    .setDisplaySize(w, h)
+    .rectangle(cx, cy, w, h, PANEL_FILL, 0.96)
+    .setStrokeStyle(3, PANEL_STROKE, 0.7)
     .setDepth(depth);
 }
 
 export function showToast(scene: Phaser.Scene, message: string, duration = 2000): void {
+  const toastW = Math.min(520, message.length * 10 + 80);
   const toastBg = scene.add
-    .image(scene.scale.width / 2, scene.scale.height - 60, 'ui-panel')
-    .setDisplaySize(Math.min(520, message.length * 10 + 80), 52)
-    .setAlpha(0.95)
+    .rectangle(scene.scale.width / 2, scene.scale.height - 60, toastW, 48, PANEL_FILL, 0.95)
+    .setStrokeStyle(2, PANEL_STROKE, 0.6)
     .setDepth(DEPTH.modal + 10);
 
   const toast = scene.add
     .text(scene.scale.width / 2, scene.scale.height - 60, message, {
       fontFamily: 'Segoe UI, Arial, sans-serif',
-      fontSize: '16px',
+      fontSize: '18px',
       color: '#fff8e1',
-      stroke: '#3e2723',
-      strokeThickness: 2,
     })
     .setOrigin(0.5)
     .setDepth(DEPTH.modal + 11);
@@ -215,5 +232,3 @@ export function createAdaptiveButton(
     ? createMobileButton(scene, x, y, label, onClick, width, height, sfx, depth)
     : createTextButton(scene, x, y, label, onClick, width, height, sfx, depth);
 }
-
-export { UI_TEXTURE_KEYS };

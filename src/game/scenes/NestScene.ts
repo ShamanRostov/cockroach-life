@@ -8,16 +8,16 @@ import { ShopPanel } from '../ui/ShopPanel';
 import { SeasonPassPanel } from '../ui/SeasonPassPanel';
 import { EventBanner } from '../ui/EventBanner';
 import { createPanel, showToast, createAdaptiveButton } from '../ui/ButtonHelper';
-import { isNestUIRegion, getRightPanelWidth, getBuildPanelX, getBuildPanelCenterX, NEST_LAYOUT, getRegionSwitcherY } from '../ui/MobileUILayout';
+import { isNestUIRegion, getRightPanelWidth, getBuildPanelX, getBuildPanelCenterX, NEST_LAYOUT, getRegionSwitcherX, getRegionSwitcherY } from '../ui/MobileUILayout';
 import { ROOM_DEFINITIONS, type RoomDefinition, type RoomType } from '../systems/BuildingSystem';
-import { gridToScreen, screenToGrid } from '../utils/isometric';
+import { gridToScreen, screenToGrid, drawIsoTile } from '../utils/isometric';
 import { buildingTextureKey, buildingDisplayScale } from '../assets/AssetKeys';
 import { spawnAmbientDust } from '../graphics/ApartmentEnvironment';
-import { addVignette, addWarmGlow } from '../graphics/VisualEffects';
+import { addWarmGlow } from '../graphics/VisualEffects';
 import { DEPTH } from '../graphics/SceneDepth';
 import { spawnBuildSparkles } from '../graphics/ParticleEffects';
 import { playBuildAnimation, playUpgradeAnimation } from '../graphics/BuildAnimation';
-import { createCockroachSprite } from '../graphics/CockroachSprite';
+import { createCockroachSprite, syncCockroachMovement } from '../graphics/CockroachSprite';
 import { i18n, L, fmt } from '../../i18n';
 import { AnalyticsService } from '../../platforms/AnalyticsService';
 import { SoundManager } from '../audio/SoundManager';
@@ -43,14 +43,14 @@ export class NestScene extends Phaser.Scene {
   private originX = 0;
   private originY = 380;
   private tilesLayer!: Phaser.GameObjects.Container;
-  private tileSprites = new Map<string, Phaser.GameObjects.Image>();
+  private tileSprites = new Map<string, Phaser.GameObjects.Graphics>();
+  private hoverLabel: Phaser.GameObjects.Text | null = null;
   private buildingsLayer!: Phaser.GameObjects.Container;
   private selectedRoom: RoomType = 'kitchen';
   private buildMode = true;
   private infoText!: Phaser.GameObjects.Text;
   private cockroach!: Phaser.GameObjects.Sprite;
   private roachTarget = { x: 0, y: 0 };
-  private roachPauseMs = 0;
   private readonly roachSpeed = 32;
   private lastTick = 0;
   private hoverCell: { gx: number; gy: number } | null = null;
@@ -71,8 +71,8 @@ export class NestScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(
       isStairwell ? 0x263238 : isBalcony ? 0x1a2e1a : COLORS.bgWarm,
     );
-    this.originX = NEST_LAYOUT.gridCenterX;
-    this.originY = NEST_LAYOUT.gridCenterY;
+    this.originX = NEST_LAYOUT.gridOriginX;
+    this.originY = NEST_LAYOUT.gridOriginY;
     this.lastTick = 0;
     this.selectedRoom = isStairwell ? 'locker' : isBalcony ? 'planter' : 'kitchen';
 
@@ -85,8 +85,7 @@ export class NestScene extends Phaser.Scene {
     } else if (isStairwell) {
       this.nestBg.setTint(0x9e9e9e);
     }
-    addWarmGlow(this, GAME_WIDTH / 2, 40, DEPTH.ambient, 2.2);
-    addVignette(this);
+    addWarmGlow(this, GAME_WIDTH / 2, 40, DEPTH.ambient, 0.6);
 
     this.dustEmitter = spawnAmbientDust(this);
 
@@ -123,10 +122,12 @@ export class NestScene extends Phaser.Scene {
     this.createCockroach();
 
     this.infoText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 30, '', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 28, '', {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '14px',
-        color: '#bcaaa4',
+        fontSize: '17px',
+        color: '#fff8e1',
+        stroke: '#1a1208',
+        strokeThickness: 3,
       })
       .setOrigin(0.5)
       .setDepth(DEPTH.hud);
@@ -186,7 +187,7 @@ export class NestScene extends Phaser.Scene {
           ? t.nest.switchStairwell
           : t.nest.switchBalcony;
 
-    createAdaptiveButton(this, 400, getRegionSwitcherY(), label, () => {
+    createAdaptiveButton(this, getRegionSwitcherX(), getRegionSwitcherY(), label, () => {
       const target = this.state.getNextNestRegion();
       if (target === 'balcony' && !this.state.isBalconyUnlocked()) {
         showToast(this, t.nest.balconyLocked);
@@ -202,6 +203,7 @@ export class NestScene extends Phaser.Scene {
   }
 
   shutdown(): void {
+    this.clearHoverLabel();
     this.eventBanner.destroy();
     this.dustEmitter?.destroy();
     this.tutorialOverlay.destroy();
@@ -252,26 +254,21 @@ export class NestScene extends Phaser.Scene {
   }
 
   private updateRoach(delta: number): void {
-    if (this.roachPauseMs > 0) {
-      this.roachPauseMs -= delta;
-      this.cockroach.anims.pause();
-      return;
-    }
-    this.cockroach.anims.resume();
-
     const dx = this.roachTarget.x - this.cockroach.x;
     const dy = this.roachTarget.y - this.cockroach.y;
     const dist = Math.hypot(dx, dy);
     if (dist < 4) {
-      this.roachPauseMs = Phaser.Math.Between(500, 1400);
       this.roachTarget = this.pickRoachWaypoint();
       return;
     }
 
+    this.cockroach.anims.resume();
     const step = this.roachSpeed * (delta / 1000);
-    this.cockroach.x += (dx / dist) * step;
-    this.cockroach.y += (dy / dist) * step;
-    this.cockroach.setFlipX(dx < 0);
+    const moveX = (dx / dist) * step;
+    const moveY = (dy / dist) * step;
+    this.cockroach.x += moveX;
+    this.cockroach.y += moveY;
+    syncCockroachMovement(this.cockroach, dx, dy);
   }
 
   private pickRoachWaypoint(): { x: number; y: number } {
@@ -279,7 +276,7 @@ export class NestScene extends Phaser.Scene {
     const gx = Phaser.Math.Between(0, gridWidth - 1);
     const gy = Phaser.Math.Between(0, gridHeight - 1);
     const { x, y } = gridToScreen(gx, gy, this.originX, this.originY);
-    return { x, y: y + 6 };
+    return { x, y: y + 4 };
   }
 
   private createCockroach(): void {
@@ -288,7 +285,7 @@ export class NestScene extends Phaser.Scene {
       this,
       start.x,
       start.y,
-      1,
+      2.2,
       50,
       this.state.skins.getTint(),
     );
@@ -301,11 +298,11 @@ export class NestScene extends Phaser.Scene {
     const panelX = getBuildPanelX();
     const panelTop = NEST_LAYOUT.buildPanelTop;
     const uiDepth = DEPTH.hud + 4;
-    createPanel(this, panelX, panelTop, panelW, 340, 0.92, DEPTH.ui);
+    createPanel(this, panelX, panelTop, panelW, NEST_LAYOUT.buildPanelH, 0.92, DEPTH.ui);
     this.add
       .text(panelX + 12, panelTop + 10, t.nest.building, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '16px',
+        fontSize: '18px',
         color: '#fff8e1',
         stroke: '#3e2723',
         strokeThickness: 2,
@@ -313,22 +310,22 @@ export class NestScene extends Phaser.Scene {
       .setDepth(uiDepth);
 
     const unlocked = this.state.building.getUnlockedRooms();
-    const btnW = panelW - 24;
+    const btnW = panelW - 20;
     unlocked.forEach((type, i) => {
       const def = ROOM_DEFINITIONS[type];
       const costs = this.getDiscountedCosts(def);
       createAdaptiveButton(
         this,
         getBuildPanelCenterX(),
-        panelTop + 48 + i * 44,
-        `${i18n.roomName(type)} (${costs.money}💰)`,
+        panelTop + 52 + i * 50,
+        `${i18n.roomName(type)}\n${costs.money}💰`,
         () => {
           this.selectedRoom = type;
           this.buildMode = true;
           showToast(this, fmt(t.nest.selected, { room: i18n.roomName(type) }));
         },
         btnW,
-        36,
+        44,
         'ui_click',
         uiDepth,
       );
@@ -337,14 +334,14 @@ export class NestScene extends Phaser.Scene {
     createAdaptiveButton(
       this,
       getBuildPanelCenterX(),
-      panelTop + 48 + unlocked.length * 44 + 8,
+      panelTop + 52 + unlocked.length * 50 + 6,
       t.nest.upgrade,
       () => {
         this.buildMode = false;
         showToast(this, t.nest.clickUpgrade);
       },
       btnW,
-      36,
+      44,
       'ui_click',
       uiDepth,
     );
@@ -359,7 +356,7 @@ export class NestScene extends Phaser.Scene {
     this.add
       .text(NEST_LAYOUT.sideMargin + 12, panelTop + 10, t.nest.defense, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '15px',
+        fontSize: '18px',
         color: '#fff8e1',
         stroke: '#3e2723',
         strokeThickness: 2,
@@ -372,21 +369,22 @@ export class NestScene extends Phaser.Scene {
       { key: 'glue', label: t.nest.trapGlue },
     ];
 
+    const trapBtnW = panelW - 20;
     traps.forEach((tr, i) => {
       const active = this.state.raid.defenseTraps.includes(tr.key);
       createAdaptiveButton(
         this,
-        NEST_LAYOUT.sideMargin + 52 + i * 82,
-        panelTop + 52,
-        active ? `✓ ${tr.label}` : tr.label,
+        NEST_LAYOUT.sideMargin + panelW / 2,
+        panelTop + 44 + i * 42,
+        active ? `${tr.label} ✓` : tr.label,
         () => {
           this.state.raid.toggleTrap(tr.key);
           this.state.persist();
           showToast(this, t.nest.trapsSaved);
           this.scene.restart();
         },
-        76,
-        34,
+        trapBtnW,
+        38,
         'ui_click',
         uiDepth,
       );
@@ -395,14 +393,14 @@ export class NestScene extends Phaser.Scene {
     createAdaptiveButton(
       this,
       NEST_LAYOUT.sideMargin + panelW / 2,
-      panelTop + NEST_LAYOUT.defensePanelH + 28,
+      panelTop + NEST_LAYOUT.defensePanelH + 18,
       t.nest.worldMap,
       () => {
         this.state.persist();
         this.scene.start(SCENES.WORLD_MAP);
       },
-      180,
-      34,
+      trapBtnW,
+      38,
       'ui_click',
       uiDepth,
     );
@@ -413,17 +411,19 @@ export class NestScene extends Phaser.Scene {
     const panelH = NEST_LAYOUT.arcadePanelH;
     const panelBottom = NEST_LAYOUT.arcadePanelBottom;
     const panelY = GAME_HEIGHT - panelH - panelBottom;
-    const panelW = 500;
-    const btnW = 92;
-    const btnGap = 118;
-    const startX = NEST_LAYOUT.sideMargin + 36;
+    const panelW = NEST_LAYOUT.defensePanelW;
+    const btnW = 112;
+    const btnH = 40;
+    const colGap = 12;
+    const rowGap = 10;
+    const gridStartX = NEST_LAYOUT.sideMargin + btnW / 2 + 8;
     const uiDepth = DEPTH.hud + 4;
 
     createPanel(this, NEST_LAYOUT.sideMargin, panelY, panelW, panelH, 0.92, DEPTH.ui);
     this.add
       .text(NEST_LAYOUT.sideMargin + 14, panelY + 10, t.nest.dangers, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '15px',
+        fontSize: '18px',
         color: '#fff8e1',
         stroke: '#3e2723',
         strokeThickness: 2,
@@ -438,10 +438,12 @@ export class NestScene extends Phaser.Scene {
     ];
 
     missions.forEach((m, i) => {
+      const col = i % 2;
+      const row = Math.floor(i / 2);
       createAdaptiveButton(
         this,
-        startX + i * btnGap,
-        panelY + 58,
+        gridStartX + col * (btnW + colGap),
+        panelY + 50 + row * (btnH + rowGap),
         m.label,
         () => {
           if (m.scene === SCENES.FOOD) {
@@ -452,22 +454,87 @@ export class NestScene extends Phaser.Scene {
           this.scene.start(m.scene);
         },
         btnW,
-        34,
+        btnH,
         'ui_click',
         uiDepth,
       );
     });
-    this.foodArcadeBtn = { x: startX + 2 * btnGap, y: panelY + 58, width: btnW, height: 34 };
+    this.foodArcadeBtn = {
+      x: gridStartX + btnW + colGap,
+      y: panelY + 50 + btnH + rowGap,
+      width: btnW,
+      height: btnH,
+    };
     this.worldMapBtn = {
       x: NEST_LAYOUT.sideMargin + NEST_LAYOUT.defensePanelW / 2,
-      y: NEST_LAYOUT.defensePanelTop + NEST_LAYOUT.defensePanelH + 28,
-      width: 180,
-      height: 34,
+      y: NEST_LAYOUT.defensePanelTop + NEST_LAYOUT.defensePanelH + 18,
+      width: panelW - 20,
+      height: 38,
     };
   }
 
   private clearHoverTint(): void {
-    this.tileSprites.forEach((tile) => tile.clearTint());
+    this.tileSprites.forEach((_tile, key) => {
+      const [gx, gy] = key.split(',').map(Number);
+      this.repaintGridCell(gx, gy);
+    });
+    this.clearHoverLabel();
+  }
+
+  private repaintGridCell(
+    gx: number,
+    gy: number,
+    highlight?: 'ok' | 'bad',
+  ): void {
+    const tile = this.tileSprites.get(`${gx},${gy}`);
+    if (!tile) return;
+    const { x, y } = gridToScreen(gx, gy, this.originX, this.originY);
+    const hasRoom = !!this.state.building.getRoomAt(gx, gy);
+    let fill = hasRoom ? 0x66bb6a : 0xfff8e1;
+    let alpha = hasRoom ? 0.1 : 0;
+    let strokeAlpha = hasRoom ? 0.22 : 0.14;
+    if (highlight === 'ok') {
+      fill = 0x66bb6a;
+      alpha = 0.32;
+      strokeAlpha = 0.45;
+    } else if (highlight === 'bad') {
+      fill = 0xef5350;
+      alpha = 0.32;
+      strokeAlpha = 0.45;
+    }
+    tile.clear();
+    drawIsoTile(tile, x, y, fill, 0xfff8e1, alpha, strokeAlpha);
+  }
+
+  private clearHoverLabel(): void {
+    this.hoverLabel?.destroy();
+    this.hoverLabel = null;
+  }
+
+  private updateHoverLabel(): void {
+    this.clearHoverLabel();
+    if (!this.hoverCell) return;
+    const room = this.state.building.getRoomAt(this.hoverCell.gx, this.hoverCell.gy);
+    if (!room) return;
+    const { x, y } = gridToScreen(this.hoverCell.gx, this.hoverCell.gy, this.originX, this.originY);
+    const t = L();
+    this.hoverLabel = this.add
+      .text(
+        x,
+        y - 28,
+        fmt(t.nest.roomLabel, { room: i18n.roomName(room.type), level: room.level }),
+        {
+          fontFamily: 'Segoe UI, Arial, sans-serif',
+          fontSize: '16px',
+          color: '#fff8e1',
+          backgroundColor: '#1a1208ee',
+          padding: { x: 10, y: 5 },
+          stroke: '#000000',
+          strokeThickness: 2,
+        },
+      )
+      .setOrigin(0.5)
+      .setDepth(DEPTH.hud + 2);
   }
 
   private drawHoverHighlight(): void {
@@ -479,8 +546,8 @@ export class NestScene extends Phaser.Scene {
 
     const err = this.buildMode ? this.state.building.canBuild(this.selectedRoom, gx, gy) : null;
     const canPlace = err === null;
-    const tile = this.tileSprites.get(`${gx},${gy}`);
-    tile?.setTint(canPlace ? 0x88ff88 : 0xff8888);
+    this.repaintGridCell(gx, gy, canPlace ? 'ok' : 'bad');
+    this.updateHoverLabel();
   }
 
   private handleGridClick(screenX: number, screenY: number): void {
@@ -599,25 +666,15 @@ export class NestScene extends Phaser.Scene {
 
     for (let gy = 0; gy < gridHeight; gy++) {
       for (let gx = 0; gx < gridWidth; gx++) {
-        const { x, y } = gridToScreen(gx, gy, this.originX, this.originY);
-        const hasRoom = !!this.state.building.getRoomAt(gx, gy);
-        const tile = this.add
-          .image(x, y, 'floor-tile')
-          .setScale(0.14)
-          .setAlpha(hasRoom ? 0.22 : 0.42);
-        if (this.state.getNestRegion() === 'balcony') {
-          tile.setTint(0x9ccc65);
-        } else if (this.state.getNestRegion() === 'stairwell') {
-          tile.setTint(0x78909c);
-        }
+        const tile = this.add.graphics();
         this.tilesLayer.add(tile);
         this.tileSprites.set(`${gx},${gy}`, tile);
+        this.repaintGridCell(gx, gy);
       }
     }
   }
 
   private refreshBuildingSprites(): void {
-    const t = L();
     this.buildingsLayer.removeAll(true);
 
     const rooms = [...this.state.building.getRooms()].sort(
@@ -633,25 +690,7 @@ export class NestScene extends Phaser.Scene {
       sprite.setOrigin(0.5, 0.92);
       sprite.setScale(scale);
 
-      const labelY = y - 8 - sprite.displayHeight * 0.95;
-      const label = this.add
-        .text(
-          x,
-          labelY,
-          fmt(t.nest.roomLabel, { room: i18n.roomName(room.type), level: room.level }),
-          {
-            fontFamily: 'Segoe UI, Arial, sans-serif',
-            fontSize: '13px',
-            color: '#fff8e1',
-            backgroundColor: '#1a1208dd',
-            padding: { x: 8, y: 4 },
-            stroke: '#000000',
-            strokeThickness: 2,
-          },
-        )
-        .setOrigin(0.5);
-
-      this.buildingsLayer.add([sprite, label]);
+      this.buildingsLayer.add(sprite);
     }
   }
 
