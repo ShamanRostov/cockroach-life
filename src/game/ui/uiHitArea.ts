@@ -1,25 +1,22 @@
 import Phaser from 'phaser';
 import { isMobileDevice } from '../config';
 
-/** Interactive hit box on a Container (reliable for nested UI). */
+/** Interactive hit box on a Container — full-size transparent rectangle. */
 export function setContainerHitArea(
   container: Phaser.GameObjects.Container,
   displayWidth: number,
   displayHeight: number,
   onClick?: () => void,
-): void {
+): Phaser.GameObjects.Rectangle {
   const w = displayWidth;
   const h = displayHeight;
-  container.setSize(w, h);
-  container.setInteractive({
-    hitArea: new Phaser.Geom.Rectangle(-w / 2, -h / 2, w, h),
-    hitAreaCallback: Phaser.Geom.Rectangle.Contains,
-    useHandCursor: !isMobileDevice(),
-  });
+  const hitRect = container.scene.add.rectangle(0, 0, w, h, 0x000000, 0);
+  hitRect.setInteractive({ useHandCursor: !isMobileDevice() });
+  container.add(hitRect);
 
   if (onClick) {
-    container.removeAllListeners('pointerdown');
-    container.on('pointerdown', (
+    hitRect.removeAllListeners('pointerdown');
+    hitRect.on('pointerdown', (
       _p: Phaser.Input.Pointer,
       _lx: number,
       _ly: number,
@@ -29,6 +26,8 @@ export function setContainerHitArea(
       onClick();
     });
   }
+
+  return hitRect;
 }
 
 /** @deprecated Use setContainerHitArea on a Container instead. */

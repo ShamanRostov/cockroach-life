@@ -14,10 +14,10 @@ const NEST = {
   sideMargin: 12,
   rightRailW: 56,
   buildPanelW: 228,
-  buildPanelTop: 100,
-  defensePanelW: 268,
-  defensePanelTop: 100,
-  defensePanelH: 118,
+  buildPanelTop: 108,
+  defensePanelW: 220,
+  defensePanelTop: 108,
+  defensePanelH: 192,
   arcadePanelH: 100,
   arcadePanelBottom: 16,
 };
@@ -35,7 +35,7 @@ const ARCADE_SLIPPER = {
 };
 const WORLD_MAP = {
   x: NEST.sideMargin + NEST.defensePanelW / 2,
-  y: NEST.defensePanelTop + NEST.defensePanelH + 28,
+  y: NEST.defensePanelTop + NEST.defensePanelH + 22,
 };
 
 function log(msg) {

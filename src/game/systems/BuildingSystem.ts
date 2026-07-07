@@ -111,8 +111,8 @@ export class BuildingSystem {
   private rooms: PlacedRoom[] = [];
   private unlockedRooms: RoomType[] = ['kitchen', 'bedroom'];
   private regionMode: 'apartment' | 'balcony' | 'stairwell' = 'apartment';
-  readonly gridWidth = 8;
-  readonly gridHeight = 6;
+  readonly gridWidth = 12;
+  readonly gridHeight = 9;
 
   load(rooms: PlacedRoom[], unlocked: RoomType[], regionMode: 'apartment' | 'balcony' | 'stairwell' = 'apartment'): void {
     this.rooms = rooms.map((r) => ({ ...r }));

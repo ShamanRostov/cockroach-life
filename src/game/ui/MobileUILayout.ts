@@ -9,6 +9,7 @@ export {
   NEST_LAYOUT,
   getBuildPanelX,
   getBuildPanelCenterX,
+  getDefensePanelCenterX,
   getEventBannerY,
   getRegionSwitcherY,
 } from './NestLayout';

@@ -3,8 +3,11 @@ import Phaser from 'phaser';
 export const COCKROACH_TEXTURE_KEY = 'cockroach';
 export const COCKROACH_ANIM_WALK = 'roach-walk';
 
-/** Top-down cockroach ~24 px on nest grid (texture 64×40 trimmed). */
-export const COCKROACH_DISPLAY_SCALE = 0.55;
+/** Top-down cockroach on nest grid (texture 64×40 trimmed). Doubled for visibility. */
+export const COCKROACH_DISPLAY_SCALE = 1.1;
+
+/** Sprite art faces opposite to movement — flip logic is inverted. */
+export const COCKROACH_DIRECTION_OFFSET = Math.PI;
 
 export function cockroachScale(mult = 1): number {
   return COCKROACH_DISPLAY_SCALE * mult;
@@ -18,6 +21,7 @@ export function attachCockroachAnim(
   sprite.setTexture(`${COCKROACH_TEXTURE_KEY}-0`);
   sprite.setScale(cockroachScale(scaleMult));
   sprite.setOrigin(0.5, 0.58);
+  sprite.setAngle(COCKROACH_DIRECTION_OFFSET);
   if (tint !== null) {
     sprite.setTint(tint);
   } else {
@@ -64,17 +68,24 @@ export function createCockroachPhysics(
   return attachCockroachAnim(sprite, scaleMult, tint) as Phaser.Physics.Arcade.Sprite;
 }
 
+export function syncCockroachDirection(
+  sprite: Phaser.GameObjects.Sprite | Phaser.Physics.Arcade.Sprite,
+  dx: number,
+  dy = 0,
+): void {
+  const moving = Math.hypot(dx, dy) > 0.5;
+  if (moving) {
+    sprite.anims.resume();
+    sprite.setFlipX(dx > 0);
+  } else {
+    sprite.anims.pause();
+  }
+}
+
 export function syncCockroachMovement(
   sprite: Phaser.GameObjects.Sprite | Phaser.Physics.Arcade.Sprite,
   vx: number,
   vy = 0,
 ): void {
-  const moving = Math.abs(vx) > 2 || Math.abs(vy) > 2;
-  if (moving) {
-    sprite.anims.resume();
-    if (vx < -2) sprite.setFlipX(true);
-    else if (vx > 2) sprite.setFlipX(false);
-  } else {
-    sprite.anims.pause();
-  }
+  syncCockroachDirection(sprite, vx, vy);
 }
