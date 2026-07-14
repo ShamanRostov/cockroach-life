@@ -1,4 +1,4 @@
-export type SeasonPassXPSource = 'daily_quest' | 'raid' | 'arcade' | 'building';
+export type SeasonPassXPSource = 'daily_quest' | 'raid' | 'arcade' | 'building' | 'economy';
 
 export type SeasonPassRewardType =
   | 'food'
@@ -36,6 +36,7 @@ const XP_AMOUNTS: Record<SeasonPassXPSource, number> = {
   raid: 30,
   arcade: 20,
   building: 10,
+  economy: 8,
 };
 
 export const SEASON_PASS_TIERS: SeasonPassTierDef[] = [

@@ -12,6 +12,7 @@ export interface OperatorPortalConfig {
 }
 
 const OPERATOR_ENV_PREFIX = 'VITE_OPERATOR_';
+const AD_REQUEST_TIMEOUT_MS = 15_000;
 
 function readOperatorFromQuery(): OperatorId {
   const params = new URLSearchParams(window.location.search);
@@ -52,6 +53,8 @@ export class OperatorPlatform implements PlatformAdapter {
   readonly operatorId: OperatorId;
   readonly portalConfig: OperatorPortalConfig;
   private portalReady = false;
+  private pendingAdResolve: ((success: boolean) => void) | null = null;
+  private pendingCloudResolve: ((payload: string | null) => void) | null = null;
 
   constructor() {
     this.operatorId = readOperatorFromQuery();
@@ -79,10 +82,29 @@ export class OperatorPlatform implements PlatformAdapter {
   private bindPortalMessages(): void {
     window.addEventListener('message', (event) => {
       if (!event.data || typeof event.data !== 'object') return;
-      const type = (event.data as { type?: string }).type;
+      const data = event.data as {
+        type?: string;
+        success?: boolean;
+        payload?: string;
+      };
+      const type = data.type;
+
       if (type === 'portal:ready') {
         this.portalReady = true;
         console.info('[Platform:Operator] Portal handshake received');
+        return;
+      }
+
+      if (type === 'portal:ad:complete' || type === 'portal:ad:closed') {
+        const success = type === 'portal:ad:complete' && (data.success ?? true);
+        this.pendingAdResolve?.(success);
+        this.pendingAdResolve = null;
+        return;
+      }
+
+      if (type === 'portal:save:loaded') {
+        this.pendingCloudResolve?.(data.payload ?? null);
+        this.pendingCloudResolve = null;
       }
     });
 
@@ -111,15 +133,49 @@ export class OperatorPlatform implements PlatformAdapter {
     return this.requestPortalAd('rewarded', rewardType);
   }
 
-  private async requestPortalAd(kind: 'interstitial' | 'rewarded', rewardType?: string): Promise<boolean> {
+  private async requestPortalAd(
+    kind: 'interstitial' | 'rewarded',
+    rewardType?: string,
+  ): Promise<boolean> {
     console.info(`[Platform:Operator] ${kind} ad request`, rewardType ?? '');
+
+    if (!isInPortalIframe()) {
+      return false;
+    }
 
     if (!this.portalReady) {
       await new Promise((r) => setTimeout(r, 100));
     }
 
-    // Production: replace with operator SDK callback / postMessage round-trip.
-    return false;
+    return new Promise((resolve) => {
+      const timeout = window.setTimeout(() => {
+        if (this.pendingAdResolve) {
+          this.pendingAdResolve = null;
+          resolve(false);
+        }
+      }, AD_REQUEST_TIMEOUT_MS);
+
+      this.pendingAdResolve = (success) => {
+        window.clearTimeout(timeout);
+        resolve(success);
+      };
+
+      try {
+        window.parent.postMessage(
+          {
+            type: 'game:ad:request',
+            kind,
+            rewardType,
+            operator: this.operatorId,
+          },
+          '*',
+        );
+      } catch {
+        window.clearTimeout(timeout);
+        this.pendingAdResolve = null;
+        resolve(false);
+      }
+    });
   }
 
   async saveToCloud(data: string): Promise<void> {
@@ -137,9 +193,32 @@ export class OperatorPlatform implements PlatformAdapter {
 
   async loadFromCloud(): Promise<string | null> {
     if (!this.portalConfig.enableCloudSave) return null;
+    if (!isInPortalIframe()) return null;
 
-    console.info('[Platform:Operator] Cloud load stub — wire portal restore API');
-    return null;
+    return new Promise((resolve) => {
+      const timeout = window.setTimeout(() => {
+        if (this.pendingCloudResolve) {
+          this.pendingCloudResolve = null;
+          resolve(null);
+        }
+      }, 5000);
+
+      this.pendingCloudResolve = (payload) => {
+        window.clearTimeout(timeout);
+        resolve(payload);
+      };
+
+      try {
+        window.parent.postMessage(
+          { type: 'game:load:request', operator: this.operatorId },
+          '*',
+        );
+      } catch {
+        window.clearTimeout(timeout);
+        this.pendingCloudResolve = null;
+        resolve(null);
+      }
+    });
   }
 
   async getPlayerName(): Promise<string> {

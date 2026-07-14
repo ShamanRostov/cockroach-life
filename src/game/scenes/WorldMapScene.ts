@@ -293,7 +293,8 @@ export class WorldMapScene extends Phaser.Scene {
     if (!this.selected) return;
 
     const p = this.selected;
-    const power = this.state.raid.calcPower(p.rooms);
+    const fighterBonus = p.id === 'player' ? this.state.breeding.getRoleBonus('fighter') : 0;
+    const power = this.state.raid.calcPower(p.rooms, fighterBonus);
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT - 100;
     const t = L();

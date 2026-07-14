@@ -74,6 +74,7 @@ export interface LocalePack {
     stairwellLocked: string;
     balconyTitle: string;
     stairwellTitle: string;
+    defenseRepelled: string;
   };
   rooms: Record<
     | 'kitchen'
@@ -290,6 +291,7 @@ export interface LocalePack {
     selectRole: string;
     breedButton: string;
     breedStarted: string;
+    levelUp: string;
     roles: { worker: string; scout: string; fighter: string };
     errors: {
       noNursery: string;
@@ -311,6 +313,7 @@ export interface LocalePack {
     rewardDoubleLoot: string;
     rewardExtraEnergy: string;
     rewardSpeedBuild: string;
+    unavailable: string;
     products: {
       food_pack_small: string;
       food_pack_large: string;

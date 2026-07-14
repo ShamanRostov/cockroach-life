@@ -2,6 +2,7 @@ import { platformManager } from './PlatformManager';
 import { platformConfig } from './PlatformConfig';
 import { iapService } from './IAPService';
 import { GameState } from '../game/GameState';
+import { AnalyticsService } from './AnalyticsService';
 import {
   INTERSTITIAL_EVERY_N_ARCADES,
   MIN_INTERSTITIAL_INTERVAL_MS,
@@ -29,6 +30,7 @@ class MonetizationServiceImpl {
     const shown = await platformManager.showInterstitialAd();
     if (shown) {
       this.lastInterstitialAt = Date.now();
+      AnalyticsService.getInstance().trackAdShown('interstitial');
       console.info(`[Monetization] Interstitial after ${sceneKey}`);
     }
   }
@@ -39,6 +41,8 @@ class MonetizationServiceImpl {
 
     const watched = await platformManager.showRewardedAd(type);
     if (watched) {
+      AnalyticsService.getInstance().trackAdRewarded();
+      AnalyticsService.getInstance().trackAdShown('rewarded');
       onSuccess();
     }
   }

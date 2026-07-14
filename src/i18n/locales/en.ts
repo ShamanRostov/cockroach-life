@@ -78,6 +78,7 @@ export const en: LocalePack = {
     stairwellLocked: '10 buildings, rating 1500+, or balcony + 3 builds',
     balconyTitle: 'Balcony Nest',
     stairwellTitle: 'Stairwell Nest',
+    defenseRepelled: '🛡 Traps repelled a raid! +{food} food, +{money} money',
   },
   rooms: {
     kitchen: { name: 'Kitchen', desc: 'Cardboard box with crumbs and a straw chimney' },
@@ -336,6 +337,7 @@ export const en: LocalePack = {
     selectRole: 'Select role to breed:',
     breedButton: 'Breed ({food}🍞 {money}💰)',
     breedStarted: 'Breeding {role}...',
+    levelUp: '⬆ {names} leveled up!',
     roles: { worker: 'Worker', scout: 'Scout', fighter: 'Fighter' },
     errors: {
       noNursery: 'Build a Nursery first',
@@ -361,6 +363,7 @@ export const en: LocalePack = {
     rewardDoubleLoot: 'Double next raid loot',
     rewardExtraEnergy: '+1 raid energy',
     rewardSpeedBuild: 'Instant next build',
+    unavailable: 'Purchases available on Yandex Games, Steam, and operator portals',
     products: {
       food_pack_small: 'Small Food Pack (200)',
       food_pack_large: 'Large Food Pack (1000)',

@@ -24,7 +24,7 @@ import type { ProductId } from '../platforms/IAPService';
 import type { RewardType } from '../platforms/MonetizationService';
 import type { PlacedRoom } from './types';
 import { iapService } from '../platforms/IAPService';
-import { IAP_GRANTS, REWARDED_ENERGY_AMOUNT } from './systems/GameBalance';
+import { IAP_GRANTS, REWARDED_ENERGY_AMOUNT, localDateString, DEFENSE_REPEL_BASE_CHANCE, DEFENSE_REPEL_TRAP_BONUS, DEFENSE_REPEL_REWARD } from './systems/GameBalance';
 
 /** Central game state singleton shared across scenes. */
 export class GameState {
@@ -54,6 +54,8 @@ export class GameState {
   private purchasedProducts: string[] = [];
   private doubleLootNext = false;
   private instantBuildNext = false;
+  private lastDefenseRepelDay = '';
+  private pendingDefenseRepel: { food: number; money: number } | null = null;
 
   private constructor() {
     this.save = new SaveSystem();
@@ -153,6 +155,7 @@ export class GameState {
     this.purchasedProducts = [...(data.purchasedProducts ?? [])];
     this.doubleLootNext = data.doubleLootNext ?? false;
     this.instantBuildNext = data.instantBuildNext ?? false;
+    this.lastDefenseRepelDay = data.lastDefenseRepelDay ?? '';
     this.tutorial.load(data.tutorialComplete, this.apartmentRooms, data.tutorialStep);
     this.skins.load(data.unlockedSkins, data.equippedSkin);
     if (this.purchasedProducts.includes('skin_pack')) {
@@ -325,7 +328,55 @@ export class GameState {
       seasonPass: this.seasonPass.exportSave(),
       unlockedSkins: this.skins.exportUnlocked(),
       equippedSkin: this.skins.getEquipped(),
+      lastDefenseRepelDay: this.lastDefenseRepelDay,
     };
+  }
+
+  /** Try a daily defense event when traps are active and shield is down. Returns reward if repelled. */
+  processDefenseRepel(): { food: number; money: number } | null {
+    const today = localDateString();
+    if (this.lastDefenseRepelDay === today) return null;
+    if (this.raid.shieldUntil > Date.now()) return null;
+    if (this.raid.defenseTraps.length === 0) return null;
+
+    const chance =
+      DEFENSE_REPEL_BASE_CHANCE + this.raid.defenseTraps.length * DEFENSE_REPEL_TRAP_BONUS;
+    if (Math.random() > chance) return null;
+
+    this.lastDefenseRepelDay = today;
+    this.addFood(DEFENSE_REPEL_REWARD.food, false);
+    this.addMoney(DEFENSE_REPEL_REWARD.money, false);
+    this.pendingDefenseRepel = { ...DEFENSE_REPEL_REWARD };
+    AnalyticsService.getInstance().trackEvent('defense_repel', {
+      traps: this.raid.defenseTraps.length,
+    });
+    this.persist();
+    return { ...DEFENSE_REPEL_REWARD };
+  }
+
+  consumeDefenseRepelNotice(): { food: number; money: number } | null {
+    const notice = this.pendingDefenseRepel;
+    this.pendingDefenseRepel = null;
+    return notice;
+  }
+
+  /** Passive colony growth while in nest. Returns roach names that leveled up. */
+  tickColonyGrowth(dt: number): string[] {
+    return this.breeding.tickGrowth(dt);
+  }
+
+  /** Grant raid XP to colony after successful raid. */
+  grantRaidColonyXP(): string[] {
+    return this.breeding.grantRaidXP();
+  }
+
+  getPlayerRaidPower(): number {
+    const rooms = [
+      ...this.apartmentRooms,
+      ...this.balconyRooms,
+      ...this.stairwellRooms,
+    ];
+    return this.raid.calcPower(rooms, this.breeding.getRoleBonus('fighter'));
   }
 
   trackEventReward(eventId: LiveOpsEventId, rewardType: string): void {
@@ -343,6 +394,9 @@ export class GameState {
     this.economy.addFood(amount);
     if (trackDaily && amount > 0) {
       this.dailyQuests.trackProgress('earn_food', amount);
+      if (amount >= 15) {
+        this.seasonPass.addXP('economy');
+      }
     }
   }
 
@@ -350,13 +404,24 @@ export class GameState {
     this.economy.addMoney(amount);
     if (trackDaily && amount > 0) {
       this.dailyQuests.trackProgress('earn_money', amount);
+      if (amount >= 10) {
+        this.seasonPass.addXP('economy');
+      }
     }
   }
 
   trackDailyProgress(type: DailyQuestType, amount = 1): void {
     this.dailyQuests.trackProgress(type, amount);
     const xpSource =
-      type === 'build' ? 'building' : type === 'raid' ? 'raid' : type === 'arcade' ? 'arcade' : null;
+      type === 'build'
+        ? 'building'
+        : type === 'raid'
+          ? 'raid'
+          : type === 'arcade'
+            ? 'arcade'
+            : type === 'earn_food' || type === 'earn_money'
+              ? 'economy'
+              : null;
     if (xpSource) {
       this.seasonPass.addXP(xpSource);
     }

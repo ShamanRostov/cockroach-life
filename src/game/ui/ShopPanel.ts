@@ -14,6 +14,7 @@ import { iapService, type IAPProduct, type ProductId } from '../../platforms/IAP
 import { monetizationService, type RewardType } from '../../platforms/MonetizationService';
 import { DEPTH } from '../graphics/SceneDepth';
 import { ModalLayer } from './ModalLayer';
+import { platformConfig } from '../../platforms/PlatformConfig';
 
 export class ShopPanel {
   private readonly state = GameState.getInstance();
@@ -23,8 +24,14 @@ export class ShopPanel {
   private onClose: (() => void) | null = null;
   private buying = false;
 
+  static isAvailable(): boolean {
+    const features = platformConfig.features;
+    return features.enableIAP || features.enableAds;
+  }
+
   /** HUD toggle button (shop icon). */
-  createHudButton(scene: Phaser.Scene): Phaser.GameObjects.Container {
+  createHudButton(scene: Phaser.Scene): Phaser.GameObjects.Container | null {
+    if (!ShopPanel.isAvailable()) return null;
     const btn = createTextButton(
       scene,
       getNestHudButtonX('shop'),
@@ -45,6 +52,10 @@ export class ShopPanel {
     this.onClose = onClose ?? null;
 
     const t = L().shop;
+    if (!ShopPanel.isAvailable()) {
+      showToast(scene, t.unavailable);
+      return;
+    }
     const dual = scene.registry.get('screenshot.dualPanels') === true;
     const depth = dual ? 902 : 900;
 

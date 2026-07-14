@@ -28,15 +28,15 @@ export const SHELTER_HEAL_PER_LEVEL = 0.65;
 export const DEATH_HOSPITAL_HEALTH = 30;
 
 export const PASSIVE_INCOME: Record<RoomType, { food: number; money: number }> = {
-  kitchen: { food: 0.35, money: 0 },
-  storage: { food: 0.18, money: 0.12 },
-  bedroom: { food: 0, money: 0.06 },
-  nursery: { food: 0, money: 0.22 },
+  kitchen: { food: 0.38, money: 0 },
+  storage: { food: 0.2, money: 0.14 },
+  bedroom: { food: 0, money: 0.07 },
+  nursery: { food: 0, money: 0.24 },
   hospital: { food: 0, money: 0 },
-  planter: { food: 0.38, money: 0 },
-  shelter: { food: 0, money: 0.05 },
-  locker: { food: 0, money: 0.14 },
-  niche: { food: 0.22, money: 0.04 },
+  planter: { food: 0.42, money: 0 },
+  shelter: { food: 0, money: 0.06 },
+  locker: { food: 0, money: 0.16 },
+  niche: { food: 0.24, money: 0.05 },
 };
 
 // ── Building costs (mirrors ROOM_DEFINITIONS) ─────────────────────────────────
@@ -96,6 +96,17 @@ export const RAID_WIN_RATING_SCALE = 0.2;
 export const RAID_LOSS_RATING_BASE = 10;
 export const RAID_LOSS_RATING_SCALE = 0.1;
 
+export const RAID_MOVE_SPEED = {
+  infiltrate: 220,
+  loot: 200,
+  escape: 260,
+} as const;
+
+/** Once per day when shield is down and traps are set. */
+export const DEFENSE_REPEL_BASE_CHANCE = 0.22;
+export const DEFENSE_REPEL_TRAP_BONUS = 0.12;
+export const DEFENSE_REPEL_REWARD = { food: 35, money: 25 };
+
 // ── Daily bonus ───────────────────────────────────────────────────────────────
 
 export const DAILY_BONUS_TABLE: { food: number; money: number }[] = [
@@ -140,6 +151,19 @@ export const ROLE_BONUS_PER_LEVEL: Record<CockroachRole, number> = {
   worker: 0.1,
   scout: 0.15,
   fighter: 0.2,
+};
+
+export const COCKROACH_MAX_LEVEL = 5;
+export const COCKROACH_XP_PER_LEVEL = 100;
+export const COCKROACH_XP_PASSIVE_PER_SEC: Record<CockroachRole, number> = {
+  worker: 1.4,
+  scout: 1.0,
+  fighter: 0.85,
+};
+export const COCKROACH_XP_RAID_WIN: Record<CockroachRole, number> = {
+  worker: 12,
+  scout: 22,
+  fighter: 32,
 };
 
 // ── Tutorial ──────────────────────────────────────────────────────────────────

@@ -1,15 +1,15 @@
 import type { BreedingTimer, CockroachRole, CockroachUnit, PlacedRoom } from '../types';
 import { generateCockroachName } from '../../i18n';
-
-const ROLE_BONUS_PER_LEVEL: Record<CockroachRole, number> = {
-  worker: 0.1,
-  scout: 0.15,
-  fighter: 0.2,
-};
-
-const BREED_FOOD_COST = 15;
-const BREED_MONEY_COST = 25;
-const BREED_DURATION_MS = 30_000;
+import {
+  BREED_DURATION_MS,
+  BREED_FOOD_COST,
+  BREED_MONEY_COST,
+  COCKROACH_MAX_LEVEL,
+  COCKROACH_XP_PASSIVE_PER_SEC,
+  COCKROACH_XP_PER_LEVEL,
+  COCKROACH_XP_RAID_WIN,
+  ROLE_BONUS_PER_LEVEL,
+} from './GameBalance';
 
 export type BreedErrorKey =
   | 'noNursery'
@@ -23,7 +23,11 @@ export class BreedingSystem {
   private maxCockroaches = 0;
 
   load(cockroaches: CockroachUnit[], maxCockroaches: number, breedingTimers: BreedingTimer[]): void {
-    this.cockroaches = (cockroaches ?? []).map((c) => ({ ...c }));
+    this.cockroaches = (cockroaches ?? []).map((c) => ({
+      ...c,
+      xp: c.xp ?? 0,
+      level: Math.min(COCKROACH_MAX_LEVEL, Math.max(1, c.level ?? 1)),
+    }));
     this.maxCockroaches = maxCockroaches ?? 0;
     this.breedingTimers = (breedingTimers ?? []).map((t) => ({ ...t }));
   }
@@ -66,6 +70,38 @@ export class BreedingSystem {
     return BREED_DURATION_MS;
   }
 
+  /** Passive XP while colony is active in the nest. Returns names of roaches that leveled up. */
+  tickGrowth(dt: number): string[] {
+    const leveled: string[] = [];
+    for (const roach of this.cockroaches) {
+      roach.xp = (roach.xp ?? 0) + COCKROACH_XP_PASSIVE_PER_SEC[roach.role] * dt;
+      if (this.tryLevelUp(roach)) {
+        leveled.push(roach.name);
+      }
+    }
+    return leveled;
+  }
+
+  /** Grant raid XP to matching roles after a successful raid. */
+  grantRaidXP(): string[] {
+    const leveled: string[] = [];
+    for (const roach of this.cockroaches) {
+      roach.xp = (roach.xp ?? 0) + COCKROACH_XP_RAID_WIN[roach.role];
+      if (this.tryLevelUp(roach)) {
+        leveled.push(roach.name);
+      }
+    }
+    return leveled;
+  }
+
+  private tryLevelUp(roach: CockroachUnit): boolean {
+    if (roach.level >= COCKROACH_MAX_LEVEL) return false;
+    const needed = roach.level * COCKROACH_XP_PER_LEVEL;
+    if ((roach.xp ?? 0) < needed) return false;
+    roach.level += 1;
+    return true;
+  }
+
   canBreed(role: CockroachRole, rooms: PlacedRoom[], food: number, money: number): BreedErrorKey | null {
     if (!this.hasNursery(rooms)) return 'noNursery';
     const cap = this.getMaxCockroaches(rooms);
@@ -106,6 +142,7 @@ export class BreedingSystem {
           name: generateCockroachName(),
           level: 1,
           role: timer.role,
+          xp: 0,
         };
         this.cockroaches.push(unit);
         hatched.push(unit);

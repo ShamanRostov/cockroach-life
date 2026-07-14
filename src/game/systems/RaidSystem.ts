@@ -62,9 +62,12 @@ export class RaidSystem {
     }
   }
 
-  calcPower(rooms: PlacedRoom[]): number {
-    if (rooms.length === 0) return RAID_POWER_BASE;
-    return rooms.reduce((s, r) => s + r.level * RAID_POWER_PER_LEVEL + RAID_POWER_FLAT, 0);
+  calcPower(rooms: PlacedRoom[], fighterBonus = 0): number {
+    const base =
+      rooms.length === 0
+        ? RAID_POWER_BASE
+        : rooms.reduce((s, r) => s + r.level * RAID_POWER_PER_LEVEL + RAID_POWER_FLAT, 0);
+    return Math.floor(base * (1 + fighterBonus));
   }
 
   canRaid(target: MapPlayer): string | null {
