@@ -10,3 +10,4 @@ Thumbs.db
 .cursor/
 playwright-report/
 test-results/
+public/assets/buildings/raw/
