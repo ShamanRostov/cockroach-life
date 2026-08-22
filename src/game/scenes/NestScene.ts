@@ -8,9 +8,10 @@ import { ShopPanel } from '../ui/ShopPanel';
 import { SeasonPassPanel } from '../ui/SeasonPassPanel';
 import { EventBanner } from '../ui/EventBanner';
 import { createPanel, showToast, createAdaptiveButton } from '../ui/ButtonHelper';
-import { isNestUIRegion, getRightPanelWidth, getBuildPanelX, getBuildPanelCenterX, NEST_LAYOUT, getRegionSwitcherX, getRegionSwitcherY } from '../ui/MobileUILayout';
+import { isNestUIRegion, getRightPanelWidth, getBuildPanelX, getBuildPanelCenterX, NEST_LAYOUT, getRegionSwitcherX, getRegionSwitcherY, getNestGridOrigin } from '../ui/MobileUILayout';
 import { ROOM_DEFINITIONS, type RoomDefinition, type RoomType } from '../systems/BuildingSystem';
-import { gridToScreen, screenToGrid, drawIsoTile } from '../utils/isometric';
+import { gridToScreen, screenToGrid, drawGridCell } from '../utils/grid';
+import { createNestTopDownBackground } from '../graphics/NestTopDownFloor';
 import { buildingTextureKey, buildingDisplayScale } from '../assets/AssetKeys';
 import { spawnAmbientDust } from '../graphics/ApartmentEnvironment';
 import { addWarmGlow } from '../graphics/VisualEffects';
@@ -51,11 +52,10 @@ export class NestScene extends Phaser.Scene {
   private infoText!: Phaser.GameObjects.Text;
   private cockroach!: Phaser.GameObjects.Sprite;
   private roachTarget = { x: 0, y: 0 };
-  private readonly roachSpeed = 32;
+  private readonly roachSpeed = 48;
   private lastTick = 0;
   private hoverCell: { gx: number; gy: number } | null = null;
   private dustEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
-  private nestBg!: Phaser.GameObjects.Image;
   private tutorialOverlay = new TutorialOverlay();
   private foodArcadeBtn = { x: 320, y: GAME_HEIGHT - 70, width: 100, height: 40 };
   private worldMapBtn = { x: 156, y: 218, width: 200, height: 36 };
@@ -71,20 +71,12 @@ export class NestScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(
       isStairwell ? 0x263238 : isBalcony ? 0x1a2e1a : COLORS.bgWarm,
     );
-    this.originX = NEST_LAYOUT.gridOriginX;
-    this.originY = NEST_LAYOUT.gridOriginY;
+    this.originX = getNestGridOrigin().x;
+    this.originY = getNestGridOrigin().y;
     this.lastTick = 0;
     this.selectedRoom = isStairwell ? 'locker' : isBalcony ? 'planter' : 'kitchen';
 
-    this.nestBg = this.add
-      .image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'nest-bg')
-      .setDisplaySize(GAME_WIDTH, GAME_HEIGHT)
-      .setDepth(DEPTH.background);
-    if (isBalcony) {
-      this.nestBg.setTint(0xb8dcc8);
-    } else if (isStairwell) {
-      this.nestBg.setTint(0x9e9e9e);
-    }
+    createNestTopDownBackground(this, region);
     addWarmGlow(this, GAME_WIDTH / 2, 40, DEPTH.ambient, 0.6);
 
     this.dustEmitter = spawnAmbientDust(this);
@@ -276,7 +268,7 @@ export class NestScene extends Phaser.Scene {
     const gx = Phaser.Math.Between(0, gridWidth - 1);
     const gy = Phaser.Math.Between(0, gridHeight - 1);
     const { x, y } = gridToScreen(gx, gy, this.originX, this.originY);
-    return { x, y: y + 4 };
+    return { x, y };
   }
 
   private createCockroach(): void {
@@ -285,7 +277,7 @@ export class NestScene extends Phaser.Scene {
       this,
       start.x,
       start.y,
-      2.2,
+      1.8,
       50,
       this.state.skins.getTint(),
     );
@@ -503,7 +495,7 @@ export class NestScene extends Phaser.Scene {
       strokeAlpha = 0.45;
     }
     tile.clear();
-    drawIsoTile(tile, x, y, fill, 0xfff8e1, alpha, strokeAlpha);
+    drawGridCell(tile, x, y, fill, 0xfff8e1, alpha, strokeAlpha);
   }
 
   private clearHoverLabel(): void {
@@ -521,7 +513,7 @@ export class NestScene extends Phaser.Scene {
     this.hoverLabel = this.add
       .text(
         x,
-        y - 28,
+        y - 36,
         fmt(t.nest.roomLabel, { room: i18n.roomName(room.type), level: room.level }),
         {
           fontFamily: 'Segoe UI, Arial, sans-serif',
@@ -638,7 +630,7 @@ export class NestScene extends Phaser.Scene {
         const child = this.buildingsLayer.getAt(i);
         if (
           child instanceof Phaser.GameObjects.Image &&
-          Phaser.Math.Distance.Between(child.x, child.y, x, y - 18) < 8
+          Phaser.Math.Distance.Between(child.x, child.y, x, y) < 12
         ) {
           playUpgradeAnimation(this, child, room.level);
           break;
@@ -686,8 +678,8 @@ export class NestScene extends Phaser.Scene {
       const key = buildingTextureKey(room.type, room.level);
 
       const scale = buildingDisplayScale(room.level);
-      const sprite = this.add.image(x, y - 8, key);
-      sprite.setOrigin(0.5, 0.92);
+      const sprite = this.add.image(x, y, key);
+      sprite.setOrigin(0.5, 0.55);
       sprite.setScale(scale);
 
       this.buildingsLayer.add(sprite);

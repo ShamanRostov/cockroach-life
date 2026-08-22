@@ -7,6 +7,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Nest building view** — switched from isometric grid to top-down orthogonal layout; parquet floor, aligned grid clicks, smoother cockroach movement
+
+---
+
 ## [0.4.1] — 2026-07-06
 
 ### Added

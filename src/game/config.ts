@@ -43,9 +43,17 @@ export const COLORS = {
   cockroachLight: 0x6d4c3d,
 } as const;
 
+/** Legacy isometric tile footprint (unused by nest grid). */
 export const TILE = {
   width: 64,
   height: 32,
+} as const;
+
+/** Top-down nest grid cell size (matches BuildingSystem 10×8 layout). */
+export const GRID_TILE = {
+  size: 64,
+  columns: 10,
+  rows: 8,
 } as const;
 
 /** Detect phones/tablets and touch-first browsers (Yandex Games mobile, etc.) */

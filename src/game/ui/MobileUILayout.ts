@@ -13,6 +13,7 @@ export {
   getEventBannerX,
   getRegionSwitcherY,
   getRegionSwitcherX,
+  getNestGridOrigin,
   type NestHudSlot,
 } from './NestLayout';
 

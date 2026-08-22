@@ -20,10 +20,10 @@ export function playBuildAnimation(opts: BuildAnimOptions): void {
   const key = buildingTextureKey(type, level);
   const targetScale = buildingDisplayScale(level);
 
-  addGlowBurst(scene, x, y + 8, COLORS.accent, 24);
+  addGlowBurst(scene, x, y, COLORS.accent, 24);
   spawnBuildSparkles(scene, x, y);
 
-  const dust = scene.add.particles(x, y + 8, 'spark', {
+  const dust = scene.add.particles(x, y, 'spark', {
     speed: { min: 20, max: 60 },
     scale: { start: 0.25, end: 0 },
     lifespan: 500,
@@ -33,9 +33,9 @@ export function playBuildAnimation(opts: BuildAnimOptions): void {
   scene.time.delayedCall(600, () => dust.destroy());
 
   const sprite = scene.add
-    .image(x, y - 10, key)
+    .image(x, y, key)
     .setDepth(25)
-    .setOrigin(0.5, 0.92)
+    .setOrigin(0.5, 0.55)
     .setScale(0)
     .setAlpha(0);
 
@@ -47,7 +47,7 @@ export function playBuildAnimation(opts: BuildAnimOptions): void {
     duration: 900,
     ease: 'Back.easeOut',
     onComplete: () => {
-      const spark = scene.add.particles(x, y - 30, 'spark', {
+      const spark = scene.add.particles(x, y - 20, 'spark', {
         speed: { min: 40, max: 120 },
         scale: { start: 0.35, end: 0 },
         lifespan: 700,
@@ -69,7 +69,7 @@ export function playUpgradeAnimation(
 ): void {
   const targetScale = buildingDisplayScale(level);
 
-  addGlowBurst(scene, sprite.x, sprite.y - 25, COLORS.accent, sprite.depth + 1);
+  addGlowBurst(scene, sprite.x, sprite.y, COLORS.accent, sprite.depth + 1);
 
   scene.tweens.add({
     targets: sprite,
@@ -84,7 +84,7 @@ export function playUpgradeAnimation(
     },
   });
 
-  const spark = scene.add.particles(sprite.x, sprite.y - 20, 'spark', {
+  const spark = scene.add.particles(sprite.x, sprite.y, 'spark', {
     speed: { min: 30, max: 100 },
     scale: { start: 0.3, end: 0 },
     lifespan: 550,

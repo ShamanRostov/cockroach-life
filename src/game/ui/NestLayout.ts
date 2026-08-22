@@ -1,4 +1,4 @@
-import { GAME_WIDTH, GAME_HEIGHT } from '../config';
+import { GAME_WIDTH, GAME_HEIGHT, GRID_TILE } from '../config';
 import { getSafeAreaInsets } from './MobileUILayout';
 
 /**
@@ -21,9 +21,6 @@ export const NEST_LAYOUT = {
   defensePanelH: 168,
   arcadePanelH: 118,
   arcadePanelBottom: 12,
-  /** Isometric cell (0,0) center — aligned to nest-bg floor tiles at 1280×720. */
-  gridOriginX: 608,
-  gridOriginY: 252,
   eventBannerX: 640,
   eventBannerY: 40,
   regionSwitcherX: 640,
@@ -86,6 +83,44 @@ export function getRegionSwitcherX(): number {
 
 export function getRegionSwitcherY(): number {
   return NEST_LAYOUT.regionSwitcherY;
+}
+
+/** Center of grid cell (0,0) — top-down, centered in play column. */
+export function getNestGridOrigin(): { x: number; y: number } {
+  const playLeft = NEST_LAYOUT.leftChromeW;
+  const playRight = GAME_WIDTH - NEST_LAYOUT.rightChromeW;
+  const playTop = NEST_LAYOUT.topBarH;
+  const playBottom =
+    GAME_HEIGHT - NEST_LAYOUT.arcadePanelBottom - NEST_LAYOUT.arcadePanelH;
+  const gridW = GRID_TILE.columns * GRID_TILE.size;
+  const gridH = GRID_TILE.rows * GRID_TILE.size;
+
+  return {
+    x: playLeft + (playRight - playLeft - gridW) / 2 + GRID_TILE.size / 2,
+    y: playTop + (playBottom - playTop - gridH) / 2 + GRID_TILE.size / 2,
+  };
+}
+
+export function getNestGridBounds(): {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  originX: number;
+  originY: number;
+} {
+  const { x: originX, y: originY } = getNestGridOrigin();
+  const width = GRID_TILE.columns * GRID_TILE.size;
+  const height = GRID_TILE.rows * GRID_TILE.size;
+
+  return {
+    left: originX - GRID_TILE.size / 2,
+    top: originY - GRID_TILE.size / 2,
+    width,
+    height,
+    originX,
+    originY,
+  };
 }
 
 export { GAME_WIDTH, GAME_HEIGHT };
