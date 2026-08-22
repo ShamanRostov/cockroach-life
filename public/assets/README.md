@@ -12,7 +12,7 @@
 | `ui/` | Panels, buttons, HUD chrome |
 | `backgrounds/` | Full-screen scene backgrounds (1280×720) |
 | `sprites/` | Icons, hazards, particles (transparent) |
-| `buildings/` | Isometric nest rooms (256×256, transparent) |
+| `buildings/` | Nest rooms `building-{type}-1` … `5` (256×256 top-down, transparent) |
 | `characters/` | Cockroach walk frames `cockroach-0` … `7` (64×40) |
 
 ## Pipeline

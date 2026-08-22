@@ -42,8 +42,11 @@ const TARGETS = {
 const BUILDINGS = [
   'kitchen', 'bedroom', 'storage', 'nursery', 'hospital', 'planter', 'shelter', 'locker', 'niche',
 ];
+const BUILDING_LEVELS = 5;
 for (const b of BUILDINGS) {
-  TARGETS[`buildings/building-${b}.png`] = { w: 256, h: 256, keyed: true };
+  for (let level = 1; level <= BUILDING_LEVELS; level++) {
+    TARGETS[`buildings/building-${b}-${level}.png`] = { w: 256, h: 256, keyed: true };
+  }
 }
 
 const SRC_MAP = {
@@ -74,7 +77,9 @@ const SRC_MAP = {
 };
 
 for (const b of BUILDINGS) {
-  SRC_MAP[`buildings/building-${b}.png`] = `building-${b}.png`;
+  for (let level = 1; level <= BUILDING_LEVELS; level++) {
+    SRC_MAP[`buildings/building-${b}-${level}.png`] = `building-${b}-${level}.png`;
+  }
 }
 
 async function exists(p) {

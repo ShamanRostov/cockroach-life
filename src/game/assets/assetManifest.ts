@@ -1,5 +1,5 @@
 import { ROOM_DEFINITIONS, type RoomType } from '../systems/BuildingSystem';
-import { COCKROACH_FRAMES } from './AssetKeys';
+import { BUILDING_LEVELS, COCKROACH_FRAMES } from './AssetKeys';
 
 const ALL_BUILDING_TYPES = Object.keys(ROOM_DEFINITIONS) as RoomType[];
 
@@ -20,8 +20,11 @@ function sprite(path: string, key: string): AssetEntry {
   return { key, path: `/assets/sprites/${path}` };
 }
 
-function building(type: RoomType): AssetEntry {
-  return { key: `building-${type}`, path: `/assets/buildings/building-${type}.png` };
+function building(type: RoomType, level: number): AssetEntry {
+  return {
+    key: `building-${type}-${level}`,
+    path: `/assets/buildings/building-${type}-${level}.png`,
+  };
 }
 
 function roach(frame: number): AssetEntry {
@@ -53,6 +56,8 @@ export const GAME_ASSET_MANIFEST: AssetEntry[] = [
   sprite('spark.png', 'spark'),
   sprite('nest-marker.png', 'nest-marker'),
   sprite('cat.png', 'cat'),
-  ...ALL_BUILDING_TYPES.map((t) => building(t)),
+  ...ALL_BUILDING_TYPES.flatMap((t) =>
+    Array.from({ length: BUILDING_LEVELS }, (_, i) => building(t, i + 1)),
+  ),
   ...Array.from({ length: COCKROACH_FRAMES }, (_, i) => roach(i)),
 ];

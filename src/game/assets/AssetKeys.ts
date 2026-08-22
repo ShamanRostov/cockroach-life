@@ -12,16 +12,19 @@ export const BUILDING_TYPES: RoomType[] = [
   'niche',
 ];
 
-/** Phaser texture key for HD building sprite. */
-export function buildingTextureKey(type: RoomType, _level = 1): string {
-  return `building-${type}`;
+export const BUILDING_LEVELS = 5;
+
+/** Phaser texture key for HD building sprite (level 1–5). */
+export function buildingTextureKey(type: RoomType, level = 1): string {
+  const clamped = Math.max(1, Math.min(BUILDING_LEVELS, level));
+  return `building-${type}-${clamped}`;
 }
 
 export const COCKROACH_FRAMES = 8;
 
 /** Scale trimmed 256×256 building sprites to top-down grid cell. */
-export function buildingDisplayScale(level: number): number {
-  return 0.48 + (level - 1) * 0.06;
+export function buildingDisplayScale(_level = 1): number {
+  return 0.52;
 }
 
 export const TEXTURE_KEYS = {
@@ -69,5 +72,7 @@ export const TRANSPARENT_SPRITE_KEYS = [
   'spark',
   'nest-marker',
   'cat',
-  ...BUILDING_TYPES.map((t) => `building-${t}`),
+  ...BUILDING_TYPES.flatMap((t) =>
+    Array.from({ length: BUILDING_LEVELS }, (_, i) => `building-${t}-${i + 1}`),
+  ),
 ] as const;

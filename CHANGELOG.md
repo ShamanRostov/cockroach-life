@@ -12,6 +12,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - **Nest building view** — switched from isometric grid to top-down orthogonal layout; parquet floor, aligned grid clicks, smoother cockroach movement
+- **Building sprites** — 45 AI-generated top-down sprites (`building-{type}-1` … `5`); upgrade level picks matching texture instead of scale-only
 
 ---
 

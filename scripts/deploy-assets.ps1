@@ -54,11 +54,14 @@ if (-not (Test-Path "$spr\spark.png")) { Copy-Asset "$src\spark.png" "$spr\spark
 Copy-Asset "$src\sprite-nest-marker.png" "$spr\nest-marker.png"
 Copy-Asset "$src\cat.png" "$spr\cat.png"
 
-# Buildings
+# Buildings — 5 upgrade levels per room type (top-down AI sprites)
 foreach ($type in @("kitchen","bedroom","storage","nursery","hospital","planter","shelter","locker","niche")) {
-  $from = "$src\building-$type.png"
-  if (-not (Test-Path $from)) { $from = "$src\building-kitchen.png" }
-  Copy-Asset $from "$bld\building-$type.png"
+  for ($level = 1; $level -le 5; $level++) {
+    $name = "building-$type-$level.png"
+    if (-not (Copy-Asset "$src\$name" "$bld\$name")) {
+      Copy-Asset "$src\raw\$name" "$bld\$name"
+    }
+  }
 }
 
 # Cockroach frames
