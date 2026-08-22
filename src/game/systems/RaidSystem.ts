@@ -29,6 +29,8 @@ export class RaidSystem {
   playerDistrict = 'plinth';
   raidRating = 1000;
   raidWins = 0;
+  counterRaidsToday = 0;
+  lastCounterRaidDay = '';
 
   currentTarget: MapPlayer | null = null;
 
@@ -41,6 +43,8 @@ export class RaidSystem {
     playerDistrict: string;
     raidRating: number;
     raidWins: number;
+    counterRaidsToday?: number;
+    lastCounterRaidDay?: string;
   }): void {
     this.raidEnergy = data.raidEnergy;
     this.raidsToday = data.raidsToday;
@@ -50,7 +54,17 @@ export class RaidSystem {
     this.playerDistrict = data.playerDistrict;
     this.raidRating = data.raidRating;
     this.raidWins = data.raidWins;
+    this.counterRaidsToday = data.counterRaidsToday ?? 0;
+    this.lastCounterRaidDay = data.lastCounterRaidDay ?? '';
     this.refreshDailyRaids();
+  }
+
+  refreshCounterRaids(): void {
+    const today = localDateString();
+    if (this.lastCounterRaidDay !== today) {
+      this.counterRaidsToday = 0;
+      this.lastCounterRaidDay = today;
+    }
   }
 
   refreshDailyRaids(): void {

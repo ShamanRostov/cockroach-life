@@ -74,6 +74,9 @@ export interface LocalePack {
     stairwellLocked: string;
     balconyTitle: string;
     stairwellTitle: string;
+    counterRaidBlocked: string;
+    counterRaidHit: string;
+    storageCapFull: string;
   };
   rooms: Record<
     | 'kitchen'
@@ -85,7 +88,7 @@ export interface LocalePack {
     | 'shelter'
     | 'locker'
     | 'niche',
-    { name: string; desc: string }
+    { name: string; desc: string; benefit: string }
   >;
   building: {
     errors: {

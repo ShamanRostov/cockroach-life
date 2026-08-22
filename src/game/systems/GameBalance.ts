@@ -31,6 +31,7 @@ export const HOSPITAL_ARCADE_HIT_REDUCTION_PER_LEVEL = 1;
 export const HOSPITAL_ARCADE_MIN_HITS = 3;
 export const HOSPITAL_ARCADE_HEAL_PER_LEVEL = 3;
 export const HOSPITAL_ARCADE_COMPLETION_PER_LEVEL = 5;
+export const HOSPITAL_MAX_HEALTH_PER_LEVEL = 8;
 export const DEATH_HOSPITAL_HEALTH = 30;
 
 /** Base resource caps before storage buildings. */
@@ -38,6 +39,22 @@ export const BASE_FOOD_CAP = 150;
 export const BASE_MONEY_CAP = 200;
 export const STORAGE_FOOD_CAP_PER_LEVEL = 80;
 export const STORAGE_MONEY_CAP_PER_LEVEL = 60;
+
+/** Nest defense — rival bots occasionally steal resources; traps block them. */
+export const MAX_COUNTER_RAIDS_PER_DAY = 4;
+export const COUNTER_RAID_INTERVAL_SEC = 75;
+export const COUNTER_RAID_MIN_BUILDINGS = 2;
+export const COUNTER_RAID_ATTACK_BASE = 28;
+export const COUNTER_RAID_ATTACK_PER_BUILDING = 4;
+export const COUNTER_RAID_ATTACK_VARIANCE = 12;
+export const COUNTER_RAID_FOOD_LOSS_BASE = 20;
+export const COUNTER_RAID_MONEY_LOSS_BASE = 14;
+export const FIGHTER_COUNTER_DEFENSE_BONUS = 18;
+export const TRAP_DEFENSE_POWER: Record<'slipper' | 'spray' | 'glue', number> = {
+  slipper: 30,
+  spray: 24,
+  glue: 18,
+};
 
 export const PASSIVE_INCOME: Record<RoomType, { food: number; money: number }> = {
   kitchen: { food: 0.35, money: 0 },

@@ -24,11 +24,13 @@ import type { ProductId } from '../platforms/IAPService';
 import type { RewardType } from '../platforms/MonetizationService';
 import type { PlacedRoom } from './types';
 import { iapService } from '../platforms/IAPService';
-import { IAP_GRANTS, REWARDED_ENERGY_AMOUNT } from './systems/GameBalance';
+import { IAP_GRANTS, REWARDED_ENERGY_AMOUNT, STARTING_MAX_HEALTH, HOSPITAL_MAX_HEALTH_PER_LEVEL, COUNTER_RAID_MIN_BUILDINGS, MAX_COUNTER_RAIDS_PER_DAY } from './systems/GameBalance';
 import {
   getFoodStorageCap,
   getMoneyStorageCap,
+  sumRoomLevels,
 } from './systems/BuildingBonuses';
+import { resolveCounterRaid, type CounterRaidResult } from './systems/CounterRaid';
 
 /** Central game state singleton shared across scenes. */
 export class GameState {
@@ -132,6 +134,8 @@ export class GameState {
       playerDistrict: data.playerDistrict ?? 'plinth',
       raidRating: data.raidRating ?? 1000,
       raidWins: data.raidWins ?? 0,
+      counterRaidsToday: data.counterRaidsToday ?? 0,
+      lastCounterRaidDay: data.lastCounterRaidDay ?? '',
     });
     this.dailyBonus.load({
       lastLoginDate: data.lastLoginDate ?? '',
@@ -214,6 +218,41 @@ export class GameState {
   refreshNestBonuses(): void {
     const rooms = this.getAllNestRooms();
     this.economy.setResourceCaps(getFoodStorageCap(rooms), getMoneyStorageCap(rooms));
+    const hospitalLevels = sumRoomLevels(rooms, 'hospital');
+    const maxHealth = STARTING_MAX_HEALTH + hospitalLevels * HOSPITAL_MAX_HEALTH_PER_LEVEL;
+    this.economy.maxHealth = maxHealth;
+    if (this.economy.health > maxHealth) {
+      this.economy.health = maxHealth;
+    }
+  }
+
+  /** Rival bot counter-raid while idling in the nest. Returns outcome when an attack resolves. */
+  runCounterRaid(): CounterRaidResult | null {
+    if (this.tutorial.isActive()) return null;
+
+    this.raid.refreshDailyRaids();
+    this.raid.refreshCounterRaids();
+
+    if (this.raid.shieldUntil > Date.now()) return null;
+    if (this.raid.counterRaidsToday >= MAX_COUNTER_RAIDS_PER_DAY) return null;
+
+    const totalBuildings = this.getTotalBuildingCount();
+    if (totalBuildings < COUNTER_RAID_MIN_BUILDINGS) return null;
+
+    const result = resolveCounterRaid(
+      this.raid.defenseTraps,
+      totalBuildings,
+      this.breeding.getRoleBonus('fighter'),
+    );
+
+    this.raid.counterRaidsToday += 1;
+
+    if (!result.blocked) {
+      this.economy.food = Math.max(0, this.economy.food - result.foodLost);
+      this.economy.money = Math.max(0, this.economy.money - result.moneyLost);
+    }
+
+    return result;
   }
 
   getFoodCap(): number {
@@ -330,6 +369,8 @@ export class GameState {
       playerDistrict: this.raid.playerDistrict,
       raidRating: this.raid.raidRating,
       raidWins: this.raid.raidWins,
+      counterRaidsToday: this.raid.counterRaidsToday,
+      lastCounterRaidDay: this.raid.lastCounterRaidDay,
       lastLoginDate: this.dailyBonus.lastLoginDate,
       loginStreak: this.dailyBonus.loginStreak,
       dailyQuests: this.dailyQuests.dailyQuests,

@@ -50,6 +50,8 @@ export interface GameSaveData {
   playerDistrict: string;
   raidRating: number;
   raidWins: number;
+  counterRaidsToday?: number;
+  lastCounterRaidDay?: string;
   lastLoginDate: string;
   loginStreak: number;
   dailyQuests: DailyQuest[];
@@ -98,6 +100,8 @@ export interface GameStateSnapshot {
   playerDistrict: string;
   raidRating: number;
   raidWins: number;
+  counterRaidsToday?: number;
+  lastCounterRaidDay?: string;
   lastLoginDate: string;
   loginStreak: number;
   dailyQuests: DailyQuest[];
@@ -140,6 +144,8 @@ export const DEFAULT_GAME_STATE: GameStateSnapshot = {
   playerDistrict: 'plinth',
   raidRating: 1000,
   raidWins: 0,
+  counterRaidsToday: 0,
+  lastCounterRaidDay: '',
   lastLoginDate: '',
   loginStreak: 0,
   dailyQuests: [],

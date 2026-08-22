@@ -68,6 +68,10 @@ class I18nManager {
     return packs[this.locale].rooms[type].desc;
   }
 
+  roomBenefit(type: RoomType): string {
+    return packs[this.locale].rooms[type].benefit;
+  }
+
   buildError(key: keyof LocalePack['building']['errors']): string {
     return packs[this.locale].building.errors[key];
   }

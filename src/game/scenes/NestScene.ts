@@ -14,7 +14,7 @@ import { gridToScreen, screenToGrid, drawGridCell } from '../utils/grid';
 import { createNestTopDownBackground } from '../graphics/NestTopDownFloor';
 import { buildingTextureKey, buildingDisplayScale } from '../assets/AssetKeys';
 import { spawnAmbientDust } from '../graphics/ApartmentEnvironment';
-import { addWarmGlow } from '../graphics/VisualEffects';
+import { screenShake, addWarmGlow } from '../graphics/VisualEffects';
 import { DEPTH } from '../graphics/SceneDepth';
 import { spawnBuildSparkles } from '../graphics/ParticleEffects';
 import { playBuildAnimation, playUpgradeAnimation } from '../graphics/BuildAnimation';
@@ -28,6 +28,7 @@ import {
   BEDROOM_HEAL_PER_LEVEL,
   SHELTER_HEAL_PER_LEVEL,
   NICHE_HEAL_PER_LEVEL,
+  COUNTER_RAID_INTERVAL_SEC,
 } from '../systems/GameBalance';
 import { getHospitalNestHealPerSec } from '../systems/BuildingBonuses';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
@@ -56,6 +57,8 @@ export class NestScene extends Phaser.Scene {
   private roachTarget = { x: 0, y: 0 };
   private readonly roachSpeed = 48;
   private lastTick = 0;
+  private counterRaidTimer = 0;
+  private storageCapHintShown = false;
   private hoverCell: { gx: number; gy: number } | null = null;
   private dustEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
   private tutorialOverlay = new TutorialOverlay();
@@ -76,6 +79,8 @@ export class NestScene extends Phaser.Scene {
     this.originX = getNestGridOrigin().x;
     this.originY = getNestGridOrigin().y;
     this.lastTick = 0;
+    this.counterRaidTimer = COUNTER_RAID_INTERVAL_SEC * 0.6;
+    this.storageCapHintShown = false;
     this.selectedRoom = isStairwell ? 'locker' : isBalcony ? 'planter' : 'kitchen';
 
     createNestTopDownBackground(this, region);
@@ -206,6 +211,12 @@ export class NestScene extends Phaser.Scene {
 
   update(_time: number, delta: number): void {
     const dt = delta / 1000;
+    this.counterRaidTimer += dt;
+    if (this.counterRaidTimer >= COUNTER_RAID_INTERVAL_SEC) {
+      this.counterRaidTimer = 0;
+      this.tryCounterRaid();
+    }
+
     this.lastTick += dt;
     if (this.lastTick >= 1) {
       const rooms = this.state.building.getRooms();
@@ -222,6 +233,7 @@ export class NestScene extends Phaser.Scene {
         food: foodMult,
         money: workerBonus,
       });
+      this.maybeShowStorageCapHint(rooms);
       const bedroom = rooms.find((r) => r.type === 'bedroom');
       if (bedroom) {
         this.state.economy.heal(BEDROOM_HEAL_PER_LEVEL * bedroom.level * this.lastTick);
@@ -249,6 +261,43 @@ export class NestScene extends Phaser.Scene {
     }
 
     this.updateRoach(delta);
+  }
+
+  private tryCounterRaid(): void {
+    const result = this.state.runCounterRaid();
+    if (!result) return;
+
+    const t = L().nest;
+    if (result.blocked) {
+      showToast(this, fmt(t.counterRaidBlocked, { defense: result.defense }));
+      SoundManager.getInstance().playSFX('ui_click');
+    } else {
+      showToast(
+        this,
+        fmt(t.counterRaidHit, {
+          food: result.foodLost,
+          money: result.moneyLost,
+        }),
+      );
+      screenShake(this, 180, 0.01);
+      SoundManager.getInstance().playSFX('arcade_hit');
+    }
+
+    this.hud.refresh();
+    this.state.persist();
+  }
+
+  private maybeShowStorageCapHint(rooms: { type: string; level: number }[]): void {
+    if (this.storageCapHintShown) return;
+    const { food, money } = this.state.economy.getPassiveIncome(rooms);
+    if (food <= 0 && money <= 0) return;
+
+    const atFoodCap = food > 0 && this.state.economy.food >= this.state.economy.maxFoodCap - 1;
+    const atMoneyCap = money > 0 && this.state.economy.money >= this.state.economy.maxMoneyCap - 1;
+    if (!atFoodCap && !atMoneyCap) return;
+
+    this.storageCapHintShown = true;
+    showToast(this, L().nest.storageCapFull);
   }
 
   private updateRoach(delta: number): void {
@@ -316,11 +365,12 @@ export class NestScene extends Phaser.Scene {
         this,
         getBuildPanelCenterX(),
         panelTop + 52 + i * 50,
-        `${i18n.roomName(type)}\n${costs.money}💰`,
+        `${i18n.roomName(type)}\n${costs.money}💰  ${i18n.roomBenefit(type)}`,
         () => {
           this.selectedRoom = type;
           this.buildMode = true;
           showToast(this, fmt(t.nest.selected, { room: i18n.roomName(type) }));
+          showToast(this, i18n.roomDesc(type));
         },
         btnW,
         44,
