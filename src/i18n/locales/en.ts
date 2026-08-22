@@ -42,8 +42,8 @@ export const en: LocalePack = {
     skip: 'Skip',
   },
   hud: {
-    food: '🍞 Food: {value}',
-    money: '💰 Money: {value}',
+    food: '🍞 Food: {value} / {max}',
+    money: '💰 Money: {value} / {max}',
     health: '❤️ {current} / {max}',
   },
   nest: {
@@ -82,9 +82,9 @@ export const en: LocalePack = {
   rooms: {
     kitchen: { name: 'Kitchen', desc: 'Cardboard box with crumbs and a straw chimney' },
     bedroom: { name: 'Bedroom', desc: 'Cozy burrow inside an old sock' },
-    storage: { name: 'Pantry', desc: 'Tin can with a hinged lid hatch' },
-    nursery: { name: 'Nursery', desc: 'Egg carton cells with tiny eggs' },
-    hospital: { name: 'Infirmary', desc: 'Bandage tent with a red cross' },
+    storage: { name: 'Pantry', desc: 'Cap: +80 🍞 and +60 💰 per level' },
+    nursery: { name: 'Nursery', desc: 'Egg carton cells — breed cockroaches' },
+    hospital: { name: 'Infirmary', desc: 'Nest healing + faster infirmary arcade' },
     planter: { name: 'Planter', desc: 'Flower pot hideout on the balcony' },
     shelter: { name: 'Shelter', desc: 'Leaf lean-to against the railing' },
     locker: { name: 'Locker', desc: 'Metal locker stash in the stairwell' },
@@ -121,7 +121,7 @@ export const en: LocalePack = {
       title: '🏥 Infirmary — healing mini-game',
       controls: 'Press SPACE when the pulse is in the green zone!',
       progress: 'Healing: {current} / {total}',
-      healed: 'Healed! +30 HP',
+      healed: 'Healed! +{hp} HP',
       now: '● NOW ●',
       zoneHint: 'Green ring — press SPACE!',
       wait: 'Wait until the heart enters the green ring',

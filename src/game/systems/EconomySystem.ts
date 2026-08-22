@@ -1,10 +1,12 @@
-import { PASSIVE_INCOME, NEST_FOOD_DRAIN_RATE, STARVATION_DAMAGE_RATE } from './GameBalance';
+import { PASSIVE_INCOME, NEST_FOOD_DRAIN_RATE, STARVATION_DAMAGE_RATE, BASE_FOOD_CAP, BASE_MONEY_CAP } from './GameBalance';
 
 export class EconomySystem {
   food = 50;
   money = 100;
   health = 100;
   maxHealth = 100;
+  maxFoodCap = BASE_FOOD_CAP;
+  maxMoneyCap = BASE_MONEY_CAP;
 
   /** Passive food drain per second while in nest. */
   readonly nestFoodDrainRate = NEST_FOOD_DRAIN_RATE;
@@ -14,6 +16,18 @@ export class EconomySystem {
     this.money = money;
     this.health = health;
     this.maxHealth = maxHealth;
+    this.clampResources();
+  }
+
+  setResourceCaps(maxFood: number, maxMoney: number): void {
+    this.maxFoodCap = maxFood;
+    this.maxMoneyCap = maxMoney;
+    this.clampResources();
+  }
+
+  clampResources(): void {
+    this.food = Math.min(this.maxFoodCap, Math.max(0, this.food));
+    this.money = Math.min(this.maxMoneyCap, Math.max(0, this.money));
   }
 
   canAfford(moneyCost: number, foodCost = 0): boolean {
@@ -28,11 +42,11 @@ export class EconomySystem {
   }
 
   addMoney(amount: number): void {
-    this.money += amount;
+    this.money = Math.min(this.maxMoneyCap, this.money + amount);
   }
 
   addFood(amount: number): void {
-    this.food += amount;
+    this.food = Math.min(this.maxFoodCap, this.food + amount);
   }
 
   heal(amount: number): void {
@@ -71,7 +85,7 @@ export class EconomySystem {
     const inc = this.getPassiveIncome(rooms);
     const foodMult = multipliers.food ?? 1;
     const moneyMult = multipliers.money ?? 1;
-    this.money += inc.money * moneyMult * dt;
-    this.food += inc.food * foodMult * dt;
+    this.money = Math.min(this.maxMoneyCap, this.money + inc.money * moneyMult * dt);
+    this.food = Math.min(this.maxFoodCap, this.food + inc.food * foodMult * dt);
   }
 }

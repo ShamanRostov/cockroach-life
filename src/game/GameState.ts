@@ -25,6 +25,10 @@ import type { RewardType } from '../platforms/MonetizationService';
 import type { PlacedRoom } from './types';
 import { iapService } from '../platforms/IAPService';
 import { IAP_GRANTS, REWARDED_ENERGY_AMOUNT } from './systems/GameBalance';
+import {
+  getFoodStorageCap,
+  getMoneyStorageCap,
+} from './systems/BuildingBonuses';
 
 /** Central game state singleton shared across scenes. */
 export class GameState {
@@ -159,6 +163,7 @@ export class GameState {
       this.skins.unlockAllPurchasable();
     }
     this.seasonPass.load(data.seasonPass, this.hasSeasonPassPremium());
+    this.refreshNestBonuses();
   }
 
   private getRegionStorage(region: MapRegion): { rooms: PlacedRoom[]; unlocked: RoomType[] } {
@@ -194,6 +199,29 @@ export class GameState {
   getTotalBuildingCount(): number {
     this.syncNestRegionToStorage();
     return this.apartmentRooms.length + this.balconyRooms.length + this.stairwellRooms.length;
+  }
+
+  /** All rooms across apartment, balcony, and stairwell nests. */
+  getAllNestRooms(): PlacedRoom[] {
+    this.syncNestRegionToStorage();
+    return [
+      ...this.apartmentRooms,
+      ...this.balconyRooms,
+      ...this.stairwellRooms,
+    ];
+  }
+
+  refreshNestBonuses(): void {
+    const rooms = this.getAllNestRooms();
+    this.economy.setResourceCaps(getFoodStorageCap(rooms), getMoneyStorageCap(rooms));
+  }
+
+  getFoodCap(): number {
+    return this.economy.maxFoodCap;
+  }
+
+  getMoneyCap(): number {
+    return this.economy.maxMoneyCap;
   }
 
   getBalconyBuildingCount(): number {

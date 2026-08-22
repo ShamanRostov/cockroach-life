@@ -13,6 +13,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 - **Nest building view** — switched from isometric grid to top-down orthogonal layout; parquet floor, aligned grid clicks, smoother cockroach movement
 - **Building sprites** — 45 AI-generated top-down sprites (`building-{type}-1` … `5`); upgrade level picks matching texture instead of scale-only
+- **Hospital building** — passive nest healing + stronger/faster infirmary arcade based on hospital levels
+- **Storage building** — raises food and money caps (+80 🍞 / +60 💰 per storage level)
 
 ---
 

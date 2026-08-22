@@ -10,6 +10,7 @@ import { monetizationService } from '../../platforms/MonetizationService';
 import { AnalyticsService } from '../../platforms/AnalyticsService';
 import { SoundManager } from '../audio/SoundManager';
 import { ARCADE_HOSPITAL } from '../systems/GameBalance';
+import { getHospitalArcadeBonuses } from '../systems/BuildingBonuses';
 import { DEPTH } from '../graphics/SceneDepth';
 
 export class HospitalScene extends Phaser.Scene {
@@ -22,6 +23,8 @@ export class HospitalScene extends Phaser.Scene {
   private timingHint!: Phaser.GameObjects.Text;
   private hits = 0;
   private required = ARCADE_HOSPITAL.requiredHits;
+  private healPerHit = ARCADE_HOSPITAL.healPerHit;
+  private completionHeal = ARCADE_HOSPITAL.completionHeal;
   private alive = true;
   private runCompleted = false;
   private progressText!: Phaser.GameObjects.Text;
@@ -35,6 +38,11 @@ export class HospitalScene extends Phaser.Scene {
 
   create(): void {
     const t = L();
+    const hospitalBonus = getHospitalArcadeBonuses(this.state.getAllNestRooms());
+    this.required = hospitalBonus.requiredHits;
+    this.healPerHit = hospitalBonus.healPerHit;
+    this.completionHeal = hospitalBonus.completionHeal;
+
     addLocaleSafeArcadeBg(this, 'arcade-hospital-bg');
 
     createPanel(this, GAME_WIDTH / 2 - 210, 24, 420, 52, 0.88, DEPTH.ui);
@@ -204,7 +212,7 @@ export class HospitalScene extends Phaser.Scene {
 
     if (inZone) {
       this.hits += 1;
-      this.state.economy.heal(ARCADE_HOSPITAL.healPerHit);
+      this.state.economy.heal(this.healPerHit);
       SoundManager.getInstance().playSFX('ui_click');
       this.progressText.setText(
         fmt(t.arcade.hospital.progress, { current: this.hits, total: this.required }),
@@ -212,7 +220,7 @@ export class HospitalScene extends Phaser.Scene {
       this.pulse.setTint(COLORS.success);
       this.cameras.main.flash(100, 67, 160, 71);
       spawnSparkBurst(this, this.pulse.x, this.pulse.y, 10, COLORS.success);
-      showScorePopup(this, this.pulse.x, this.pulse.y - 40, `+${ARCADE_HOSPITAL.healPerHit}`, '#66bb6a');
+      showScorePopup(this, this.pulse.x, this.pulse.y - 40, `+${this.healPerHit}`, '#66bb6a');
 
       this.time.delayedCall(200, () => {
         this.pulse.clearTint();
@@ -236,7 +244,7 @@ export class HospitalScene extends Phaser.Scene {
     this.alive = false;
     this.runCompleted = true;
     const score = this.hits * ARCADE_HOSPITAL.scorePerHit;
-    this.state.economy.heal(ARCADE_HOSPITAL.completionHeal);
+    this.state.economy.heal(this.completionHeal);
     this.state.updateHighScore(SCENES.HOSPITAL, score);
     AnalyticsService.getInstance().trackArcadeComplete(SCENES.HOSPITAL, score, true);
     SoundManager.getInstance().playSFX('arcade_win');
@@ -245,7 +253,7 @@ export class HospitalScene extends Phaser.Scene {
 
     createPanel(this, GAME_WIDTH / 2 - 210, GAME_HEIGHT - 136, 420, 72, 0.92, DEPTH.ui);
     this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 100, L().arcade.hospital.healed, {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 100, fmt(L().arcade.hospital.healed, { hp: this.completionHeal }), {
         fontFamily: 'Segoe UI, Arial, sans-serif',
         fontSize: '28px',
         color: '#fff8e1',

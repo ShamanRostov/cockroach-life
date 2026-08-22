@@ -25,7 +25,19 @@ export const NEST_FOOD_DRAIN_RATE = 0.045;
 export const STARVATION_DAMAGE_RATE = 0.018;
 export const BEDROOM_HEAL_PER_LEVEL = 0.5;
 export const SHELTER_HEAL_PER_LEVEL = 0.65;
+export const NICHE_HEAL_PER_LEVEL = 0.6;
+export const HOSPITAL_HEAL_PER_LEVEL = 0.4;
+export const HOSPITAL_ARCADE_HIT_REDUCTION_PER_LEVEL = 1;
+export const HOSPITAL_ARCADE_MIN_HITS = 3;
+export const HOSPITAL_ARCADE_HEAL_PER_LEVEL = 3;
+export const HOSPITAL_ARCADE_COMPLETION_PER_LEVEL = 5;
 export const DEATH_HOSPITAL_HEALTH = 30;
+
+/** Base resource caps before storage buildings. */
+export const BASE_FOOD_CAP = 150;
+export const BASE_MONEY_CAP = 200;
+export const STORAGE_FOOD_CAP_PER_LEVEL = 80;
+export const STORAGE_MONEY_CAP_PER_LEVEL = 60;
 
 export const PASSIVE_INCOME: Record<RoomType, { food: number; money: number }> = {
   kitchen: { food: 0.35, money: 0 },

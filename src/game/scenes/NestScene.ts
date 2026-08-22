@@ -27,7 +27,9 @@ import {
   DEATH_HOSPITAL_HEALTH,
   BEDROOM_HEAL_PER_LEVEL,
   SHELTER_HEAL_PER_LEVEL,
+  NICHE_HEAL_PER_LEVEL,
 } from '../systems/GameBalance';
+import { getHospitalNestHealPerSec } from '../systems/BuildingBonuses';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 import { TUTORIAL_STEP_COUNT } from '../systems/TutorialSystem';
 import type { TutorialTarget } from '../ui/TutorialOverlay';
@@ -230,7 +232,11 @@ export class NestScene extends Phaser.Scene {
       }
       const niche = rooms.find((r) => r.type === 'niche');
       if (niche) {
-        this.state.economy.heal(0.6 * niche.level * this.lastTick);
+        this.state.economy.heal(NICHE_HEAL_PER_LEVEL * niche.level * this.lastTick);
+      }
+      const hospitalHeal = getHospitalNestHealPerSec(this.state.getAllNestRooms());
+      if (hospitalHeal > 0) {
+        this.state.economy.heal(hospitalHeal * this.lastTick);
       }
       this.lastTick = 0;
       this.hud.refresh();
@@ -646,6 +652,7 @@ export class NestScene extends Phaser.Scene {
   }
 
   private refreshWorld(): void {
+    this.state.refreshNestBonuses();
     this.refreshGridTiles();
     this.refreshBuildingSprites();
     this.drawHoverHighlight();

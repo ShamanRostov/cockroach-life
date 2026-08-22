@@ -63,9 +63,11 @@ export class ResourceHUD {
     const food = Math.floor(economy.food);
     const money = Math.floor(economy.money);
     const health = Math.floor(economy.health);
+    const foodCap = economy.maxFoodCap;
+    const moneyCap = economy.maxMoneyCap;
 
-    this.foodText.setText(fmt(t.hud.food, { value: food }));
-    this.moneyText.setText(fmt(t.hud.money, { value: money }));
+    this.foodText.setText(fmt(t.hud.food, { value: food, max: foodCap }));
+    this.moneyText.setText(fmt(t.hud.money, { value: money, max: moneyCap }));
     this.healthText.setText(
       fmt(t.hud.health, { current: health, max: economy.maxHealth }),
     );
