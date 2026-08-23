@@ -7,6 +7,7 @@ import { createCockroachPhysics, syncCockroachMovement } from '../graphics/Cockr
 import { spawnFoodPickup, spawnCrumbTrail, spawnSparkBurst } from '../graphics/ParticleEffects';
 import { screenShake, showScorePopup } from '../graphics/VisualEffects';
 import { TouchControls } from '../ui/TouchControls';
+import { showArcadeHint } from '../ui/ArcadeHint';
 import { L, fmt } from '../../i18n';
 import { monetizationService } from '../../platforms/MonetizationService';
 import { AnalyticsService } from '../../platforms/AnalyticsService';
@@ -105,6 +106,8 @@ export class FoodHuntScene extends Phaser.Scene {
         color: '#bcaaa4',
       })
       .setOrigin(0.5);
+
+    showArcadeHint(this, t.arcade.food.howTo, controlsHint);
   }
 
   update(_time: number, delta: number): void {

@@ -14,6 +14,7 @@ import { leaderboardService, LEADERBOARD_IDS } from '../../platforms/Leaderboard
 import { LeaderboardPanel } from '../ui/LeaderboardPanel';
 import { ARCADE_SLIPPER } from '../systems/GameBalance';
 import { SS_REGISTRY } from '../../dev/screenshotRegistry';
+import { showArcadeHint } from '../ui/ArcadeHint';
 
 export class SlipperDodgeScene extends Phaser.Scene {
   private player!: Phaser.Physics.Arcade.Sprite;
@@ -93,6 +94,8 @@ export class SlipperDodgeScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    showArcadeHint(this, t.arcade.slipper.howTo, controlsHint);
+
     if (this.registry.get(SS_REGISTRY.SLIPPER_MID)) {
       this.applyScreenshotMidGame();
     } else {
@@ -112,8 +115,12 @@ export class SlipperDodgeScene extends Phaser.Scene {
   private refreshSlipperBody(s: Phaser.Physics.Arcade.Sprite): void {
     const body = s.body as Phaser.Physics.Arcade.Body | null;
     if (!body) return;
-    body.setSize(s.displayWidth * 0.72, s.displayHeight * 0.55);
-    body.setOffset(s.displayWidth * 0.14, s.displayHeight * 0.2);
+    // Phaser body size is in *unscaled* texture pixels (NOT displayWidth).
+    // Using display size here inflated hitboxes by ~scale² and caused false hits.
+    const fw = s.width;
+    const fh = s.height;
+    const r = Math.min(fw, fh) * 0.3;
+    body.setCircle(r, fw / 2 - r, fh / 2 - r);
   }
 
   private spawnOneSlipper(x?: number, y = -80): Phaser.Physics.Arcade.Sprite {
@@ -123,7 +130,13 @@ export class SlipperDodgeScene extends Phaser.Scene {
     s.setData('dodged', false);
     this.refreshSlipperBody(s);
     this.slippers.push(s);
-    this.physics.add.overlap(this.player, s, () => this.onHit(), undefined, this);
+    this.physics.add.overlap(
+      this.player,
+      s,
+      () => this.onHit(),
+      (_player, slipper) => this.slipperReallyHits(slipper as Phaser.Physics.Arcade.Sprite),
+      this,
+    );
     this.launchSlipper(s);
     return s;
   }
@@ -193,6 +206,16 @@ export class SlipperDodgeScene extends Phaser.Scene {
       }
     }
     this.slippers = this.slippers.filter((s) => s.active);
+  }
+
+  /** Extra precision: AABB/circle can still feel early on large scaled slippers. */
+  private slipperReallyHits(slipper: Phaser.Physics.Arcade.Sprite): boolean {
+    const dx = this.player.x - slipper.x;
+    const dy = this.player.y - slipper.y;
+    const hitR =
+      Math.min(slipper.displayWidth, slipper.displayHeight) * 0.28 +
+      Math.min(this.player.displayWidth, this.player.displayHeight) * 0.28;
+    return dx * dx + dy * dy <= hitR * hitR;
   }
 
   private launchSlipper(s: Phaser.Physics.Arcade.Sprite): void {

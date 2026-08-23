@@ -12,6 +12,7 @@ import { SoundManager } from '../audio/SoundManager';
 import { ARCADE_HOSPITAL } from '../systems/GameBalance';
 import { getHospitalArcadeBonuses } from '../systems/BuildingBonuses';
 import { DEPTH } from '../graphics/SceneDepth';
+import { showArcadeHint } from '../ui/ArcadeHint';
 
 export class HospitalScene extends Phaser.Scene {
   private pulse!: Phaser.GameObjects.Image;
@@ -68,6 +69,12 @@ export class HospitalScene extends Phaser.Scene {
         },
       )
       .setOrigin(0.5);
+
+    showArcadeHint(
+      this,
+      t.arcade.hospital.howTo,
+      isMobileDevice() ? L().mobile.tapToPulse : t.arcade.hospital.controls,
+    );
 
     this.progressText = this.add
       .text(GAME_WIDTH / 2, 140, fmt(t.arcade.hospital.progress, { current: 0, total: this.required }), {

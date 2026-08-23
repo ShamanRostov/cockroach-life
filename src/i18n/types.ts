@@ -109,12 +109,30 @@ export interface LocalePack {
     };
   };
   arcade: {
-    slipper: { title: string; controls: string; hit: string };
-    spray: { title: string; controls: string; win: string; poisoned: string };
-    food: { title: string; controls: string; hunger: string; collected: string; win: string; fail: string };
-    hospital: { title: string; controls: string; progress: string; healed: string; now: string; zoneHint: string; wait: string };
+    slipper: { title: string; howTo: string; controls: string; hit: string };
+    spray: { title: string; howTo: string; controls: string; win: string; poisoned: string };
+    food: {
+      title: string;
+      howTo: string;
+      controls: string;
+      hunger: string;
+      collected: string;
+      win: string;
+      fail: string;
+    };
+    hospital: {
+      title: string;
+      howTo: string;
+      controls: string;
+      progress: string;
+      healed: string;
+      now: string;
+      zoneHint: string;
+      wait: string;
+    };
     catChase: {
       title: string;
+      howTo: string;
       controls: string;
       timeLeft: string;
       score: string;

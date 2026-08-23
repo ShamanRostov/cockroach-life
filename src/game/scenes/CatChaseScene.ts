@@ -7,6 +7,7 @@ import { createCockroachPhysics, syncCockroachMovement } from '../graphics/Cockr
 import { spawnFoodPickup, spawnSparkBurst } from '../graphics/ParticleEffects';
 import { screenShake, showScorePopup } from '../graphics/VisualEffects';
 import { TouchControls } from '../ui/TouchControls';
+import { showArcadeHint } from '../ui/ArcadeHint';
 import { L, fmt } from '../../i18n';
 import { monetizationService } from '../../platforms/MonetizationService';
 import { AnalyticsService } from '../../platforms/AnalyticsService';
@@ -115,6 +116,8 @@ export class CatChaseScene extends Phaser.Scene {
         color: '#bcaaa4',
       })
       .setOrigin(0.5);
+
+    showArcadeHint(this, t.arcade.catChase.howTo, controlsHint);
   }
 
   update(_time: number, delta: number): void {

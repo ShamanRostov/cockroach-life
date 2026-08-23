@@ -114,17 +114,20 @@ export const en: LocalePack = {
   arcade: {
     slipper: {
       title: '👟 Dodge the Slipper!',
+      howTo: 'Slippers fall from above — dodge sideways to survive and score!',
       controls: '← → or A/D — dodge!',
       hit: 'Hit by the slipper!\n{score}{record}',
     },
     spray: {
       title: '☠️ Bug spray! Find cover!',
+      howTo: 'Poison cloud grows — hide in wall cracks until the timer ends!',
       controls: 'WASD — run to wall cracks!',
       win: 'Survived the spray! +25 food, +15 money',
       poisoned: 'Poisoned!\nTo the hospital...',
     },
     food: {
       title: '🍞 Food Hunt in the Kitchen',
+      howTo: 'Collect crumbs before hunger hits zero. Reach the target to win!',
       controls: 'WASD — collect crumbs before you starve!',
       hunger: 'Hunger: {value}%',
       collected: 'Collected: {current} / {target}',
@@ -133,6 +136,7 @@ export const en: LocalePack = {
     },
     hospital: {
       title: '🏥 Infirmary',
+      howTo: 'Wait for the pulse to enter the green ring, then press!',
       controls: 'Press SPACE when the pulse is in the green zone!',
       progress: 'Healing: {current} / {total}',
       healed: 'Healed! +{hp} HP',
@@ -142,6 +146,7 @@ export const en: LocalePack = {
     },
     catChase: {
       title: '🐱 Cat Chase!',
+      howTo: 'Outrun the cat, grab crumbs, pick up boosts. Survive the timer!',
       controls: 'WASD — outrun the cat and grab crumbs!',
       timeLeft: 'Time left: {seconds}s',
       score: 'Score: {score}',

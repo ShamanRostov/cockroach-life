@@ -86,7 +86,31 @@ export function createCockroachPhysics(
 ): Phaser.Physics.Arcade.Sprite {
   const prefix = texturePrefix(view);
   const sprite = scene.physics.add.sprite(x, y, `${prefix}-0`);
-  return attachCockroachAnim(sprite, scaleMult, tint, view) as Phaser.Physics.Arcade.Sprite;
+  attachCockroachAnim(sprite, scaleMult, tint, view);
+  refineCockroachBody(sprite, view);
+  return sprite;
+}
+
+/** Shrink hitbox to the solid body (source art has transparent padding). */
+export function refineCockroachBody(
+  sprite: Phaser.Physics.Arcade.Sprite,
+  view: CockroachView = 'side',
+): void {
+  const body = sprite.body as Phaser.Physics.Arcade.Body | null;
+  if (!body) return;
+  const fw = sprite.width;
+  const fh = sprite.height;
+  if (view === 'side') {
+    const bw = fw * 0.52;
+    const bh = fh * 0.48;
+    body.setSize(bw, bh);
+    body.setOffset((fw - bw) / 2, fh * 0.32);
+  } else {
+    const bw = fw * 0.5;
+    const bh = fh * 0.5;
+    body.setSize(bw, bh);
+    body.setOffset((fw - bw) / 2, (fh - bh) / 2);
+  }
 }
 
 /** Top-down art faces up (negative Y). Side art faces left. */
