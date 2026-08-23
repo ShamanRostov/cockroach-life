@@ -10,16 +10,19 @@ export const NEST_LAYOUT = {
   rightChromeW: 272,
   topBarH: 100,
   sideMargin: 10,
+  /** ResourceHUD panel size (must fit food/money/HP + bar). */
   hudW: 252,
-  hudH: 76,
+  hudH: 102,
   rightRailW: 48,
   buildPanelW: 220,
   buildPanelTop: 112,
-  buildPanelH: 340,
+  buildPanelH: 420,
   defensePanelW: 252,
-  defensePanelTop: 120,
-  defensePanelH: 168,
-  arcadePanelH: 118,
+  /** Below resource HUD with a clear gap. */
+  defensePanelTop: 128,
+  /** Title + 3 traps + world map, all inside the panel. */
+  defensePanelH: 248,
+  arcadePanelH: 140,
   arcadePanelBottom: 12,
   eventBannerX: 640,
   eventBannerY: 40,
@@ -64,7 +67,9 @@ export function isNestUIRegion(x: number, y: number): boolean {
 
   if (y < NEST_LAYOUT.topBarH + safe.top) return true;
   if (x >= buildX - 4) return true;
-  if (x < NEST_LAYOUT.leftChromeW && y < 340) return true;
+  if (x < NEST_LAYOUT.leftChromeW && y < NEST_LAYOUT.defensePanelTop + NEST_LAYOUT.defensePanelH + 8) {
+    return true;
+  }
   if (x < NEST_LAYOUT.leftChromeW && y > GAME_HEIGHT - NEST_LAYOUT.arcadePanelH - 24) return true;
   return false;
 }

@@ -46,9 +46,11 @@ export interface LocalePack {
     building: string;
     dangers: string;
     upgrade: string;
+    demolish: string;
     info: string;
     selected: string;
     clickUpgrade: string;
+    clickDemolish: string;
     died: string;
     notEnoughResources: string;
     built: string;
@@ -56,6 +58,8 @@ export interface LocalePack {
     maxLevel: string;
     notEnoughMoney: string;
     upgraded: string;
+    demolished: string;
+    uniqueOnly: string;
     roomLabel: string;
     slipper: string;
     spray: string;
@@ -95,6 +99,7 @@ export interface LocalePack {
       outOfBounds: string;
       locked: string;
       occupied: string;
+      limitReached: string;
     };
   };
   arcade: {

@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH } from '../config';
 import { getEventBannerY, getEventBannerX } from './NestLayout';
 import { GameState } from '../GameState';
 import {
@@ -30,16 +29,17 @@ export class EventBanner {
 
     const container = scene.add.container(getEventBannerX(), getEventBannerY()).setDepth(DEPTH.hud + 1);
 
-    const bannerW = 360;
-    const bannerH = 36;
+    const bannerW = 420;
+    const bannerH = 40;
+    const padX = 14;
     const bg = scene.add
       .rectangle(0, 0, bannerW, bannerH, 0x1e140c, 0.9)
       .setStrokeStyle(2, 0xffa726, 0.55);
 
     const label = scene.add
-      .text(-200, 0, `${event.icon} ${this.state.liveOps.getEventName()}`, {
+      .text(-bannerW / 2 + padX, 0, `${event.icon} ${this.state.liveOps.getEventName()}`, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '17px',
+        fontSize: '16px',
         color: '#fff8e1',
         stroke: '#5d2e00',
         strokeThickness: 2,
@@ -47,12 +47,19 @@ export class EventBanner {
       .setOrigin(0, 0.5);
 
     this.timerText = scene.add
-      .text(200, 0, fmt(t.timeRemaining, { days, hours }), {
+      .text(bannerW / 2 - padX, 0, fmt(t.timeRemaining, { days, hours }), {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '16px',
+        fontSize: '15px',
         color: '#ffca28',
       })
       .setOrigin(1, 0.5);
+
+    // Keep label from colliding with the timer.
+    const timerReserve = 130;
+    label.setStyle({
+      ...label.style,
+      wordWrap: { width: bannerW - padX * 2 - timerReserve },
+    });
 
     container.add([bg, label, this.timerText]);
     setContainerHitArea(container, bannerW, bannerH, () => this.showDetails(scene));
@@ -88,7 +95,7 @@ export class EventBanner {
 
     const panelW = 480;
     const panelH = 280;
-    const cx = GAME_WIDTH / 2;
+    const cx = scene.scale.width / 2;
     const cy = 360;
 
     this.modal.track(createModalPanel(scene, cx, cy, panelW, panelH, depth + 1));

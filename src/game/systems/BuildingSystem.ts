@@ -11,7 +11,7 @@ export type RoomType =
   | 'locker'
   | 'niche';
 
-export type BuildErrorKey = 'outOfBounds' | 'locked' | 'occupied';
+export type BuildErrorKey = 'outOfBounds' | 'locked' | 'occupied' | 'limitReached';
 
 export interface RoomDefinition {
   type: RoomType;
@@ -21,6 +21,27 @@ export interface RoomDefinition {
   roofColor: number;
   maxLevel: number;
   upgradeMoneyCost: number;
+}
+
+/**
+ * Max copies per nest region.
+ * Unique facilities (1): upgrade instead of spam — pantry, nursery, hospital, stairwell locker.
+ * Stackable: kitchens/bedrooms and outdoor dens for colony expansion.
+ */
+export const ROOM_MAX_INSTANCES: Record<RoomType, number> = {
+  kitchen: Number.POSITIVE_INFINITY,
+  bedroom: Number.POSITIVE_INFINITY,
+  storage: 1,
+  nursery: 1,
+  hospital: 1,
+  planter: Number.POSITIVE_INFINITY,
+  shelter: Number.POSITIVE_INFINITY,
+  locker: 1,
+  niche: Number.POSITIVE_INFINITY,
+};
+
+export function isUniqueRoom(type: RoomType): boolean {
+  return ROOM_MAX_INSTANCES[type] === 1;
 }
 
 export const ROOM_DEFINITIONS: Record<RoomType, RoomDefinition> = {
@@ -107,6 +128,24 @@ export const ROOM_DEFINITIONS: Record<RoomType, RoomDefinition> = {
   },
 };
 
+/** Base money/food spent to reach this room's current level (ignores live-ops discounts). */
+export function getRoomInvestedCost(room: PlacedRoom): { money: number; food: number } {
+  const def = ROOM_DEFINITIONS[room.type];
+  return {
+    money: def.moneyCost + Math.max(0, room.level - 1) * def.upgradeMoneyCost,
+    food: def.foodCost,
+  };
+}
+
+/** Demolish refund: half of invested cost (floored). */
+export function getDemolishRefund(room: PlacedRoom): { money: number; food: number } {
+  const invested = getRoomInvestedCost(room);
+  return {
+    money: Math.floor(invested.money / 2),
+    food: Math.floor(invested.food / 2),
+  };
+}
+
 export class BuildingSystem {
   private rooms: PlacedRoom[] = [];
   private unlockedRooms: RoomType[] = ['kitchen', 'bedroom'];
@@ -132,6 +171,10 @@ export class BuildingSystem {
     return this.rooms.find((r) => r.gridX === gridX && r.gridY === gridY);
   }
 
+  countOfType(type: RoomType): number {
+    return this.rooms.filter((r) => r.type === type).length;
+  }
+
   canBuild(type: RoomType, gridX: number, gridY: number): BuildErrorKey | null {
     if (gridX < 0 || gridY < 0 || gridX >= this.gridWidth || gridY >= this.gridHeight) {
       return 'outOfBounds';
@@ -141,6 +184,9 @@ export class BuildingSystem {
     }
     if (this.getRoomAt(gridX, gridY)) {
       return 'occupied';
+    }
+    if (this.countOfType(type) >= ROOM_MAX_INSTANCES[type]) {
+      return 'limitReached';
     }
     return null;
   }
@@ -161,6 +207,14 @@ export class BuildingSystem {
     if (room.level >= def.maxLevel) return false;
     room.level += 1;
     return true;
+  }
+
+  /** Remove a placed room; returns the removed copy or null. */
+  remove(gridX: number, gridY: number): PlacedRoom | null {
+    const idx = this.rooms.findIndex((r) => r.gridX === gridX && r.gridY === gridY);
+    if (idx < 0) return null;
+    const [removed] = this.rooms.splice(idx, 1);
+    return { ...removed };
   }
 
   private checkUnlocks(): void {

@@ -16,9 +16,9 @@ const NEST = {
   buildPanelW: 220,
   buildPanelTop: 112,
   defensePanelW: 252,
-  defensePanelTop: 120,
-  defensePanelH: 168,
-  arcadePanelH: 118,
+  defensePanelTop: 128,
+  defensePanelH: 248,
+  arcadePanelH: 140,
   arcadePanelBottom: 12,
 };
 
@@ -33,11 +33,12 @@ const BUILD_FIRST_ROOM = {
 };
 const ARCADE_SLIPPER = {
   x: NEST.sideMargin + 36,
-  y: GAME_HEIGHT - NEST.arcadePanelH - NEST.arcadePanelBottom + 58,
+  y: GAME_HEIGHT - NEST.arcadePanelH - NEST.arcadePanelBottom + 50,
 };
 const WORLD_MAP = {
   x: NEST.sideMargin + NEST.defensePanelW / 2,
-  y: NEST.defensePanelTop + NEST.defensePanelH + 28,
+  // Inside defense panel: header 36 + 3*(40+8) + half button ≈ firstBtn + 3*48
+  y: NEST.defensePanelTop + 36 + 40 / 2 + 3 * (40 + 8) + 4,
 };
 
 function log(msg) {

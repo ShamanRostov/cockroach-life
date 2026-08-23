@@ -36,7 +36,7 @@ const TARGETS = {
   'sprites/spark.png': { w: 32, h: 32, keyed: true },
   'sprites/nest-marker.png': { w: 48, h: 48, keyed: true },
   'sprites/cat.png': { w: 64, h: 64, keyed: true },
-  'characters/cockroach-0.png': { w: 64, h: 40, keyed: true },
+  'characters/cockroach-0.png': { w: 64, h: 64, keyed: true },
 };
 
 const BUILDINGS = [
