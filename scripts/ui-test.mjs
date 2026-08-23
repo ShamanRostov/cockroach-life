@@ -23,7 +23,7 @@ const NEST = {
 };
 
 /** HUD icons sit in a row above the build panel (see NestLayout.getNestHudButtonX). */
-const HUD_START_X = GAME_WIDTH - NEST.sideMargin - NEST.buildPanelW + 22;
+const HUD_START_X = GAME_WIDTH - NEST.sideMargin - NEST.buildPanelW + 32;
 const HUD_Y = 56;
 const HUD_SLOTS = [0, 1, 2, 3].map((i) => ({ x: HUD_START_X + i * 56, y: HUD_Y }));
 const MODAL_CLOSE = { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 + 210 };

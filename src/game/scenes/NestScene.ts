@@ -57,8 +57,8 @@ export class NestScene extends Phaser.Scene {
   private hoverLabel: Phaser.GameObjects.Text | null = null;
   private buildingsLayer!: Phaser.GameObjects.Container;
   private selectedRoom: RoomType = 'kitchen';
-  /** build = place, upgrade = level up, demolish = remove for 50% refund */
-  private editMode: 'build' | 'upgrade' | 'demolish' = 'build';
+  /** none = look around; build/upgrade/demolish only after choosing a tool */
+  private editMode: 'none' | 'build' | 'upgrade' | 'demolish' = 'none';
   private infoText!: Phaser.GameObjects.Text;
   private cockroach!: Phaser.GameObjects.Sprite;
   private roachTarget = { x: 0, y: 0 };
@@ -162,8 +162,21 @@ export class NestScene extends Phaser.Scene {
 
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (isNestUIRegion(pointer.x, pointer.y)) return;
-      if (this.input.manager.pointers.filter((p) => p.isDown).length > 1) return;
-      if (pointer.middleButtonDown()) return;
+      // RMB — cancel current build/upgrade/demolish tool
+      if (!pointer.wasTouch && pointer.rightButtonDown()) {
+        this.cancelEditMode();
+      }
+    });
+
+    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (isNestUIRegion(pointer.x, pointer.y)) return;
+      if (!pointer.wasTouch && pointer.button === 2) return; // ignore RMB release
+      if (!pointer.wasTouch && pointer.button !== 0 && pointer.button !== undefined) return;
+      if (this.input.manager.pointers.filter((p) => p.isDown && (p.wasTouch || p.leftButtonDown())).length > 0) {
+        return;
+      }
+      if (!this.worldZoom.allowGridTap()) return;
+      if (this.editMode === 'none') return;
       const world = this.worldZoom.screenToWorld(pointer.x, pointer.y);
       this.handleGridClick(world.x, world.y);
     });
@@ -426,17 +439,15 @@ export class NestScene extends Phaser.Scene {
         panelTop + 52 + i * 50,
         `${i18n.roomName(type)}${uniqueMark}\n${costs.money}💰  ${i18n.roomBenefit(type)}`,
         () => {
-          this.selectedRoom = type;
-          this.editMode = 'build';
-          if (
-            isUniqueRoom(type) &&
-            this.state.building.countOfType(type) >= 1
-          ) {
+          if (isUniqueRoom(type) && this.state.building.countOfType(type) >= 1) {
             showToast(this, fmt(t.nest.uniqueOnly, { room: i18n.roomName(type) }));
             return;
           }
+          this.selectedRoom = type;
+          this.editMode = 'build';
           showToast(this, fmt(t.nest.selected, { room: i18n.roomName(type) }));
           showToast(this, i18n.roomDesc(type));
+          this.updateInfo();
         },
         btnW,
         44,
@@ -453,6 +464,7 @@ export class NestScene extends Phaser.Scene {
       () => {
         this.editMode = 'upgrade';
         showToast(this, t.nest.clickUpgrade);
+        this.updateInfo();
       },
       btnW,
       40,
@@ -468,6 +480,7 @@ export class NestScene extends Phaser.Scene {
       () => {
         this.editMode = 'demolish';
         showToast(this, t.nest.clickDemolish);
+        this.updateInfo();
       },
       btnW,
       40,
@@ -695,6 +708,13 @@ export class NestScene extends Phaser.Scene {
     const { gridWidth, gridHeight } = this.state.building;
     if (gx < 0 || gy < 0 || gx >= gridWidth || gy >= gridHeight) return;
 
+    if (this.editMode === 'none') {
+      const occupied = !!this.state.building.getRoomAt(gx, gy);
+      this.repaintGridCell(gx, gy, occupied ? 'ok' : undefined);
+      this.updateHoverLabel();
+      return;
+    }
+
     const err =
       this.editMode === 'build' ? this.state.building.canBuild(this.selectedRoom, gx, gy) : null;
     const occupied = !!this.state.building.getRoomAt(gx, gy);
@@ -705,10 +725,22 @@ export class NestScene extends Phaser.Scene {
     this.updateHoverLabel();
   }
 
+  private cancelEditMode(): void {
+    if (this.editMode === 'none') return;
+    this.editMode = 'none';
+    showToast(this, L().nest.actionCancelled);
+    this.updateInfo();
+    this.drawHoverHighlight();
+  }
+
   private handleGridClick(screenX: number, screenY: number): void {
     const t = L();
     const { gridX, gridY } = screenToGrid(screenX, screenY, this.originX, this.originY);
     const building = this.state.building;
+
+    if (this.editMode === 'none') {
+      return;
+    }
 
     if (this.editMode === 'build') {
       const def = ROOM_DEFINITIONS[this.selectedRoom];
@@ -902,10 +934,20 @@ export class NestScene extends Phaser.Scene {
         : region === 'stairwell'
           ? `  •  ${t.nest.stairwellTitle}`
           : '';
-    const info = isMobileDevice()
-      ? `${fmt(t.nest.info, { count })}${regionHint}  •  ${t.mobile.tapToBuild}`
-      : `${fmt(t.nest.info, { count })}${regionHint}`;
-    this.infoText.setText(info);
+
+    let modeHint = t.nest.modeIdle;
+    if (this.editMode === 'build') {
+      modeHint = fmt(t.nest.modeBuild, { room: i18n.roomName(this.selectedRoom) });
+    } else if (this.editMode === 'upgrade') {
+      modeHint = t.nest.modeUpgrade;
+    } else if (this.editMode === 'demolish') {
+      modeHint = t.nest.modeDemolish;
+    }
+
+    const cancelHint = isMobileDevice() ? '' : `  •  ${t.nest.rmbCancel}`;
+    this.infoText.setText(
+      `${fmt(t.nest.info, { count })}${regionHint}  •  ${modeHint}${cancelHint}`,
+    );
   }
 
   private refreshTutorial(): void {

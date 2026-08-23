@@ -37,7 +37,7 @@ const HUD_SLOTS: NestHudSlot[] = ['daily', 'shop', 'breeding', 'seasonPass'];
 /** Icon buttons in a row above the build panel — no overlap with construction rail. */
 export function getNestHudButtonX(slot: NestHudSlot): number {
   const idx = HUD_SLOTS.indexOf(slot);
-  const startX = getBuildPanelX() + 22;
+  const startX = getBuildPanelX() + 32;
   return startX + idx * 56;
 }
 

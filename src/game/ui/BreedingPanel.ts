@@ -39,10 +39,10 @@ export class BreedingPanel {
       scene,
       getNestHudButtonX('breeding'),
       getNestHudButtonY('breeding'),
-      `🐣${count}`,
+      `🐣\n${count}`,
       () => this.show(scene),
-      48,
-      36,
+      54,
+      46,
     );
     this.hudButton.setDepth(DEPTH.hud + 12);
   }

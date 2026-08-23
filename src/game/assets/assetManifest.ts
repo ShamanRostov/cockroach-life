@@ -31,6 +31,10 @@ function roach(frame: number): AssetEntry {
   return { key: `cockroach-${frame}`, path: `/assets/characters/cockroach-${frame}.png` };
 }
 
+function roachSide(frame: number): AssetEntry {
+  return { key: `cockroach-side-${frame}`, path: `/assets/characters/cockroach-side-${frame}.png` };
+}
+
 /** All PNG textures loaded at boot — no procedural fallback. */
 export const GAME_ASSET_MANIFEST: AssetEntry[] = [
   ui('ui-panel.png', 'ui-panel'),
@@ -60,4 +64,5 @@ export const GAME_ASSET_MANIFEST: AssetEntry[] = [
     Array.from({ length: BUILDING_LEVELS }, (_, i) => building(t, i + 1)),
   ),
   ...Array.from({ length: COCKROACH_FRAMES }, (_, i) => roach(i)),
+  ...Array.from({ length: COCKROACH_FRAMES }, (_, i) => roachSide(i)),
 ];

@@ -51,6 +51,12 @@ export interface LocalePack {
     selected: string;
     clickUpgrade: string;
     clickDemolish: string;
+    actionCancelled: string;
+    modeIdle: string;
+    modeBuild: string;
+    modeUpgrade: string;
+    modeDemolish: string;
+    rmbCancel: string;
     died: string;
     notEnoughResources: string;
     built: string;
@@ -179,6 +185,7 @@ export interface LocalePack {
   };
   seasonPass: {
     title: string;
+    hudButton: string;
     daysLeft: string;
     freeTrack: string;
     premiumTrack: string;
@@ -257,6 +264,8 @@ export interface LocalePack {
   };
   daily: {
     title: string;
+    hudButton: string;
+    hudButtonReady: string;
     streak: string;
     rewardFood: string;
     rewardMoney: string;
@@ -317,6 +326,7 @@ export interface LocalePack {
   };
   shop: {
     title: string;
+    hudButton: string;
     buy: string;
     owned: string;
     close: string;

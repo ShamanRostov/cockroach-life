@@ -27,7 +27,9 @@ export class DailyPanel {
   createHudButton(scene: Phaser.Scene): Phaser.GameObjects.Container {
     const streak = this.state.dailyBonus.getStreak();
     const bonus = this.state.dailyBonus.checkDailyBonus();
-    const label = bonus.available ? `🎁 ${streak}` : `🎁`;
+    const label = bonus.available
+      ? fmt(L().daily.hudButtonReady, { streak })
+      : L().daily.hudButton;
 
     const btn = createTextButton(
       scene,
@@ -35,8 +37,8 @@ export class DailyPanel {
       getNestHudButtonY('daily'),
       label,
       () => this.show(scene),
-      48,
-      38,
+      54,
+      46,
     );
     btn.setDepth(DEPTH.hud + 12);
     return btn;

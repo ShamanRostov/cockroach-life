@@ -29,10 +29,10 @@ export class ShopPanel {
       scene,
       getNestHudButtonX('shop'),
       getNestHudButtonY('shop'),
-      '💰',
+      L().shop.hudButton,
       () => this.show(scene),
-      48,
-      38,
+      54,
+      46,
     );
     btn.setDepth(DEPTH.hud + 12);
     return btn;

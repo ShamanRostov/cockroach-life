@@ -30,10 +30,10 @@ export class SeasonPassPanel {
       scene,
       getNestHudButtonX('seasonPass'),
       getNestHudButtonY('seasonPass'),
-      `🎫${tier}`,
+      fmt(L().seasonPass.hudButton, { tier }),
       () => this.show(scene),
-      48,
-      38,
+      54,
+      46,
     );
     btn.setDepth(DEPTH.hud + 12);
     return btn;
