@@ -445,8 +445,11 @@ export class NestScene extends Phaser.Scene {
           }
           this.selectedRoom = type;
           this.editMode = 'build';
-          showToast(this, fmt(t.nest.selected, { room: i18n.roomName(type) }));
-          showToast(this, i18n.roomDesc(type));
+          // Single toast: action + room tip (avoid stacking two messages).
+          showToast(
+            this,
+            `${fmt(t.nest.selected, { room: i18n.roomName(type) })}\n${i18n.roomDesc(type)}`,
+          );
           this.updateInfo();
         },
         btnW,
@@ -733,9 +736,9 @@ export class NestScene extends Phaser.Scene {
     this.drawHoverHighlight();
   }
 
-  private handleGridClick(screenX: number, screenY: number): void {
+  private handleGridClick(worldX: number, worldY: number): void {
     const t = L();
-    const { gridX, gridY } = screenToGrid(screenX, screenY, this.originX, this.originY);
+    const { gridX, gridY } = screenToGrid(worldX, worldY, this.originX, this.originY);
     const building = this.state.building;
 
     if (this.editMode === 'none') {
@@ -761,7 +764,7 @@ export class NestScene extends Phaser.Scene {
         const instant = this.state.consumeInstantBuild();
         if (instant) {
           this.refreshWorld();
-          spawnBuildSparkles(this, x, y);
+          spawnBuildSparkles(this, x, y, this.worldRoot);
           showToast(this, fmt(t.nest.built, { room: i18n.roomName(this.selectedRoom) }));
         } else {
           playBuildAnimation({
@@ -770,6 +773,7 @@ export class NestScene extends Phaser.Scene {
             y,
             type: this.selectedRoom,
             level: 1,
+            parent: this.worldRoot,
             onComplete: () => this.refreshWorld(),
           });
           showToast(this, fmt(t.nest.built, { room: i18n.roomName(this.selectedRoom) }));
@@ -856,7 +860,7 @@ export class NestScene extends Phaser.Scene {
           child instanceof Phaser.GameObjects.Image &&
           Phaser.Math.Distance.Between(child.x, child.y, x, y) < 12
         ) {
-          playUpgradeAnimation(this, child, room.level);
+          playUpgradeAnimation(this, child, room.level, undefined, this.worldRoot);
           break;
         }
       }
@@ -904,7 +908,7 @@ export class NestScene extends Phaser.Scene {
 
       const scale = buildingDisplayScale(room.level);
       const sprite = this.add.image(x, y, key);
-      sprite.setOrigin(0.5, 0.55);
+      sprite.setOrigin(0.5, 0.5);
       sprite.setScale(scale);
 
       this.buildingsLayer.add(sprite);

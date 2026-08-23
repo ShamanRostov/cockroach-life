@@ -27,11 +27,11 @@ export function buildingTextureKey(type: RoomType, level = 1): string {
 export const COCKROACH_FRAMES = 8;
 
 /**
- * Scale 256×256 building sprites to fit one top-down grid cell.
- * Uses ~88% of cell size so neighbors don't visually overlap.
+ * Scale 256×256 building sprites to fill one top-down grid cell.
+ * Slight overfill (~5%) compensates for transparent padding in source art.
  */
 export function buildingDisplayScale(_level = 1): number {
-  return (GRID_TILE.size * 0.88) / BUILDING_TEXTURE_SIZE;
+  return (GRID_TILE.size * 1.05) / BUILDING_TEXTURE_SIZE;
 }
 
 export const TEXTURE_KEYS = {

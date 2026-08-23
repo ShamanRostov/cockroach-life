@@ -12,16 +12,25 @@ interface BuildAnimOptions {
   type: RoomType;
   level: number;
   onComplete: () => void;
+  /** Nest world container — keeps FX aligned under zoom/pan. */
+  parent?: Phaser.GameObjects.Container;
+}
+
+function attach(
+  parent: Phaser.GameObjects.Container | undefined,
+  obj: Phaser.GameObjects.GameObject,
+): void {
+  parent?.add(obj);
 }
 
 /** Construction: glow burst → HD sprite materializes with bounce → spark particles. */
 export function playBuildAnimation(opts: BuildAnimOptions): void {
-  const { scene, x, y, type, level, onComplete } = opts;
+  const { scene, x, y, type, level, onComplete, parent } = opts;
   const key = buildingTextureKey(type, level);
   const targetScale = buildingDisplayScale(level);
 
-  addGlowBurst(scene, x, y, COLORS.accent, 24);
-  spawnBuildSparkles(scene, x, y);
+  addGlowBurst(scene, x, y, COLORS.accent, 24, parent);
+  spawnBuildSparkles(scene, x, y, parent);
 
   const dust = scene.add.particles(x, y, 'spark', {
     speed: { min: 20, max: 60 },
@@ -30,14 +39,16 @@ export function playBuildAnimation(opts: BuildAnimOptions): void {
     quantity: 16,
     tint: 0xc9b896,
   });
+  attach(parent, dust);
   scene.time.delayedCall(600, () => dust.destroy());
 
   const sprite = scene.add
     .image(x, y, key)
     .setDepth(25)
-    .setOrigin(0.5, 0.55)
+    .setOrigin(0.5, 0.5)
     .setScale(0)
     .setAlpha(0);
+  attach(parent, sprite);
 
   scene.tweens.add({
     targets: sprite,
@@ -54,6 +65,7 @@ export function playBuildAnimation(opts: BuildAnimOptions): void {
         quantity: 20,
         tint: [COLORS.accent, 0xffeb3b, 0xffffff],
       });
+      attach(parent, spark);
       scene.time.delayedCall(800, () => spark.destroy());
       sprite.destroy();
       onComplete();
@@ -66,10 +78,12 @@ export function playUpgradeAnimation(
   sprite: Phaser.GameObjects.Image,
   level: number,
   onComplete?: () => void,
+  parent?: Phaser.GameObjects.Container,
 ): void {
   const targetScale = buildingDisplayScale(level);
+  const layer = parent ?? (sprite.parentContainer as Phaser.GameObjects.Container | null) ?? undefined;
 
-  addGlowBurst(scene, sprite.x, sprite.y, COLORS.accent, sprite.depth + 1);
+  addGlowBurst(scene, sprite.x, sprite.y, COLORS.accent, sprite.depth + 1, layer);
 
   scene.tweens.add({
     targets: sprite,
@@ -91,5 +105,6 @@ export function playUpgradeAnimation(
     quantity: 14,
     tint: COLORS.accent,
   });
+  attach(layer, spark);
   scene.time.delayedCall(600, () => spark.destroy());
 }

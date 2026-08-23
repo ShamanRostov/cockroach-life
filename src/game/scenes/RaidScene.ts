@@ -337,7 +337,7 @@ export class RaidScene extends Phaser.Scene {
       const img = this.add
         .image(x, y, buildingTextureKey(room.type, room.level))
         .setDepth(10)
-        .setOrigin(0.5, 0.55)
+        .setOrigin(0.5, 0.5)
         .setScale(scale);
       this.phaseObjects.push(img);
 

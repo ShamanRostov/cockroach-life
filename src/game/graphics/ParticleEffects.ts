@@ -7,7 +7,12 @@ function autoDestroy(scene: Phaser.Scene, emitter: Phaser.GameObjects.Particles.
 }
 
 /** Golden construction sparkles when a building is placed. */
-export function spawnBuildSparkles(scene: Phaser.Scene, x: number, y: number): void {
+export function spawnBuildSparkles(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  parent?: Phaser.GameObjects.Container,
+): void {
   const emitter = scene.add
     .particles(x, y - 16, 'spark', {
       speed: { min: 50, max: 160 },
@@ -19,6 +24,7 @@ export function spawnBuildSparkles(scene: Phaser.Scene, x: number, y: number): v
       blendMode: Phaser.BlendModes.ADD,
     })
     .setDepth(DEPTH.particles);
+  parent?.add(emitter);
   autoDestroy(scene, emitter, 850);
 }
 

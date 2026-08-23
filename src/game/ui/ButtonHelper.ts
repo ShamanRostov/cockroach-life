@@ -169,31 +169,64 @@ export function createModalPanel(
     .setDepth(depth);
 }
 
-export function showToast(scene: Phaser.Scene, message: string, duration = 2000): void {
-  const toastW = Math.min(520, message.length * 10 + 80);
-  const toastBg = scene.add
-    .rectangle(scene.scale.width / 2, scene.scale.height - 60, toastW, 48, PANEL_FILL, 0.95)
-    .setStrokeStyle(2, PANEL_STROKE, 0.6)
-    .setDepth(DEPTH.modal + 10);
+const TOAST_REGISTRY_KEY = '__nestToast';
+
+type ActiveToast = {
+  bg: Phaser.GameObjects.Rectangle;
+  text: Phaser.GameObjects.Text;
+  tween?: Phaser.Tweens.Tween;
+};
+
+/** One toast at a time — replaces any previous toast to avoid overlap. */
+export function showToast(scene: Phaser.Scene, message: string, duration = 2200): void {
+  const prev = scene.registry.get(TOAST_REGISTRY_KEY) as ActiveToast | undefined;
+  if (prev) {
+    prev.tween?.stop();
+    prev.bg.destroy();
+    prev.text.destroy();
+    scene.registry.remove(TOAST_REGISTRY_KEY);
+  }
+
+  const maxW = Math.min(640, scene.scale.width - 48);
+  const cx = scene.scale.width / 2;
+  const cy = scene.scale.height - 72;
 
   const toast = scene.add
-    .text(scene.scale.width / 2, scene.scale.height - 60, message, {
+    .text(cx, cy, message, {
       fontFamily: 'Segoe UI, Arial, sans-serif',
-      fontSize: '18px',
+      fontSize: '17px',
       color: '#fff8e1',
+      align: 'center',
+      wordWrap: { width: maxW - 36 },
     })
     .setOrigin(0.5)
     .setDepth(DEPTH.modal + 11);
 
-  scene.tweens.add({
+  const padX = 28;
+  const padY = 14;
+  const toastW = Math.min(maxW, Math.max(180, toast.width + padX * 2));
+  const toastH = Math.max(44, toast.height + padY * 2);
+
+  const toastBg = scene.add
+    .rectangle(cx, cy, toastW, toastH, PANEL_FILL, 0.95)
+    .setStrokeStyle(2, PANEL_STROKE, 0.6)
+    .setDepth(DEPTH.modal + 10);
+
+  const entry: ActiveToast = { bg: toastBg, text: toast };
+  scene.registry.set(TOAST_REGISTRY_KEY, entry);
+
+  entry.tween = scene.tweens.add({
     targets: [toast, toastBg],
     alpha: 0,
-    y: '-=30',
+    y: '-=28',
     duration,
-    delay: duration * 0.5,
+    delay: Math.max(700, duration * 0.45),
     onComplete: () => {
       toast.destroy();
       toastBg.destroy();
+      if (scene.registry.get(TOAST_REGISTRY_KEY) === entry) {
+        scene.registry.remove(TOAST_REGISTRY_KEY);
+      }
     },
   });
 }
@@ -217,8 +250,10 @@ export function addGlowBurst(
   y: number,
   color = COLORS.accent,
   depth: number = DEPTH.particles,
+  parent?: Phaser.GameObjects.Container,
 ): Phaser.GameObjects.Image {
   const glow = scene.add.image(x, y, 'spark').setDepth(depth).setTint(color).setAlpha(0.85);
+  parent?.add(glow);
   scene.tweens.add({
     targets: glow,
     scale: 2.4,
