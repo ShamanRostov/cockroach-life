@@ -1,8 +1,8 @@
 import { PASSIVE_INCOME, NEST_FOOD_DRAIN_RATE, STARVATION_DAMAGE_RATE, BASE_FOOD_CAP, BASE_MONEY_CAP } from './GameBalance';
 
 export class EconomySystem {
-  food = 50;
-  money = 100;
+  food = 90;
+  money = 140;
   health = 100;
   maxHealth = 100;
   maxFoodCap = BASE_FOOD_CAP;
@@ -57,10 +57,10 @@ export class EconomySystem {
     this.health = Math.max(0, this.health - amount);
   }
 
-  tickNest(dt: number): void {
-    this.food = Math.max(0, this.food - this.nestFoodDrainRate * dt);
+  tickNest(dt: number, drainMult = 1): void {
+    this.food = Math.max(0, this.food - this.nestFoodDrainRate * drainMult * dt);
     if (this.food <= 0) {
-      this.damage(STARVATION_DAMAGE_RATE * dt);
+      this.damage(STARVATION_DAMAGE_RATE * drainMult * dt);
     }
   }
 

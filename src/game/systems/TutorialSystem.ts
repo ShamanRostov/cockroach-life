@@ -1,26 +1,59 @@
 import type { PlacedRoom } from '../types';
+import { TUTORIAL_COMPLETE_REWARD } from './GameBalance';
 
-export type TutorialStepId = 'welcome' | 'buildKitchen' | 'foodArcade' | 'worldMap' | 'complete';
+/**
+ * Soft onboarding across ~10 minutes of play.
+ * Steps advance by natural actions; tips are short and always skippable.
+ * No fail-states are forced — counter-raids stay off while active.
+ */
+export type TutorialStepId =
+  | 'welcome'
+  | 'buildKitchen'
+  | 'passiveTip'
+  | 'buildBedroom'
+  | 'foodArcade'
+  | 'setTrap'
+  | 'trySlipper'
+  | 'upgradeTip'
+  | 'worldMap'
+  | 'complete';
 
 const STEP_ORDER: TutorialStepId[] = [
   'welcome',
   'buildKitchen',
+  'passiveTip',
+  'buildBedroom',
   'foodArcade',
+  'setTrap',
+  'trySlipper',
+  'upgradeTip',
   'worldMap',
   'complete',
 ];
 
+/** Steps that only need "Got it" — no gameplay gate. */
+export const TUTORIAL_DISMISSABLE_STEPS: TutorialStepId[] = [
+  'welcome',
+  'passiveTip',
+  'upgradeTip',
+];
+
 export const TUTORIAL_STEP_COUNT = STEP_ORDER.length - 1;
+
+const LEGACY_STEP_MAP: Record<string, TutorialStepId> = {
+  welcome: 'welcome',
+  buildKitchen: 'buildKitchen',
+  foodArcade: 'foodArcade',
+  worldMap: 'worldMap',
+  complete: 'complete',
+};
 
 export class TutorialSystem {
   tutorialComplete = true;
   currentStep: TutorialStepId = 'welcome';
 
   /** Old saves without the field: skip tutorial if the player already built rooms. */
-  static inferCompleteFromSave(
-    rooms: PlacedRoom[],
-    saved?: boolean,
-  ): boolean {
+  static inferCompleteFromSave(rooms: PlacedRoom[], saved?: boolean): boolean {
     if (saved === true) return true;
     if (saved === false) return false;
     return rooms.length > 0;
@@ -29,12 +62,12 @@ export class TutorialSystem {
   load(
     savedComplete: boolean | undefined,
     rooms: PlacedRoom[],
-    savedStep?: TutorialStepId,
+    savedStep?: string,
   ): void {
     this.tutorialComplete = TutorialSystem.inferCompleteFromSave(rooms, savedComplete);
     if (!this.tutorialComplete) {
-      this.currentStep =
-        savedStep && STEP_ORDER.includes(savedStep) ? savedStep : 'welcome';
+      const mapped = savedStep ? LEGACY_STEP_MAP[savedStep] ?? (STEP_ORDER.includes(savedStep as TutorialStepId) ? (savedStep as TutorialStepId) : null) : null;
+      this.currentStep = mapped && STEP_ORDER.includes(mapped) ? mapped : 'welcome';
     }
   }
 
@@ -45,6 +78,10 @@ export class TutorialSystem {
   getStepIndex(): number {
     const idx = STEP_ORDER.indexOf(this.currentStep);
     return idx < 0 ? 0 : Math.min(idx, TUTORIAL_STEP_COUNT);
+  }
+
+  isDismissable(): boolean {
+    return TUTORIAL_DISMISSABLE_STEPS.includes(this.currentStep);
   }
 
   advance(): void {
@@ -63,8 +100,35 @@ export class TutorialSystem {
     if (this.currentStep === 'buildKitchen') this.advance();
   }
 
+  onBedroomBuilt(): void {
+    if (this.currentStep === 'buildBedroom') this.advance();
+  }
+
   onFoodArcadeStarted(): void {
     if (this.currentStep === 'foodArcade') this.advance();
+  }
+
+  onFoodArcadeCompleted(): void {
+    if (this.currentStep === 'foodArcade') this.advance();
+  }
+
+  onTrapToggled(): void {
+    if (this.currentStep === 'setTrap') this.advance();
+  }
+
+  onSlipperStarted(): void {
+    if (this.currentStep === 'trySlipper') this.advance();
+  }
+
+  onBuildingUpgraded(): void {
+    if (this.currentStep === 'upgradeTip' || this.currentStep === 'trySlipper') {
+      if (this.currentStep === 'trySlipper') {
+        // Allow skipping slipper by upgrading instead
+        this.currentStep = 'worldMap';
+        return;
+      }
+      this.advance();
+    }
   }
 
   onWorldMapVisited(): boolean {
@@ -75,6 +139,7 @@ export class TutorialSystem {
 
   completeWithReward(): { food: number; money: number } {
     this.tutorialComplete = true;
-    return { food: 50, money: 30 };
+    this.currentStep = 'complete';
+    return { ...TUTORIAL_COMPLETE_REWARD };
   }
 }

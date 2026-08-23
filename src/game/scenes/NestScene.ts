@@ -29,10 +29,12 @@ import {
   SHELTER_HEAL_PER_LEVEL,
   NICHE_HEAL_PER_LEVEL,
   COUNTER_RAID_INTERVAL_SEC,
+  NEST_FOOD_DRAIN_TUTORIAL_MULT,
 } from '../systems/GameBalance';
 import { getHospitalNestHealPerSec } from '../systems/BuildingBonuses';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
-import { TUTORIAL_STEP_COUNT } from '../systems/TutorialSystem';
+import { TUTORIAL_STEP_COUNT, TUTORIAL_DISMISSABLE_STEPS } from '../systems/TutorialSystem';
+import type { TutorialStepId } from '../systems/TutorialSystem';
 import type { TutorialTarget } from '../ui/TutorialOverlay';
 import { SS_REGISTRY } from '../../dev/screenshotRegistry';
 
@@ -63,6 +65,8 @@ export class NestScene extends Phaser.Scene {
   private dustEmitter!: Phaser.GameObjects.Particles.ParticleEmitter;
   private tutorialOverlay = new TutorialOverlay();
   private foodArcadeBtn = { x: 320, y: GAME_HEIGHT - 70, width: 100, height: 40 };
+  private slipperArcadeBtn = { x: 200, y: GAME_HEIGHT - 70, width: 100, height: 40 };
+  private trapBtn = { x: 140, y: 180, width: 200, height: 40 };
   private worldMapBtn = { x: 156, y: 218, width: 200, height: 36 };
 
   constructor() {
@@ -226,7 +230,10 @@ export class NestScene extends Phaser.Scene {
         this.breedingPanel.refreshHudButton(this);
         this.state.persist();
       }
-      this.state.economy.tickNest(this.lastTick);
+      this.state.economy.tickNest(
+        this.lastTick,
+        this.state.tutorial.isActive() ? NEST_FOOD_DRAIN_TUTORIAL_MULT : 1,
+      );
       const workerBonus = 1 + this.state.breeding.getRoleBonus('worker');
       const foodMult = this.state.liveOps.getEventMultiplier('passive_food') * workerBonus;
       this.state.economy.applyPassiveIncome(rooms, this.lastTick, {
@@ -427,8 +434,10 @@ export class NestScene extends Phaser.Scene {
         active ? `${tr.label} ✓` : tr.label,
         () => {
           this.state.raid.toggleTrap(tr.key);
+          this.state.tutorial.onTrapToggled();
           this.state.persist();
           showToast(this, t.nest.trapsSaved);
+          this.refreshTutorial();
           this.scene.restart();
         },
         trapBtnW,
@@ -437,6 +446,12 @@ export class NestScene extends Phaser.Scene {
         uiDepth,
       );
     });
+    this.trapBtn = {
+      x: NEST_LAYOUT.sideMargin + panelW / 2,
+      y: panelTop + 44,
+      width: trapBtnW,
+      height: 38,
+    };
 
     createAdaptiveButton(
       this,
@@ -496,7 +511,9 @@ export class NestScene extends Phaser.Scene {
         () => {
           if (m.scene === SCENES.FOOD) {
             this.state.tutorial.onFoodArcadeStarted();
-            this.state.persist();
+          }
+          if (m.scene === SCENES.SLIPPER) {
+            this.state.tutorial.onSlipperStarted();
           }
           this.state.persist();
           this.scene.start(m.scene);
@@ -508,8 +525,15 @@ export class NestScene extends Phaser.Scene {
       );
     });
     this.foodArcadeBtn = {
-      x: gridStartX + btnW + colGap,
+      x: gridStartX,
       y: panelY + 50 + btnH + rowGap,
+      width: btnW,
+      height: btnH,
+    };
+    // First mission button (slipper) for tutorial highlight
+    this.slipperArcadeBtn = {
+      x: gridStartX,
+      y: panelY + 50,
       width: btnW,
       height: btnH,
     };
@@ -641,6 +665,9 @@ export class NestScene extends Phaser.Scene {
         if (this.selectedRoom === 'kitchen') {
           this.state.tutorial.onKitchenBuilt();
         }
+        if (this.selectedRoom === 'bedroom') {
+          this.state.tutorial.onBedroomBuilt();
+        }
         this.refreshTutorial();
         void leaderboardService.submitScore(
           LEADERBOARD_IDS.COLONY_SIZE,
@@ -671,6 +698,8 @@ export class NestScene extends Phaser.Scene {
       }
       this.state.economy.spend(upgradeCost);
       building.upgrade(gridX, gridY);
+      this.state.tutorial.onBuildingUpgraded();
+      this.refreshTutorial();
       showToast(
         this,
         fmt(t.nest.upgraded, { room: i18n.roomName(room.type), level: room.level }),
@@ -785,34 +814,53 @@ export class NestScene extends Phaser.Scene {
     const t = L().tutorial;
     const step = this.state.tutorial.currentStep;
     const stepIndex = this.state.tutorial.getStepIndex();
+    const dismissable = TUTORIAL_DISMISSABLE_STEPS.includes(step);
 
     const onSkip = (): void => {
       this.state.skipTutorial();
       this.tutorialOverlay.destroy();
+      showToast(this, t.skipped);
     };
 
     const onNext = (): void => {
-      if (step === 'welcome') {
-        this.state.tutorial.advance();
-        this.state.persist();
-        this.refreshTutorial();
-      }
+      if (!dismissable) return;
+      this.state.tutorial.advance();
+      this.state.persist();
+      this.refreshTutorial();
     };
 
     let message = t.welcome;
     let target: TutorialTarget | undefined;
 
-    switch (step) {
+    switch (step as TutorialStepId) {
       case 'welcome':
         message = t.welcome;
         break;
       case 'buildKitchen':
         message = t.buildKitchen;
-        target = { x: this.originX + 200, y: this.originY + 90, width: 500, height: 240 };
+        target = { x: this.originX + 200, y: this.originY + 120, width: 420, height: 280 };
+        break;
+      case 'passiveTip':
+        message = t.passiveTip;
+        break;
+      case 'buildBedroom':
+        message = t.buildBedroom;
+        target = { x: this.originX + 200, y: this.originY + 120, width: 420, height: 280 };
         break;
       case 'foodArcade':
         message = t.foodArcade;
         target = this.foodArcadeBtn;
+        break;
+      case 'setTrap':
+        message = t.setTrap;
+        target = this.trapBtn;
+        break;
+      case 'trySlipper':
+        message = t.trySlipper;
+        target = this.slipperArcadeBtn;
+        break;
+      case 'upgradeTip':
+        message = t.upgradeTip;
         break;
       case 'worldMap':
         message = t.worldMap;
@@ -825,10 +873,11 @@ export class NestScene extends Phaser.Scene {
 
     this.tutorialOverlay.show(this, message, stepIndex, TUTORIAL_STEP_COUNT, {
       target,
-      nextLabel: step === 'welcome' ? t.next : t.next,
+      nextLabel: dismissable ? t.gotIt : t.hint,
       skipLabel: t.skip,
-      onNext: step === 'welcome' ? onNext : () => undefined,
+      onNext: dismissable ? onNext : () => undefined,
       onSkip,
+      hideNext: !dismissable,
     });
   }
 }

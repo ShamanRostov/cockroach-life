@@ -14,15 +14,17 @@ export function localDateString(date = new Date()): string {
 
 // ── Starting economy ──────────────────────────────────────────────────────────
 
-export const STARTING_FOOD = 50;
-export const STARTING_MONEY = 100;
+export const STARTING_FOOD = 90;
+export const STARTING_MONEY = 140;
 export const STARTING_HEALTH = 100;
 export const STARTING_MAX_HEALTH = 100;
 
 // ── Nest economy ──────────────────────────────────────────────────────────────
 
-export const NEST_FOOD_DRAIN_RATE = 0.045;
-export const STARVATION_DAMAGE_RATE = 0.018;
+/** Full drain outside tutorial — soft drain while onboarding. */
+export const NEST_FOOD_DRAIN_RATE = 0.032;
+export const NEST_FOOD_DRAIN_TUTORIAL_MULT = 0.25;
+export const STARVATION_DAMAGE_RATE = 0.012;
 export const BEDROOM_HEAL_PER_LEVEL = 0.5;
 export const SHELTER_HEAL_PER_LEVEL = 0.65;
 export const NICHE_HEAL_PER_LEVEL = 0.6;
@@ -57,15 +59,15 @@ export const TRAP_DEFENSE_POWER: Record<'slipper' | 'spray' | 'glue', number> = 
 };
 
 export const PASSIVE_INCOME: Record<RoomType, { food: number; money: number }> = {
-  kitchen: { food: 0.35, money: 0 },
-  storage: { food: 0.18, money: 0.12 },
-  bedroom: { food: 0, money: 0.06 },
+  kitchen: { food: 0.48, money: 0 },
+  storage: { food: 0.22, money: 0.14 },
+  bedroom: { food: 0, money: 0.1 },
   nursery: { food: 0, money: 0.22 },
   hospital: { food: 0, money: 0 },
-  planter: { food: 0.38, money: 0 },
-  shelter: { food: 0, money: 0.05 },
-  locker: { food: 0, money: 0.14 },
-  niche: { food: 0.22, money: 0.04 },
+  planter: { food: 0.42, money: 0 },
+  shelter: { food: 0, money: 0.08 },
+  locker: { food: 0, money: 0.16 },
+  niche: { food: 0.24, money: 0.06 },
 };
 
 // ── Building costs (mirrors ROOM_DEFINITIONS) ─────────────────────────────────
@@ -78,15 +80,15 @@ export interface RoomCostDef {
 }
 
 export const ROOM_COSTS: Record<RoomType, RoomCostDef> = {
-  kitchen: { moneyCost: 30, foodCost: 10, maxLevel: 5, upgradeMoneyCost: 20 },
-  bedroom: { moneyCost: 25, foodCost: 5, maxLevel: 5, upgradeMoneyCost: 15 },
-  storage: { moneyCost: 40, foodCost: 0, maxLevel: 5, upgradeMoneyCost: 25 },
-  nursery: { moneyCost: 60, foodCost: 20, maxLevel: 3, upgradeMoneyCost: 40 },
-  hospital: { moneyCost: 50, foodCost: 10, maxLevel: 3, upgradeMoneyCost: 30 },
-  planter: { moneyCost: 28, foodCost: 8, maxLevel: 5, upgradeMoneyCost: 18 },
-  shelter: { moneyCost: 22, foodCost: 5, maxLevel: 5, upgradeMoneyCost: 16 },
-  locker: { moneyCost: 38, foodCost: 0, maxLevel: 5, upgradeMoneyCost: 24 },
-  niche: { moneyCost: 24, foodCost: 5, maxLevel: 5, upgradeMoneyCost: 15 },
+  kitchen: { moneyCost: 20, foodCost: 5, maxLevel: 5, upgradeMoneyCost: 15 },
+  bedroom: { moneyCost: 18, foodCost: 3, maxLevel: 5, upgradeMoneyCost: 12 },
+  storage: { moneyCost: 35, foodCost: 0, maxLevel: 5, upgradeMoneyCost: 22 },
+  nursery: { moneyCost: 50, foodCost: 15, maxLevel: 3, upgradeMoneyCost: 35 },
+  hospital: { moneyCost: 40, foodCost: 8, maxLevel: 3, upgradeMoneyCost: 25 },
+  planter: { moneyCost: 24, foodCost: 6, maxLevel: 5, upgradeMoneyCost: 16 },
+  shelter: { moneyCost: 18, foodCost: 4, maxLevel: 5, upgradeMoneyCost: 14 },
+  locker: { moneyCost: 32, foodCost: 0, maxLevel: 5, upgradeMoneyCost: 20 },
+  niche: { moneyCost: 20, foodCost: 4, maxLevel: 5, upgradeMoneyCost: 12 },
 };
 
 export const APARTMENT_STARTING_UNLOCKS: RoomType[] = ['kitchen', 'bedroom'];
@@ -173,7 +175,7 @@ export const ROLE_BONUS_PER_LEVEL: Record<CockroachRole, number> = {
 
 // ── Tutorial ──────────────────────────────────────────────────────────────────
 
-export const TUTORIAL_COMPLETE_REWARD = { food: 50, money: 30 };
+export const TUTORIAL_COMPLETE_REWARD = { food: 100, money: 80 };
 
 // ── IAP product grants ────────────────────────────────────────────────────────
 
@@ -213,12 +215,12 @@ export const LIVE_OPS_MULTIPLIERS: Record<LiveOpsMultiplierType, number> = {
 // ── Arcade rewards & tuning ───────────────────────────────────────────────────
 
 export const ARCADE_FOOD_HUNT = {
-  targetCrumbs: 7,
-  winFood: 45,
-  winMoney: 12,
-  failDamage: 12,
-  hungerDrain: 0.011,
-  hungerPerCrumb: 14,
+  targetCrumbs: 5,
+  winFood: 55,
+  winMoney: 18,
+  failDamage: 8,
+  hungerDrain: 0.008,
+  hungerPerCrumb: 18,
   /** × COCKROACH_DISPLAY_SCALE */
   roachScale: 4.5,
   crumbScaleMin: 0.7,

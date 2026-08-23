@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { SCENES, COLORS, GAME_WIDTH, GAME_HEIGHT } from '../config';
+import { SCENES, COLORS, GAME_WIDTH, GAME_HEIGHT, GRID_TILE, isMobileDevice } from '../config';
 import { GameState } from '../GameState';
 import { updateBotPlayer } from '../systems/WorldMapData';
 import { buildingTextureKey, buildingDisplayScale } from '../assets/AssetKeys';
@@ -15,6 +15,7 @@ import { platformManager } from '../../platforms/PlatformManager';
 import { spawnRaidSmoke } from '../graphics/ParticleEffects';
 import { screenShake } from '../graphics/VisualEffects';
 import { DEPTH } from '../graphics/SceneDepth';
+import { createNestTopDownBackground } from '../graphics/NestTopDownFloor';
 import { SS_REGISTRY } from '../../dev/screenshotRegistry';
 
 type Phase = 'intro' | 'infiltrate' | 'loot' | 'escape' | 'result';
@@ -299,20 +300,19 @@ export class RaidScene extends Phaser.Scene {
 
   // ─── Phase 2: Loot ───────────────────────────────────────────
   private setupLoot(): void {
-    this.physics.world.setBounds(200, 100, GAME_WIDTH - 400, GAME_HEIGHT - 180);
+    this.physics.world.setBounds(280, 120, GAME_WIDTH - 560, GAME_HEIGHT - 220);
     this.collected = 0;
 
     const originX = GAME_WIDTH / 2;
     const originY = 360;
 
-    const bgImg = this.add
-      .image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'nest-bg')
-      .setDisplaySize(GAME_WIDTH, GAME_HEIGHT)
-      .setDepth(0)
-      .setAlpha(0.85);
-    this.phaseObjects.push(bgImg);
+    const floor = createNestTopDownBackground(this, 'apartment');
+    floor.setAlpha(0.95);
+    this.phaseObjects.push(floor);
 
-    const overlay = this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.35);
+    const overlay = this.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x1a1208, 0.25)
+      .setDepth(1);
     this.phaseObjects.push(overlay);
 
     const label = this.add
@@ -327,22 +327,23 @@ export class RaidScene extends Phaser.Scene {
       .setDepth(20);
     this.phaseObjects.push(label);
 
-    this.target.rooms.forEach((room, i) => {
+    const rooms = this.target.rooms.slice(0, 6);
+    rooms.forEach((room, i) => {
       const col = i % 3;
       const row = Math.floor(i / 3);
-      const x = originX + (col - 1) * 140;
-      const y = originY + row * 90 - 40;
+      const x = originX + (col - 1) * (GRID_TILE.size + 48);
+      const y = originY + row * (GRID_TILE.size + 28) - 36;
       const scale = buildingDisplayScale(room.level);
       const img = this.add
         .image(x, y, buildingTextureKey(room.type, room.level))
         .setDepth(10)
-        .setOrigin(0.5, 0.92)
+        .setOrigin(0.5, 0.55)
         .setScale(scale);
       this.phaseObjects.push(img);
 
       this.tweens.add({
         targets: img,
-        y: y - 4,
+        y: y - 3,
         duration: 900 + i * 100,
         yoyo: true,
         repeat: -1,
@@ -350,7 +351,13 @@ export class RaidScene extends Phaser.Scene {
       });
     });
 
-    this.player = createCockroachPhysics(this, originX, originY + 100, 1.3, this.state.skins.getTint()).setDepth(15);
+    this.player = createCockroachPhysics(
+      this,
+      originX,
+      originY + 110,
+      1.5,
+      this.state.skins.getTint(),
+    ).setDepth(15);
     this.player.setCollideWorldBounds(true);
 
     this.foods = this.physics.add.group();
@@ -376,6 +383,12 @@ export class RaidScene extends Phaser.Scene {
         this.startPhase('escape');
       }
     });
+
+    if (isMobileDevice()) {
+      this.touchControls = new TouchControls({ scene: this, layout: 'joystick' });
+    }
+
+    this.phaseTimer = 25000;
   }
 
   private spawnLootCrumb(originX: number, originY: number): void {

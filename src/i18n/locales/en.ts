@@ -117,7 +117,7 @@ export const en: LocalePack = {
       controls: 'WASD — collect crumbs before you starve!',
       hunger: 'Hunger: {value}%',
       collected: 'Collected: {current} / {target}',
-      win: 'Kitchen raided!\n+45 food, +12 money\n{score}',
+      win: 'Kitchen raided!\n+55 food, +18 money\n{score}',
       fail: 'Too hungry!',
     },
     hospital: {
@@ -230,14 +230,31 @@ export const en: LocalePack = {
     locked: 'Locked',
   },
   tutorial: {
-    welcome: 'Welcome to Cockroach Life!\nBuild your colony, raid neighbors, and survive the apartment.',
-    buildKitchen: 'Build your first Kitchen — select it on the right, then tap the grid.',
-    foodArcade: 'Play Food Hunt to earn crumbs — tap the 🍞 button below.',
-    worldMap: 'Open the World Map to scout rival nests and launch raids.',
-    complete: 'Tutorial complete! Here is your starter bonus.',
+    welcome:
+      'You are a cockroach in Apartment 47.\nBuild a junk nest — no rush, unlock things at your pace.',
+    buildKitchen:
+      'Pick Kitchen on the right, then tap a floor tile.\nThat starts your passive food income.',
+    passiveTip:
+      'Food and money tick while you are in the nest.\nWatch the HUD on the left — resources are already rising.',
+    buildBedroom:
+      'Build a Bedroom — it pays money and heals HP.\nSelect it on the right and tap an empty cell.',
+    foodArcade:
+      'Play Food (🍞) below — a short crumb-hunt arcade.\nDying is fine here; it is practice.',
+    setTrap:
+      'Toggle any trap on the left (slipper / spray / glue).\nTraps protect your nest from thieving neighbors.',
+    trySlipper:
+      'Try Slipper (👟) — dodge with arrow keys.\nOr just upgrade a building — that counts too.',
+    upgradeTip:
+      'Tap Upgrade, then click a building.\nHigher levels mean better income and a new sprite.',
+    worldMap:
+      'Open the World Map — rival nests and raids live there.\nTake a look; you can raid later.',
+    complete: 'You are set! Play at your own pace from here.',
     next: 'Next',
+    gotIt: 'Got it',
+    hint: 'Do this ↓',
     skip: 'Skip',
-    reward: '+50 food, +30 money',
+    skipped: 'Tutorial skipped — good luck in the apartment!',
+    reward: '+100 food, +80 money — starter bonus!',
   },
   raid: {
     intro: '⚔️ Raid on\n{name}!',

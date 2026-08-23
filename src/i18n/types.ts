@@ -205,11 +205,19 @@ export interface LocalePack {
   tutorial: {
     welcome: string;
     buildKitchen: string;
+    passiveTip: string;
+    buildBedroom: string;
     foodArcade: string;
+    setTrap: string;
+    trySlipper: string;
+    upgradeTip: string;
     worldMap: string;
     complete: string;
     next: string;
+    gotIt: string;
+    hint: string;
     skip: string;
+    skipped: string;
     reward: string;
   };
   raid: {

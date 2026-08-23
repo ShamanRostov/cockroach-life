@@ -128,8 +128,8 @@ export interface GameStateSnapshot {
 }
 
 export const DEFAULT_GAME_STATE: GameStateSnapshot = {
-  food: 50,
-  money: 100,
+  food: 90,
+  money: 140,
   health: 100,
   maxHealth: 100,
   rooms: [],

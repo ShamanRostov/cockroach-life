@@ -206,6 +206,7 @@ export class FoodHuntScene extends Phaser.Scene {
   private win(): void {
     this.alive = false;
     this.runCompleted = true;
+    this.state.tutorial.onFoodArcadeCompleted();
     const score = Math.floor(this.hunger + this.collected * 10);
     this.state.updateHighScore(SCENES.FOOD, score);
     AnalyticsService.getInstance().trackArcadeComplete(SCENES.FOOD, score, true);
@@ -237,6 +238,7 @@ export class FoodHuntScene extends Phaser.Scene {
   private lose(): void {
     this.alive = false;
     this.runCompleted = true;
+    this.state.tutorial.onFoodArcadeCompleted();
     const score = Math.floor(this.hunger + this.collected * 10);
     AnalyticsService.getInstance().trackArcadeComplete(SCENES.FOOD, score, false);
     SoundManager.getInstance().playSFX('arcade_lose');

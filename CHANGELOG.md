@@ -7,6 +7,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.5.0] — Unreleased
+
+### Added
+
+- Soft tutorial (~10 min of play): 9 guided steps, always skippable, no forced fails
+- Counter-raids, hospital/storage building bonuses (from 0.4.x)
+
+### Changed
+
+- Early-game balance: more starting resources, cheaper first rooms, higher passive income, softer hunger
+- Food Hunt easier (5 crumbs, better rewards, less fail damage)
+- Raid loot phase uses top-down nest floor + building sprites
+- Tutorial overlay: progress dots, softer dim, “Got it” vs action-gated tips
+
+---
+
 ## [Unreleased]
 
 ### Changed
