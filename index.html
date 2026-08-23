@@ -36,6 +36,24 @@
     <link rel="apple-touch-icon" href="/icon-512.png" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" sizes="512x512" />
     <!--
+      CrazyGames SDK v3 — loaded when:
+        - Build with: npm run build:crazygames
+        - URL: ?platform=crazygames
+    -->
+    <script>
+      (function () {
+        var params = new URLSearchParams(location.search);
+        var buildFlag = '%VITE_LOAD_CRAZYGAMES_SDK%' === 'true';
+        var queryFlag = params.get('platform') === 'crazygames';
+        if (buildFlag || queryFlag) {
+          var s = document.createElement('script');
+          s.src = 'https://sdk.crazygames.com/crazygames-sdk-v3.js';
+          s.async = false;
+          document.head.appendChild(s);
+        }
+      })();
+    </script>
+    <!--
       Yandex Games SDK (https://yandex.ru/games/sdk/v2)
       Loaded when ANY of:
         - Build with: npm run build:yandex  (sets VITE_LOAD_YANDEX_SDK=true)

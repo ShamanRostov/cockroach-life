@@ -23,6 +23,7 @@ import { i18n, L, fmt } from '../../i18n';
 import { AnalyticsService } from '../../platforms/AnalyticsService';
 import { SoundManager } from '../audio/SoundManager';
 import { leaderboardService, LEADERBOARD_IDS } from '../../platforms/LeaderboardService';
+import { platformManager } from '../../platforms/PlatformManager';
 import {
   DEATH_HOSPITAL_HEALTH,
   BEDROOM_HEAL_PER_LEVEL,
@@ -164,6 +165,7 @@ export class NestScene extends Phaser.Scene {
     this.refreshWorld();
     this.updateInfo();
     SoundManager.getInstance().playMusic('ambient_nest');
+    platformManager.gameplayStart();
     this.time.delayedCall(300, () => this.refreshTutorial());
     this.time.delayedCall(500, () => this.applyScreenshotPanels());
   }
@@ -210,6 +212,7 @@ export class NestScene extends Phaser.Scene {
     this.eventBanner.destroy();
     this.dustEmitter?.destroy();
     this.tutorialOverlay.destroy();
+    platformManager.gameplayStop();
     SoundManager.getInstance().stopMusic();
   }
 
@@ -276,15 +279,15 @@ export class NestScene extends Phaser.Scene {
 
     const t = L().nest;
     if (result.blocked) {
-      showToast(this, fmt(t.counterRaidBlocked, { defense: result.defense }));
+      this.showCounterRaidBanner(
+        fmt(t.counterRaidBlocked, { defense: result.defense }),
+        0x43a047,
+      );
       SoundManager.getInstance().playSFX('ui_click');
     } else {
-      showToast(
-        this,
-        fmt(t.counterRaidHit, {
-          food: result.foodLost,
-          money: result.moneyLost,
-        }),
+      this.showCounterRaidBanner(
+        fmt(t.counterRaidHit, { food: result.foodLost, money: result.moneyLost }),
+        0xe53935,
       );
       screenShake(this, 180, 0.01);
       SoundManager.getInstance().playSFX('arcade_hit');
@@ -292,6 +295,42 @@ export class NestScene extends Phaser.Scene {
 
     this.hud.refresh();
     this.state.persist();
+  }
+
+  /** Temporary top banner so counter-raids are obvious without reading a tiny toast. */
+  private showCounterRaidBanner(message: string, accent: number): void {
+    const y = 72;
+    const bg = this.add
+      .rectangle(GAME_WIDTH / 2, y, 560, 48, 0x1a1208, 0.92)
+      .setStrokeStyle(2, accent, 0.9)
+      .setDepth(DEPTH.hud + 40);
+    const text = this.add
+      .text(GAME_WIDTH / 2, y, message, {
+        fontFamily: 'Segoe UI, Arial, sans-serif',
+        fontSize: '18px',
+        color: '#fff8e1',
+        align: 'center',
+      })
+      .setOrigin(0.5)
+      .setDepth(DEPTH.hud + 41);
+
+    this.tweens.add({
+      targets: [bg, text],
+      alpha: { from: 0, to: 1 },
+      y: { from: y - 16, to: y },
+      duration: 280,
+      ease: 'Back.easeOut',
+    });
+    this.tweens.add({
+      targets: [bg, text],
+      alpha: 0,
+      delay: 2800,
+      duration: 400,
+      onComplete: () => {
+        bg.destroy();
+        text.destroy();
+      },
+    });
   }
 
   private maybeShowStorageCapHint(rooms: { type: string; level: number }[]): void {

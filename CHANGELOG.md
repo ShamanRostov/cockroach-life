@@ -7,6 +7,22 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [0.5.1] — Unreleased
+
+### Added
+
+- **CrazyGames SDK v3** platform adapter (`CrazyGamesPlatform`), `npm run build:crazygames`, docs
+- Counter-raid **banner** (visible defense / theft feedback)
+- `gameplayStart` / `gameplayStop` hooks from Nest for CrazyGames telemetry
+
+### Changed
+
+- Mid-game unlocks earlier (balcony 4 builds / 1000 rating; stairwell 8 / 1400)
+- Raid energy 4/day, up to 6 raids; softer counter-raid losses
+- UI test HUD coords match NestLayout row buttons
+
+---
+
 ## [0.5.0] — Unreleased
 
 ### Added

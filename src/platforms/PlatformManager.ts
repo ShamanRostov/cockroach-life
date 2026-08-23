@@ -3,6 +3,7 @@ import { YandexPlatform } from './YandexSDK';
 import { WebPlatform } from './WebPlatform';
 import { SteamPlatform } from './SteamPlatform';
 import { OperatorPlatform } from './OperatorPlatform';
+import { CrazyGamesPlatform } from './CrazyGamesPlatform';
 import { platformConfig } from './PlatformConfig';
 import { fmt, L } from '../i18n';
 import { GameState } from '../game/GameState';
@@ -12,12 +13,19 @@ function detectPlatform(): PlatformId {
 
   const params = new URLSearchParams(window.location.search);
   const forced = params.get('platform');
-  if (forced === 'steam' || forced === 'operator' || forced === 'web' || forced === 'yandex') {
+  if (
+    forced === 'steam' ||
+    forced === 'operator' ||
+    forced === 'web' ||
+    forced === 'yandex' ||
+    forced === 'crazygames'
+  ) {
     return forced;
   }
 
+  if (window.CrazyGames?.SDK) return 'crazygames';
   if (window.YaGames) return 'yandex';
-  if (params.get('platform') === 'steam' || (window as unknown as { electron?: unknown }).electron) {
+  if ((window as unknown as { electron?: unknown }).electron) {
     return 'steam';
   }
   if (params.get('portal') || params.get('operator')) return 'operator';
@@ -33,6 +41,8 @@ function createAdapter(platform: PlatformId): PlatformAdapter {
       return new SteamPlatform();
     case 'operator':
       return new OperatorPlatform();
+    case 'crazygames':
+      return new CrazyGamesPlatform();
     default:
       return new WebPlatform();
   }
@@ -55,6 +65,18 @@ class PlatformManagerImpl implements PlatformAdapter {
 
   gameReady(): void {
     this.adapter.gameReady();
+  }
+
+  gameplayStart(): void {
+    this.adapter.gameplayStart?.();
+  }
+
+  gameplayStop(): void {
+    this.adapter.gameplayStop?.();
+  }
+
+  happyTime(): void {
+    this.adapter.happyTime?.();
   }
 
   showInterstitialAd(): Promise<boolean> {
@@ -81,7 +103,6 @@ class PlatformManagerImpl implements PlatformAdapter {
     return this.adapter.shareGame(text);
   }
 
-  /** Share raid success with localized stats text. */
   async shareRaidSuccess(foodStolen: number, rating?: number): Promise<ShareResult> {
     const state = GameState.getInstance();
     const raidRating = rating ?? state.raid.raidRating;

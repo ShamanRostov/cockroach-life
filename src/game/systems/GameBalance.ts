@@ -49,8 +49,8 @@ export const COUNTER_RAID_MIN_BUILDINGS = 2;
 export const COUNTER_RAID_ATTACK_BASE = 28;
 export const COUNTER_RAID_ATTACK_PER_BUILDING = 4;
 export const COUNTER_RAID_ATTACK_VARIANCE = 12;
-export const COUNTER_RAID_FOOD_LOSS_BASE = 20;
-export const COUNTER_RAID_MONEY_LOSS_BASE = 14;
+export const COUNTER_RAID_FOOD_LOSS_BASE = 14;
+export const COUNTER_RAID_MONEY_LOSS_BASE = 10;
 export const FIGHTER_COUNTER_DEFENSE_BONUS = 18;
 export const TRAP_DEFENSE_POWER: Record<'slipper' | 'spray' | 'glue', number> = {
   slipper: 30,
@@ -104,16 +104,16 @@ export const APARTMENT_UNLOCK_THRESHOLDS: { count: number; room: RoomType }[] = 
 
 // ── Region unlock ─────────────────────────────────────────────────────────────
 
-export const BALCONY_UNLOCK_BUILDING_COUNT = 5;
-export const BALCONY_UNLOCK_RATING = 1200;
-export const STAIRWELL_UNLOCK_BUILDING_COUNT = 10;
-export const STAIRWELL_UNLOCK_RATING = 1500;
-export const STAIRWELL_BALCONY_BUILDING_COUNT = 3;
+export const BALCONY_UNLOCK_BUILDING_COUNT = 4;
+export const BALCONY_UNLOCK_RATING = 1000;
+export const STAIRWELL_UNLOCK_BUILDING_COUNT = 8;
+export const STAIRWELL_UNLOCK_RATING = 1400;
+export const STAIRWELL_BALCONY_BUILDING_COUNT = 2;
 
 // ── Raids ─────────────────────────────────────────────────────────────────────
 
-export const MAX_RAIDS_PER_DAY = 5;
-export const MAX_RAID_ENERGY = 3;
+export const MAX_RAIDS_PER_DAY = 6;
+export const MAX_RAID_ENERGY = 4;
 export const RAID_SHIELD_HOURS = 3;
 export const LOOT_FOOD_CAP = 0.15;
 export const LOOT_MONEY_CAP = 0.1;

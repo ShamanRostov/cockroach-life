@@ -523,8 +523,9 @@ export class RaidScene extends Phaser.Scene {
     if (result.success) {
       this.state.addFood(result.foodStolen);
       this.state.addMoney(result.moneyStolen);
+      platformManager.happyTime();
     } else {
-      this.state.economy.damage(15);
+      this.state.economy.damage(12);
     }
     this.state.trackDailyProgress('raid', 1);
     AnalyticsService.getInstance().trackRaidComplete(result.success, result.foodStolen);

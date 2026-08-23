@@ -30,7 +30,13 @@ function detectEnvironment(): Environment {
 
 function detectPlatformFromEnv(): PlatformId | null {
   const forced = import.meta.env.VITE_PLATFORM as string | undefined;
-  if (forced === 'yandex' || forced === 'web' || forced === 'steam' || forced === 'operator') {
+  if (
+    forced === 'yandex' ||
+    forced === 'web' ||
+    forced === 'steam' ||
+    forced === 'operator' ||
+    forced === 'crazygames'
+  ) {
     return forced;
   }
   return null;
@@ -51,6 +57,13 @@ function featureFlagsFor(platform: PlatformId, environment: Environment): Platfo
       return {
         enableAds: true,
         enableIAP: true,
+        enableAnalytics: environment !== 'dev',
+        enableCloudSave: true,
+      };
+    case 'crazygames':
+      return {
+        enableAds: true,
+        enableIAP: false,
         enableAnalytics: environment !== 'dev',
         enableCloudSave: true,
       };

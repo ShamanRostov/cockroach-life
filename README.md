@@ -85,6 +85,7 @@ src/
 
 - [x] Web / браузер
 - [x] Яндекс Игры (SDK) — см. `yandex-games.config.json`
+- [x] CrazyGames (SDK v3) — см. `docs/CRAZYGAMES.md`, `npm run build:crazygames`
 - [x] Steam (Electron) — см. `steam/README.md`
 - [x] Билайн / Мегафон (HTML5-порталы) — см. `docs/OPERATOR_PORTALS.md`
 

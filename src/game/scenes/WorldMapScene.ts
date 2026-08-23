@@ -21,6 +21,7 @@ import {
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 import type { MapPlayer } from '../types';
 import { L, fmt, mapPlayerName } from '../../i18n';
+import { platformManager } from '../../platforms/PlatformManager';
 
 type RaidErrorKey = 'noEnergy' | 'dailyLimit' | 'shielded' | 'self';
 
@@ -440,6 +441,7 @@ export class WorldMapScene extends Phaser.Scene {
   private completeTutorial(): void {
     this.tutorialOverlay.destroy();
     this.state.finishTutorial();
+    platformManager.happyTime();
     showToast(this, L().tutorial.reward);
   }
 }

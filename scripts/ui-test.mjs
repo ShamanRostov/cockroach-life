@@ -11,23 +11,25 @@ const results = [];
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 const NEST = {
-  sideMargin: 12,
-  rightRailW: 56,
-  buildPanelW: 228,
-  buildPanelTop: 100,
-  defensePanelW: 268,
-  defensePanelTop: 100,
-  defensePanelH: 118,
-  arcadePanelH: 100,
-  arcadePanelBottom: 16,
+  sideMargin: 10,
+  leftChromeW: 272,
+  buildPanelW: 220,
+  buildPanelTop: 112,
+  defensePanelW: 252,
+  defensePanelTop: 120,
+  defensePanelH: 168,
+  arcadePanelH: 118,
+  arcadePanelBottom: 12,
 };
 
-const HUD_X = GAME_WIDTH - NEST.sideMargin - NEST.rightRailW / 2;
-const HUD_Y = [108, 154, 200, 246];
+/** HUD icons sit in a row above the build panel (see NestLayout.getNestHudButtonX). */
+const HUD_START_X = GAME_WIDTH - NEST.sideMargin - NEST.buildPanelW + 22;
+const HUD_Y = 56;
+const HUD_SLOTS = [0, 1, 2, 3].map((i) => ({ x: HUD_START_X + i * 56, y: HUD_Y }));
 const MODAL_CLOSE = { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 + 210 };
 const BUILD_FIRST_ROOM = {
   x: GAME_WIDTH - NEST.sideMargin - NEST.buildPanelW / 2,
-  y: NEST.buildPanelTop + 48 + 18,
+  y: NEST.buildPanelTop + 52 + 22,
 };
 const ARCADE_SLIPPER = {
   x: NEST.sideMargin + 36,
@@ -126,16 +128,23 @@ await page.waitForTimeout(1200);
 await runStep(page, 'menu-play', 640, 268, 'NestScene');
 await page.waitForTimeout(800);
 
-// Nest HUD buttons (right stack)
+// Nest HUD buttons (row above build panel)
 const hudNames = ['hud-daily', 'hud-shop', 'hud-breeding', 'hud-season'];
 for (let i = 0; i < hudNames.length; i++) {
   const before = await sceneKey(page);
-  await tap(page, HUD_X, HUD_Y[i]);
+  await tap(page, HUD_SLOTS[i].x, HUD_SLOTS[i].y);
   await page.waitForTimeout(500);
   await tap(page, MODAL_CLOSE.x, MODAL_CLOSE.y);
   await page.waitForTimeout(300);
   const after = await sceneKey(page);
-  results.push({ name: hudNames[i], x: HUD_X, y: HUD_Y[i], before, after, ok: after === 'NestScene' });
+  results.push({
+    name: hudNames[i],
+    x: HUD_SLOTS[i].x,
+    y: HUD_SLOTS[i].y,
+    before,
+    after,
+    ok: after === 'NestScene',
+  });
 }
 
 // Build panel first room button
