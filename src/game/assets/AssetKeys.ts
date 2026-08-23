@@ -1,4 +1,5 @@
 import type { RoomType } from '../systems/BuildingSystem';
+import { GRID_TILE } from '../config';
 
 export const BUILDING_TYPES: RoomType[] = [
   'kitchen',
@@ -14,6 +15,9 @@ export const BUILDING_TYPES: RoomType[] = [
 
 export const BUILDING_LEVELS = 5;
 
+/** Source PNG size after process-building-sprites (256×256 contain). */
+const BUILDING_TEXTURE_SIZE = 256;
+
 /** Phaser texture key for HD building sprite (level 1–5). */
 export function buildingTextureKey(type: RoomType, level = 1): string {
   const clamped = Math.max(1, Math.min(BUILDING_LEVELS, level));
@@ -22,9 +26,12 @@ export function buildingTextureKey(type: RoomType, level = 1): string {
 
 export const COCKROACH_FRAMES = 8;
 
-/** Scale trimmed 256×256 building sprites to top-down grid cell. */
+/**
+ * Scale 256×256 building sprites to fit one top-down grid cell.
+ * Uses ~88% of cell size so neighbors don't visually overlap.
+ */
 export function buildingDisplayScale(_level = 1): number {
-  return 0.52;
+  return (GRID_TILE.size * 0.88) / BUILDING_TEXTURE_SIZE;
 }
 
 export const TEXTURE_KEYS = {
