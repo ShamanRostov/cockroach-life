@@ -132,7 +132,7 @@ export const ru: LocalePack = {
       fail: 'Слишком голоден!',
     },
     hospital: {
-      title: '🏥 Лазарет — мини-игра лечения',
+      title: '🏥 Лазарет',
       controls: 'Нажми ПРОБЕЛ когда пульс в зелёной зоне!',
       progress: 'Лечение: {current} / {total}',
       healed: 'Вылечен! +{hp} ОЗ',

@@ -254,8 +254,8 @@ export class MenuScene extends Phaser.Scene {
     ];
 
     const btnW = 440;
-    const btnH = 56;
-    const btnGap = 14;
+    const btnH = 64;
+    const btnGap = 12;
     const rowStep = btnH + btnGap;
     const backBtnH = 50;
     const backMargin = 28;

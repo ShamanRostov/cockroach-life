@@ -132,7 +132,7 @@ export const en: LocalePack = {
       fail: 'Too hungry!',
     },
     hospital: {
-      title: '🏥 Infirmary — healing mini-game',
+      title: '🏥 Infirmary',
       controls: 'Press SPACE when the pulse is in the green zone!',
       progress: 'Healing: {current} / {total}',
       healed: 'Healed! +{hp} HP',

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config';
-import { isNestUIRegion } from './NestLayout';
+import { isNestUIRegion, getNestGridBounds, NEST_LAYOUT } from './NestLayout';
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 2.4;
@@ -15,6 +15,7 @@ function isPrimaryDown(pointer: Phaser.Input.Pointer): boolean {
 /**
  * Wheel + pinch zoom for nest world.
  * Pan only while LMB / finger is held (never sticks after release).
+ * Pan limits follow the nest grid so the full map stays reachable when zoomed.
  */
 export class NestWorldZoom {
   private readonly worldRoot: Phaser.GameObjects.Container;
@@ -191,11 +192,35 @@ export class NestWorldZoom {
     this.applyTransform();
   }
 
+  /**
+   * Allow any nest-grid edge to reach the play viewport when zoomed.
+   * worldRoot: screen = world * zoom + pan
+   */
   private clampPan(): void {
-    const maxPanX = GAME_WIDTH * 0.45 * (this.zoom - 1);
-    const maxPanY = GAME_HEIGHT * 0.45 * (this.zoom - 1);
-    this.panX = Phaser.Math.Clamp(this.panX, -maxPanX, maxPanX);
-    this.panY = Phaser.Math.Clamp(this.panY, -maxPanY, maxPanY);
+    const bounds = getNestGridBounds();
+    const playLeft = NEST_LAYOUT.leftChromeW + 8;
+    const playRight = GAME_WIDTH - NEST_LAYOUT.rightChromeW - 8;
+    const playTop = NEST_LAYOUT.topBarH + 8;
+    const playBottom =
+      GAME_HEIGHT - NEST_LAYOUT.arcadePanelBottom - NEST_LAYOUT.arcadePanelH - 8;
+
+    // pan = screen - world * zoom (to put world point W at screen S)
+    const maxPanX = playRight - bounds.left * this.zoom;
+    const minPanX = playLeft - (bounds.left + bounds.width) * this.zoom;
+    const maxPanY = playBottom - bounds.top * this.zoom;
+    const minPanY = playTop - (bounds.top + bounds.height) * this.zoom;
+
+    if (minPanX > maxPanX) {
+      this.panX = (minPanX + maxPanX) / 2;
+    } else {
+      this.panX = Phaser.Math.Clamp(this.panX, minPanX, maxPanX);
+    }
+
+    if (minPanY > maxPanY) {
+      this.panY = (minPanY + maxPanY) / 2;
+    } else {
+      this.panY = Phaser.Math.Clamp(this.panY, minPanY, maxPanY);
+    }
   }
 
   private applyTransform(): void {

@@ -10,7 +10,7 @@ export const COCKROACH_SIDE_ANIM_WALK = 'roach-side-walk';
 /** Top-down nest cockroach (~one cell). */
 export const COCKROACH_DISPLAY_SCALE = 0.55;
 /** Side-view arcade cockroach (legacy look). */
-export const COCKROACH_SIDE_DISPLAY_SCALE = 0.72;
+export const COCKROACH_SIDE_DISPLAY_SCALE = 0.58;
 
 export function cockroachScale(mult = 1, view: CockroachView = 'top'): number {
   const base = view === 'side' ? COCKROACH_SIDE_DISPLAY_SCALE : COCKROACH_DISPLAY_SCALE;

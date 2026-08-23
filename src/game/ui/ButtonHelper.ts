@@ -11,13 +11,25 @@ const BTN_FILL = 0xe65100;
 const BTN_HOVER = 0xff9800;
 
 function buttonFontSize(w: number, h: number, label: string): string {
-  const lines = label.split('\n').length;
+  const explicitLines = label.split('\n').length;
+  const approxCharsPerLine = Math.max(10, Math.floor((w - 28) / 11));
+  const plainLen = label.replace(/\n/g, '').length;
+  const wrappedGuess = Math.max(explicitLines, Math.ceil(plainLen / approxCharsPerLine));
+  const lines = Math.max(explicitLines, wrappedGuess);
+
+  // Tall multi-line labels need smaller type or they clip the button.
+  if (lines >= 2) {
+    if (h >= 70) return w >= 350 ? '22px' : '18px';
+    if (h >= 60) return w >= 350 ? '20px' : '17px';
+    return w >= 350 ? '18px' : '15px';
+  }
+
   if (w >= 400 && h >= 60) return '28px';
-  if (w >= 350 && h >= 52) return '26px';
+  if (w >= 350 && h >= 52) return '24px';
   if (w >= 280) return '22px';
-  if (w >= 200) return lines > 1 ? '19px' : '21px';
-  if (w >= 120) return lines > 1 ? '17px' : '19px';
-  return '17px';
+  if (w >= 200) return '20px';
+  if (w >= 120) return '18px';
+  return '16px';
 }
 
 function buttonStroke(w: number): number {

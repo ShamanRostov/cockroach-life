@@ -204,7 +204,7 @@ export class RaidScene extends Phaser.Scene {
       .setDepth(0);
     this.phaseObjects.push(bg);
 
-    this.player = createCockroachPhysics(this, 120, GAME_HEIGHT / 2, 1.3, this.state.skins.getTint()).setDepth(DEPTH.entities);
+    this.player = createCockroachPhysics(this, 120, GAME_HEIGHT / 2, 1.0, this.state.skins.getTint()).setDepth(DEPTH.entities);
     this.player.setCollideWorldBounds(true);
 
     spawnRaidSmoke(this, 120, GAME_HEIGHT / 2);
@@ -355,7 +355,7 @@ export class RaidScene extends Phaser.Scene {
       this,
       originX,
       originY + 110,
-      1.5,
+      1.05,
       this.state.skins.getTint(),
     ).setDepth(15);
     this.player.setCollideWorldBounds(true);
