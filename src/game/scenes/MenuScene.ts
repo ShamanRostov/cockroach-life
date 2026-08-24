@@ -146,11 +146,12 @@ export class MenuScene extends Phaser.Scene {
 
     this.createMuteButton();
 
+    // Unmistakable build stamp — if you don't see TOP-DOWN, you're on a stale cache/build.
     this.add
-      .text(12, GAME_HEIGHT - 12, `v${GAME_VERSION}`, {
+      .text(12, GAME_HEIGHT - 12, `v${GAME_VERSION} · TOP-DOWN NEST · 6d9f7a7`, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
-        fontSize: '13px',
-        color: '#8d6e63',
+        fontSize: '14px',
+        color: '#ffcc80',
       })
       .setOrigin(0, 1)
       .setDepth(DEPTH.ui + 2);
