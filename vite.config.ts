@@ -10,9 +10,16 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       strictPort: false,
       open: true,
-      host: true,
-      // Allow Cloudflare / localtunnel so the game can be opened from the laptop.
-      allowedHosts: true,
+      host: '0.0.0.0',
+      // Explicit hosts: boolean `true` was still rejected by this Vite build for tunnels.
+      allowedHosts: [
+        'all',
+        '.trycloudflare.com',
+        '.loca.lt',
+        'expenses-timothy-tabs-wan.trycloudflare.com',
+        'localhost',
+        '127.0.0.1',
+      ],
     },
     build: {
       outDir: 'dist',
