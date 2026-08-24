@@ -260,13 +260,13 @@ export const ARCADE_HOSPITAL = {
 
 export const ARCADE_SLIPPER = {
   playerSpeed: 280,
-  /** × side cockroach display scale (2× previous feel) */
+  /** × side cockroach display scale (2× for readability) */
   roachScale: 3.0,
-  /** Slipper display scale — 2× previous */
-  slipperScaleBase: 4.4,
-  slipperScaleMin: 3.04,
-  slipperScaleMax: 4.4,
-  slipperScaleLarge: 5.6,
+  /** Slipper display scale — unchanged */
+  slipperScaleBase: 2.2,
+  slipperScaleMin: 1.52,
+  slipperScaleMax: 2.2,
+  slipperScaleLarge: 2.8,
   waveMin: 2,
   waveMax: 4,
 };
