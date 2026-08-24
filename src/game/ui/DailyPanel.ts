@@ -14,6 +14,10 @@ import { SoundManager } from '../audio/SoundManager';
 import { DEPTH } from '../graphics/SceneDepth';
 import { ModalLayer } from './ModalLayer';
 
+const PANEL_W = 540;
+const PANEL_H = 560;
+const QUEST_ROW_H = 64;
+
 export class DailyPanel {
   private readonly state = GameState.getInstance();
   private modal = new ModalLayer();
@@ -59,10 +63,11 @@ export class DailyPanel {
     this.overlay = this.modal.track(createModalOverlay(scene, depth));
     this.overlay.on('pointerdown', () => this.hide());
 
-    const panelW = dual ? 460 : 520;
-    const panelH = dual ? 480 : 480;
+    const panelW = dual ? 460 : PANEL_W;
+    const panelH = dual ? 520 : PANEL_H;
     const cx = dual ? 310 : GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
+    const top = cy - panelH / 2;
 
     this.modal.track(createModalPanel(scene, cx, cy, panelW, panelH, depth + 1));
 
@@ -79,9 +84,10 @@ export class DailyPanel {
     this.container = this.modal.track(scene.add.container(0, 0).setDepth(depth + 2));
 
     const title = scene.add
-      .text(cx, cy - 210, t.title, {
+      .text(cx, top + 28, t.title, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
         fontSize: '26px',
+        fontStyle: 'bold',
         color: '#fff8e1',
         stroke: '#5d2e00',
         strokeThickness: 3,
@@ -90,23 +96,24 @@ export class DailyPanel {
 
     this.container.add(title);
 
-    this.renderBonusSection(scene, cx, cy - 150);
-    this.renderQuestsSection(scene, cx, cy + 30);
+    this.renderBonusSection(scene, cx, top + 70, depth);
+    this.renderQuestsSection(scene, cx, top + 210, depth);
 
+    // Footer close — always below quest rows, never shared with claim buttons
     this.modal.track(
       createTextButton(
         scene,
         cx,
-        cy + 210,
+        cy + panelH / 2 - 36,
         t.close,
         () => this.hide(),
         160,
         40,
-      ).setDepth(depth + 3),
+      ).setDepth(depth + 4),
     );
   }
 
-  private renderBonusSection(scene: Phaser.Scene, cx: number, y: number): void {
+  private renderBonusSection(scene: Phaser.Scene, cx: number, y: number, depth: number): void {
     const t = L().daily;
     const bonus = this.state.dailyBonus.checkDailyBonus();
     const streak = bonus.streak;
@@ -127,7 +134,7 @@ export class DailyPanel {
     const rewardLine = rewardParts.length > 0 ? rewardParts.join('  ') : '';
 
     const rewardText = scene.add
-      .text(cx, y + 28, rewardLine, {
+      .text(cx, y + 26, rewardLine, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
         fontSize: '15px',
         color: '#bcaaa4',
@@ -137,7 +144,7 @@ export class DailyPanel {
 
     if (streak >= 7) {
       const jackpot = scene.add
-        .text(cx, y + 52, t.jackpot, {
+        .text(cx, y + 48, t.jackpot, {
           fontFamily: 'Segoe UI, Arial, sans-serif',
           fontSize: '14px',
           color: '#ff7043',
@@ -151,7 +158,7 @@ export class DailyPanel {
         createTextButton(
           scene,
           cx,
-          y + 88,
+          y + 86,
           t.claimBonus,
           () => {
             if (this.state.claimDailyBonus()) {
@@ -163,11 +170,11 @@ export class DailyPanel {
           },
           220,
           40,
-        ).setDepth(903),
+        ).setDepth(depth + 3),
       );
     } else {
       const claimed = scene.add
-        .text(cx, y + 88, t.bonusClaimedToday, {
+        .text(cx, y + 86, t.bonusClaimedToday, {
           fontFamily: 'Segoe UI, Arial, sans-serif',
           fontSize: '15px',
           color: '#66bb6a',
@@ -177,14 +184,15 @@ export class DailyPanel {
     }
   }
 
-  private renderQuestsSection(scene: Phaser.Scene, cx: number, startY: number): void {
+  private renderQuestsSection(scene: Phaser.Scene, cx: number, startY: number, depth: number): void {
     const t = L().daily;
     const quests = this.state.dailyQuests.getActiveQuests();
 
     const header = scene.add
-      .text(cx, startY - 30, t.questsTitle, {
+      .text(cx, startY, t.questsTitle, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
         fontSize: '20px',
+        fontStyle: 'bold',
         color: '#fff8e1',
       })
       .setOrigin(0.5);
@@ -194,8 +202,8 @@ export class DailyPanel {
     this.progressBars = [];
 
     quests.forEach((quest, i) => {
-      const y = startY + i * 72;
-      this.renderQuestRow(scene, cx, y, quest, t);
+      const y = startY + 40 + i * QUEST_ROW_H;
+      this.renderQuestRow(scene, cx, y, quest, t, depth);
     });
   }
 
@@ -205,6 +213,7 @@ export class DailyPanel {
     y: number,
     quest: DailyQuest,
     t: ReturnType<typeof L>['daily'],
+    depth: number,
   ): void {
     const name = fmt(t.questNames[quest.type], { n: quest.target });
     const progressLabel = fmt(t.progress, {
@@ -213,7 +222,7 @@ export class DailyPanel {
     });
 
     const nameText = scene.add
-      .text(cx - 220, y - 10, name, {
+      .text(cx - 230, y - 12, name, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
         fontSize: '14px',
         color: '#fff8e1',
@@ -223,28 +232,28 @@ export class DailyPanel {
     this.questTexts.push(nameText);
 
     const barBg = scene.add
-      .image(cx - 20, y + 12, 'ui-button')
+      .image(cx - 230, y + 14, 'ui-button')
       .setOrigin(0, 0.5)
-      .setDisplaySize(200, 10)
+      .setDisplaySize(280, 10)
       .setTint(0x3e2723);
     this.container?.add(barBg);
 
     const ratio = quest.target > 0 ? Math.min(quest.progress / quest.target, 1) : 0;
     const barFill = scene.add
-      .image(cx - 20, y + 12, 'ui-button')
+      .image(cx - 230, y + 14, 'ui-button')
       .setOrigin(0, 0.5)
-      .setDisplaySize(200 * ratio, 10)
+      .setDisplaySize(Math.max(2, 280 * ratio), 10)
       .setTint(quest.claimed ? 0x66bb6a : 0xffa726);
     this.container?.add(barFill);
     this.progressBars.push(barFill);
 
     const progText = scene.add
-      .text(cx + 200, y + 12, progressLabel, {
+      .text(cx + 60, y + 14, progressLabel, {
         fontFamily: 'Segoe UI, Arial, sans-serif',
         fontSize: '12px',
         color: '#bcaaa4',
       })
-      .setOrigin(1, 0.5);
+      .setOrigin(0, 0.5);
     this.container?.add(progText);
 
     const rewardParts: string[] = [];
@@ -252,21 +261,23 @@ export class DailyPanel {
     if (quest.reward.money) rewardParts.push(`💰${quest.reward.money}`);
     const rewardStr = rewardParts.join(' ');
 
+    // Right column: status / claim — never under the Close footer
+    const actionX = cx + 170;
     if (quest.claimed) {
       const done = scene.add
-        .text(cx + 200, y - 10, t.questDone, {
+        .text(actionX, y, t.questDone, {
           fontFamily: 'Segoe UI, Arial, sans-serif',
           fontSize: '13px',
           color: '#66bb6a',
         })
-        .setOrigin(1, 0.5);
+        .setOrigin(0.5);
       this.container?.add(done);
     } else if (quest.progress >= quest.target) {
       this.modal.track(
         createTextButton(
           scene,
-          cx + 60,
-          y + 38,
+          actionX,
+          y,
           fmt(t.claimQuest, { reward: rewardStr }),
           () => {
             if (this.state.claimDailyQuest(quest.id)) {
@@ -276,18 +287,18 @@ export class DailyPanel {
               this.show(scene, this.onClose ?? undefined);
             }
           },
-          140,
-          32,
-        ).setDepth(903),
+          150,
+          36,
+        ).setDepth(depth + 3),
       );
     } else {
       const pending = scene.add
-        .text(cx + 200, y - 10, rewardStr, {
+        .text(actionX, y, rewardStr, {
           fontFamily: 'Segoe UI, Arial, sans-serif',
-          fontSize: '12px',
+          fontSize: '13px',
           color: '#8d6e63',
         })
-        .setOrigin(1, 0.5);
+        .setOrigin(0.5);
       this.container?.add(pending);
     }
   }
