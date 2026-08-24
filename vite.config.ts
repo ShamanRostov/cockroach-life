@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => {
       strictPort: false,
       open: true,
       host: true,
+      // Allow Cloudflare / localtunnel so the game can be opened from the laptop.
+      allowedHosts: true,
     },
     build: {
       outDir: 'dist',
