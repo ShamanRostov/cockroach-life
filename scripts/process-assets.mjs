@@ -59,10 +59,10 @@ const SRC_MAP = {
   'backgrounds/floor-tile.png': 'floor-tile.png',
   'backgrounds/world-map-bg.png': 'world-map-bg.png',
   'backgrounds/raid-infiltrate-bg.png': 'raid-infiltrate-bg.png',
-  'backgrounds/arcade-slipper-bg.png': 'arcade-slipper-bg.png',
-  'backgrounds/arcade-spray-bg.png': 'arcade-spray-bg.png',
-  'backgrounds/arcade-food-bg.png': 'arcade-food-bg.png',
-  'backgrounds/arcade-hospital-bg.png': 'arcade-hospital-bg.png',
+  'backgrounds/arcade-slipper-bg.png': ['arcade/slipper-bg.png', 'arcade-slipper-bg.png'],
+  'backgrounds/arcade-spray-bg.png': ['arcade/spray-bg.png', 'arcade-spray-bg.png'],
+  'backgrounds/arcade-food-bg.png': ['arcade/food-bg.png', 'arcade-food-bg.png'],
+  'backgrounds/arcade-hospital-bg.png': ['arcade/hospital-bg.png', 'arcade-hospital-bg.png'],
   'backgrounds/arcade-catch-bg.png': 'arcade-catch-bg.png',
   'sprites/slipper.png': ['sprite-slipper.png', 'slipper.png'],
   'sprites/food-crumb.png': ['sprite-food-crumb.png', 'food-crumb.png'],
@@ -90,6 +90,9 @@ async function resolveSrc(rel) {
   const names = SRC_MAP[rel];
   const list = Array.isArray(names) ? names : [names ?? path.basename(rel)];
   for (const name of list) {
+    // Prefer files under public/assets (e.g. arcade/spray-bg.png) before ASSET_SRC.
+    const local = path.join(ROOT, name);
+    if (await exists(local)) return local;
     const p = path.join(SRC, name);
     if (await exists(p)) return p;
   }
@@ -130,61 +133,13 @@ async function keyWhite(input) {
   return sharp(px, { raw: { width: info.width, height: info.height, channels: 4 } }).png();
 }
 
-/** Paint rectangles over baked English text on arcade backgrounds (1280×720). */
-const BG_TEXT_REGIONS = {
-  'backgrounds/arcade-hospital-bg.png': [
-    { x: 0, y: 555, w: 1280, h: 165, r: 31, g: 24, b: 72 },
-    { x: 900, y: 455, w: 210, h: 95, r: 106, g: 158, b: 184 },
-  ],
-  'backgrounds/arcade-spray-bg.png': [
-    { x: 35, y: 175, w: 360, h: 420, r: 58, g: 92, b: 104 },
-    { x: 95, y: 255, w: 240, h: 260, r: 74, g: 112, b: 120 },
-  ],
-  'backgrounds/arcade-food-bg.png': [
-    { x: 55, y: 345, w: 200, h: 95, r: 242, g: 236, b: 228 },
-    { x: 215, y: 285, w: 90, h: 175, r: 90, g: 142, b: 196 },
-  ],
-  'backgrounds/arcade-catch-bg.png': [
-    { x: 25, y: 175, w: 150, h: 200, r: 216, g: 207, b: 192 },
-    { x: 40, y: 565, w: 160, h: 55, r: 139, g: 105, b: 20 },
-    { x: 575, y: 55, w: 130, h: 55, r: 46, g: 125, b: 50 },
-    { x: 95, y: 318, w: 55, h: 40, r: 61, g: 111, b: 168 },
-    { x: 1085, y: 318, w: 55, h: 40, r: 198, g: 40, b: 40 },
-  ],
-};
-
-function paintRect(px, imgW, imgH, x, y, w, h, r, g, b) {
-  const x0 = Math.max(0, x);
-  const y0 = Math.max(0, y);
-  const x1 = Math.min(imgW, x + w);
-  const y1 = Math.min(imgH, y + h);
-  for (let py = y0; py < y1; py++) {
-    for (let px_x = x0; px_x < x1; px_x++) {
-      const i = (py * imgW + px_x) * 4;
-      px[i] = r;
-      px[i + 1] = g;
-      px[i + 2] = b;
-      px[i + 3] = 255;
-    }
-  }
-}
-
-async function sanitizeBgText(rel) {
-  const regions = BG_TEXT_REGIONS[rel];
-  if (!regions) return;
-  const out = path.join(ROOT, rel);
-  if (!(await exists(out))) return;
-
-  const { data, info } = await sharp(out).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  const px = new Uint8Array(data);
-  for (const region of regions) {
-    paintRect(px, info.width, info.height, region.x, region.y, region.w, region.h, region.r, region.g, region.b);
-  }
-  const tmp = `${out}.san.tmp`;
-  await sharp(px, { raw: { width: info.width, height: info.height, channels: 4 } }).png().toFile(tmp);
-  await unlink(out);
-  await rename(tmp, out);
-  console.log('SANITIZED', rel);
+/**
+ * Previously painted flat rectangles over baked English BG text — that created
+ * the large colored "squares" in spray/food/cat/hospital arcades. Disabled.
+ * UI copy is i18n-only; prefer clean art from public/assets/arcade/*-bg.png.
+ */
+async function sanitizeBgText(_rel) {
+  /* no-op */
 }
 
 async function processOne(rel, opts) {
