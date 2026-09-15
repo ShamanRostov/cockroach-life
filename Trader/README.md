@@ -1,23 +1,20 @@
 # Trader
 
-Новый проект. Workspace и репозиторий для дальнейшей разработки.
+Каркас нового проекта **Trader**.
 
-## Быстрый старт
+Сейчас лежит в репозитории `cockroach-life` (отдельный GitHub-репозиторий создать из этого агента нельзя — нет прав `createRepository`). Когда будет `github.com/ShamanRostov/Trader`, перенесите эту папку туда и подключите Cloud Agent к новому репо.
 
-```bash
-cd Trader
-git pull origin main
-```
+## Открыть workspace
 
-Откройте папку в Cursor: **File → Open Folder** → `Trader`,  
-или файл `Trader.code-workspace`.
+- Cursor → **File → Open Workspace from File** → `Trader/Trader.code-workspace`
+- или **Open Folder** → папка `Trader`
 
-## Git
+## Git (обязательно)
 
-Все изменения сразу сохраняйте в git (см. правило в `.cursor/rules/always-git.mdc`):
+Правило в `.cursor/rules/always-git.mdc` и в корне репозитория: после изменений сразу
 
 ```bash
 git add -A
-git commit -m "краткое описание"
-git push origin main
+git commit -m "описание"
+git push
 ```
