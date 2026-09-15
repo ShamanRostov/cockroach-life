@@ -26,7 +26,8 @@ src/i18n/locales/
 ## Открыть дома в Cursor
 
 Клон: `git clone https://github.com/ShamanRostov/cockroach-life.git` → открыть папку в Cursor.  
-Пошагово: **[docs/HOME_CURSOR.md](docs/HOME_CURSOR.md)**
+Пошагово: **[docs/HOME_CURSOR.md](docs/HOME_CURSOR.md)**  
+Облако ↔ компьютер без потери прогресса: **[docs/CLOUD_CONTINUITY.md](docs/CLOUD_CONTINUITY.md)**
 
 ## Запуск
 
