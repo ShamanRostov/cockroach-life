@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trader — прогноз ММВБ</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="bg"></div>
+  <header class="top">
+    <div class="brand">Trader</div>
+    <p class="tag">Новости → зависимости ≥{{ (min_hit_rate * 100)|int }}% → long/short по голубым фишкам ММВБ</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="panel-head">
+        <h1>Прогноз часа</h1>
+        <button id="runForecast" type="button">Обновить сейчас</button>
+      </div>
+      {% if forecast %}
+      <p class="meta">
+        Сформирован: {{ forecast.generated_at }} ·
+        Новостей учтено: {{ forecast.news_considered }} ·
+        Валидных правил: {{ forecast.valid_rules }}
+      </p>
+      {% if forecast.recommendations %}
+      <ul class="recs">
+        {% for r in forecast.recommendations %}
+        <li class="rec {{ r.side }}">
+          <div class="rec-top">
+            <strong>{{ r.ticker }}</strong>
+            <span class="name">{{ r.name }}</span>
+            <span class="side">{{ r.side|upper }}</span>
+            <span class="hit">{{ '%.0f'|format(r.hit_rate * 100) }}% · n={{ r.samples }}</span>
+          </div>
+          <p class="why">{{ r.rationale }}</p>
+          <p class="news"><a href="{{ r.news_link }}" target="_blank" rel="noopener">{{ r.news_title }}</a></p>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="empty">Нет рекомендаций: нет валидных зависимостей ≥{{ (min_hit_rate * 100)|int }}% под текущие новости.</p>
+      {% endif %}
+      <p class="disclaimer">{{ forecast.disclaimer }}</p>
+      {% else %}
+      <p class="empty">Прогноз ещё не построен. Запустите bootstrap или нажмите «Обновить сейчас».</p>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <h2>Валидные зависимости</h2>
+      {% if rules %}
+      <table>
+        <thead>
+          <tr>
+            <th>Сигнал</th>
+            <th>Тикер</th>
+            <th>Ожидание</th>
+            <th>Hit rate</th>
+            <th>Выборка</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rules %}
+          <tr>
+            <td>{{ r.signal_key }}</td>
+            <td>{{ r.ticker }}</td>
+            <td>{{ r.expected_direction }}</td>
+            <td>{{ '%.1f'|format(r.hit_rate * 100) }}%</td>
+            <td>{{ r.samples }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">Пока нет правил с hit rate ≥{{ (min_hit_rate * 100)|int }}%. Нужна история новостей, пересекающаяся с ценами.</p>
+      {% endif %}
+    </section>
+
+    <section class="panel actions">
+      <h2>Пайплайн</h2>
+      <p class="meta">Новостей в архиве: {{ news_count }} · Тикеров: {{ tickers|length }}</p>
+      <div class="buttons">
+        <button data-api="/api/pipeline/news" type="button">Собрать новости</button>
+        <button data-api="/api/pipeline/prices" type="button">Обновить цены 6м</button>
+        <button data-api="/api/pipeline/analyze" type="button">Найти зависимости</button>
+      </div>
+      <pre id="pipeOut" class="pipe-out"></pre>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
