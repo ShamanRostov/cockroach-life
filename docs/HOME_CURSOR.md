@@ -50,23 +50,43 @@ npm run build
 
 ---
 
-## 4. Синхронизация с облаком
+## 4. Синхронизация с облаком (чтобы ничего не терялось)
 
-Перед работой дома:
+**Прогресс = то, что на GitHub.** Подробный сценарий: **[CLOUD_CONTINUITY.md](./CLOUD_CONTINUITY.md)**.
 
-```bash
+### Перед работой дома
+
+```powershell
+git checkout main
 git pull origin main
 ```
 
-После своих правок:
+Если продолжаете задачу агента — переключитесь на **его ветку** (имя в PR / на странице агента):
 
-```bash
-git add -A
-git commit -m "описание изменений"
-git push origin main
+```powershell
+git fetch origin
+git checkout cursor/имя-ветки
+git pull
 ```
 
-Тогда Cloud Agent в Cursor снова увидит ваш код на GitHub.
+### После своих правок
+
+```powershell
+git add -A
+git commit -m "описание изменений"
+git push
+```
+
+Предпочтительно: правки в feature-ветке → **Pull Request** → merge в `main` на GitHub.  
+Прямой push в `main` допустим только для мелких личных правок, когда вы один и уверены.
+
+### Перенести Cloud Agent на компьютер
+
+1. Откройте эту папку в Cursor Desktop  
+2. Запустите локальный агент  
+3. Agents Window → у облачного агента **Move to → Local**
+
+Либо просто `git checkout` его ветки и продолжайте в новом чате.
 
 ---
 
@@ -78,5 +98,6 @@ git push origin main
 | Порт 5173 занят | Vite сам выберет 5174 — смотрите URL в терминале |
 | Чёрный экран | Запускайте только через `npm run dev`, не file:// |
 | Нет `node` | Установите [Node.js LTS](https://nodejs.org/) (нужен v18+) |
+| Дома нет изменений агента | Не сделали pull / не та ветка — см. раздел 4 |
 
 Подробнее: `README.md`, облачная работа: `docs/CLOUD_CONTINUITY.md`.
