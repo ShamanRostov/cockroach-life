@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -10,6 +11,17 @@ from trader.analysis.sentiment import tag_news_row
 from trader.config import settings
 from trader.data.moex import load_prices, price_direction
 from trader.data.news import load_news
+
+
+def _wilson_lower(hits: int, n: int, z: float = 1.96) -> float:
+    """Нижняя граница Wilson score interval для доли успехов."""
+    if n <= 0:
+        return 0.0
+    p = hits / n
+    denom = 1 + z * z / n
+    centre = p + z * z / (2 * n)
+    margin = z * math.sqrt((p * (1 - p) + z * z / (4 * n)) / n)
+    return max(0.0, (centre - margin) / denom)
 
 
 def _explode_tagged(news: pd.DataFrame) -> pd.DataFrame:
@@ -59,7 +71,7 @@ def build_event_outcomes(horizon_hours: int | None = None) -> pd.DataFrame:
             {
                 **e.to_dict(),
                 "actual_direction": direction,
-                "hit": direction == e["expected_direction"],
+                "hit": bool(direction == e["expected_direction"]),
                 "horizon_hours": horizon,
             }
         )
@@ -71,25 +83,43 @@ def discover_dependencies(
     min_samples: int | None = None,
 ) -> pd.DataFrame:
     """
-    Правильная зависимость: в >= min_hit_rate случаев поведение акций
-    совпало с ожидаемым направлением сигнала.
+    Правильная зависимость: hit_rate ≥ порога и (опционально) Wilson lower ≥ порога,
+    при достаточной выборке.
     """
     thr = min_hit_rate if min_hit_rate is not None else settings.dependency_min_hit_rate
     n_min = min_samples if min_samples is not None else settings.min_samples_for_rule
     outcomes = build_event_outcomes()
     if outcomes.empty:
         return pd.DataFrame()
+
+    # Сохраняем сырые исходы для аудита выборок
+    out_dir = settings.data_dir / "analysis"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    outcomes.to_parquet(out_dir / "outcomes.parquet", index=False)
+
     grouped = (
         outcomes.groupby(["signal_key", "ticker", "sentiment", "expected_direction"], as_index=False)
-        .agg(
-            samples=("hit", "count"),
-            hits=("hit", "sum"),
-        )
+        .agg(samples=("hit", "count"), hits=("hit", "sum"))
     )
     grouped["hit_rate"] = grouped["hits"] / grouped["samples"]
-    grouped["valid"] = (grouped["hit_rate"] >= thr) & (grouped["samples"] >= n_min)
+    grouped["wilson_lower"] = [
+        _wilson_lower(int(h), int(n)) for h, n in zip(grouped["hits"], grouped["samples"])
+    ]
+    rate_ok = grouped["hit_rate"] >= thr
+    sample_ok = grouped["samples"] >= n_min
+    grouped["valid"] = rate_ok & sample_ok
+    if settings.wilson_for_strong:
+        grouped["strong_valid"] = grouped["valid"] & (grouped["wilson_lower"] >= thr)
+    else:
+        grouped["strong_valid"] = grouped["valid"]
+    if settings.use_wilson_lower_bound:
+        # строгий режим: Wilson обязателен для valid
+        grouped["valid"] = grouped["strong_valid"]
     grouped["threshold"] = thr
-    return grouped.sort_values(["valid", "hit_rate", "samples"], ascending=[False, False, False])
+    return grouped.sort_values(
+        ["valid", "strong_valid", "wilson_lower", "hit_rate", "samples"],
+        ascending=[False, False, False, False, False],
+    )
 
 
 def save_dependencies(deps: pd.DataFrame) -> Path:
@@ -104,6 +134,11 @@ def save_dependencies(deps: pd.DataFrame) -> Path:
         "valid_rules": int(len(valid)),
         "min_hit_rate": settings.dependency_min_hit_rate,
         "min_samples": settings.min_samples_for_rule,
+        "min_move_pct": settings.min_move_pct,
+        "use_wilson_lower_bound": settings.use_wilson_lower_bound,
+        "outcomes": int(len(pd.read_parquet(out / "outcomes.parquet")))
+        if (out / "outcomes.parquet").exists()
+        else 0,
     }
     (out / "dependencies_meta.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2),
@@ -116,6 +151,15 @@ def save_dependencies(deps: pd.DataFrame) -> Path:
         )
     else:
         (out / "valid_rules.json").write_text("[]", encoding="utf-8")
+
+    # Покрытие по тикерам — видно, где выборка ещё слабая
+    if not deps.empty:
+        coverage = (
+            deps.groupby("ticker", as_index=False)
+            .agg(rules=("signal_key", "count"), samples=("samples", "sum"), valid=("valid", "sum"))
+            .sort_values("samples", ascending=False)
+        )
+        coverage.to_json(out / "ticker_coverage.json", orient="records", force_ascii=False, indent=2)
     return path
 
 

@@ -86,6 +86,15 @@ def news_store_path() -> Path:
     return path / "news.parquet"
 
 
+def _normalize_title(title: str) -> str:
+    import re
+
+    t = (title or "").lower().strip()
+    t = re.sub(r"\s+", " ", t)
+    t = re.sub(r"[^\w\sа-яё]+", "", t, flags=re.IGNORECASE)
+    return t[:180]
+
+
 def merge_and_save_news(fresh: pd.DataFrame) -> Path:
     path = news_store_path()
     if path.exists() and not fresh.empty:
@@ -98,7 +107,11 @@ def merge_and_save_news(fresh: pd.DataFrame) -> Path:
         df = fresh
     if df.empty:
         raise RuntimeError("Нет новостей для сохранения")
-    df = df.drop_duplicates(subset=["id"]).sort_values("published_at").reset_index(drop=True)
+    df = df.drop_duplicates(subset=["id"])
+    # Доп. дедуп по нормализованному заголовку (один сюжет с разных зеркал)
+    df["title_norm"] = df["title"].map(_normalize_title)
+    df = df.sort_values("published_at").drop_duplicates(subset=["title_norm"], keep="first")
+    df = df.drop(columns=["title_norm"]).reset_index(drop=True)
     df.to_parquet(path, index=False)
     meta = {
         "updated_at": datetime.now(timezone.utc).isoformat(),

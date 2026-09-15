@@ -123,7 +123,11 @@ def price_direction(
     at: datetime,
     horizon_hours: int,
 ) -> str | None:
-    """Направление close→close через horizon_hours: up / down / flat."""
+    """Направление close→close через horizon_hours: up / down / flat.
+
+    Если новость пришла вне сессии, якоримся к ближайшему следующему бару
+    и к первому бару не раньше чем через horizon_hours после якоря.
+    """
     tdf = prices[prices["ticker"] == ticker].sort_values("begin")
     if tdf.empty:
         return None
@@ -133,16 +137,23 @@ def price_direction(
         at_ts = at_ts.tz_convert("Europe/Moscow").tz_localize(None)
     begins = pd.to_datetime(tdf["begin"])
     base = tdf[begins <= at_ts].tail(1)
-    future = tdf[begins >= at_ts + pd.Timedelta(hours=horizon_hours)].head(1)
-    if base.empty or future.empty:
+    if base.empty:
+        base = tdf[begins >= at_ts].head(1)
+    if base.empty:
+        return None
+    base_ts = pd.Timestamp(base.iloc[0]["begin"])
+    target_ts = max(at_ts, base_ts) + pd.Timedelta(hours=horizon_hours)
+    future = tdf[begins >= target_ts].head(1)
+    if future.empty:
         return None
     c0 = float(base.iloc[0]["close"])
     c1 = float(future.iloc[0]["close"])
     if c0 == 0:
         return None
     chg = (c1 - c0) / c0
-    if chg > 0.001:
+    thr = float(settings.min_move_pct)
+    if chg > thr:
         return "up"
-    if chg < -0.001:
+    if chg < -thr:
         return "down"
     return "flat"

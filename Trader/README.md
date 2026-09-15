@@ -58,9 +58,15 @@ python scripts/run_scheduler.py
 ```
 DEPENDENCY_MIN_HIT_RATE=0.70
 REACTION_HORIZON_HOURS=4
-MIN samples: settings.min_samples_for_rule (по умолчанию 8)
+MIN_SAMPLES_FOR_RULE=5
+MIN_MOVE_PCT=0.002
 ```
 
-Пока архив новостей короткий, валидных правил может не быть — это ожидаемо. После `backfill_news_history.py` и повторного `analyze` правила появятся, если сигнал реально повторяем ≥70% случаев.
+Критерии правила:
+- `hit_rate ≥ 70%`
+- `samples ≥ MIN_SAMPLES_FOR_RULE` (цель поднять до 8–10 после добора архива)
+- `strong_valid`: дополнительно Wilson lower bound ≥ 70%
 
-Минимальная выборка для правила по умолчанию: **5** (`min_samples_for_rule`).
+Пока архив directional-событий короткий, валидных правил может быть мало — это ожидаемо. После `backfill_news_history.py` и `reanalyze.py` правила появятся, если сигнал реально повторяем.
+
+См. также: [docs/ROADMAP.md](docs/ROADMAP.md), [docs/STATUS.md](docs/STATUS.md).
