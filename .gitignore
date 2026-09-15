@@ -7,7 +7,10 @@ electron/out/
 *.log
 .DS_Store
 Thumbs.db
-.cursor/
+# Cursor local state — keep project rules in git
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 playwright-report/
 test-results/
 public/assets/buildings/raw/
